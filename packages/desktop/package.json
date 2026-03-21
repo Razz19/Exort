@@ -1,0 +1,40 @@
+{
+  "name": "@exortai/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "requirements:status": "tsx src/main/requirements/cli.ts status",
+    "requirements:install": "tsx src/main/requirements/cli.ts install",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo 'No lint configured for @exortai/desktop'"
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.1.51",
+    "dompurify": "^3.3.1",
+    "electron-store": "^10.1.0",
+    "lucide-svelte": "^0.563.0",
+    "marked": "^17.0.1",
+    "material-file-icons": "^2.4.0",
+    "monaco-editor": "^0.52.2",
+    "serialport": "^13.0.0",
+    "svelte": "^5.16.0",
+    "uplot": "^1.6.32"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@types/node": "^22.10.5",
+    "autoprefixer": "^10.4.20",
+    "electron": "^34.0.2",
+    "electron-vite": "^3.0.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}

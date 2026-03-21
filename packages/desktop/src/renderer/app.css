@@ -1,0 +1,283 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-family: var(--font-sans);
+}
+
+html,
+body,
+#app {
+  @apply m-0 h-full bg-dark-bg text-gray-100;
+}
+
+.btn-primary {
+  @apply rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply rounded-lg border border-dark-border bg-dark-surface px-4 py-2 text-sm font-medium text-gray-300 transition-colors duration-200 hover:bg-primary-700/30;
+}
+
+.input-field {
+  @apply rounded-lg border border-dark-border bg-dark-bg px-3 py-2 text-sm text-white focus:outline-none ;
+}
+
+.card {
+  @apply rounded-lg border border-dark-border bg-dark-surface;
+}
+
+.chat-panel-root {
+  --chat-font-body-size: 0.875rem;
+  --chat-font-body-line: 1.625;
+  --chat-font-ui-2xs: 0.6875rem;
+  --chat-font-ui-xs: 0.75rem;
+  --chat-font-ui-sm: 0.8125rem;
+  --chat-font-ui-md: 0.875rem;
+  --chat-font-ui-lg: 1.125rem;
+  --chat-font-tool-size: 0.8125rem;
+}
+
+.chat-panel-root[data-chat-font-size='small'] {
+  --chat-font-body-size: 0.8125rem;
+  --chat-font-ui-2xs: 0.625rem;
+  --chat-font-ui-xs: 0.6875rem;
+  --chat-font-ui-sm: 0.75rem;
+  --chat-font-ui-md: 0.8125rem;
+  --chat-font-ui-lg: 1rem;
+  --chat-font-tool-size: 0.75rem;
+}
+
+.chat-panel-root[data-chat-font-size='large'] {
+  --chat-font-body-size: 0.9375rem;
+  --chat-font-ui-2xs: 0.75rem;
+  --chat-font-ui-xs: 0.8125rem;
+  --chat-font-ui-sm: 0.875rem;
+  --chat-font-ui-md: 0.9375rem;
+  --chat-font-ui-lg: 1.1875rem;
+  --chat-font-tool-size: 0.875rem;
+}
+
+.chat-panel-root textarea {
+  font-size: var(--chat-font-body-size);
+  line-height: var(--chat-font-body-line);
+}
+
+.chat-panel-root .text-\[11px\] {
+  font-size: var(--chat-font-ui-2xs);
+}
+
+.chat-panel-root .text-\[10px\] {
+  font-size: calc(var(--chat-font-ui-2xs) - 0.0625rem);
+}
+
+.chat-panel-root .text-\[13px\] {
+  font-size: var(--chat-font-ui-sm);
+}
+
+.chat-panel-root .text-xs {
+  font-size: var(--chat-font-ui-xs);
+}
+
+.chat-panel-root .text-sm {
+  font-size: var(--chat-font-ui-sm);
+}
+
+.chat-panel-root .text-base {
+  font-size: var(--chat-font-ui-md);
+}
+
+.chat-panel-root .text-lg {
+  font-size: var(--chat-font-ui-lg);
+}
+
+.chat-markdown {
+  @apply text-sm leading-relaxed text-gray-100;
+  font-size: var(--chat-font-body-size, 0.875rem);
+  line-height: var(--chat-font-body-line, 1.625);
+}
+
+.chat-markdown-planning {
+  @apply text-dark-fg4;
+  opacity: 0.5;
+}
+
+.chat-markdown-planning-collapsed {
+  max-height: 8rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.chat-markdown-planning-collapsed::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4rem;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    theme("colors.dark.bg") 100%
+  );
+}
+
+.chat-markdown p {
+  @apply mb-3;
+}
+
+.chat-markdown p:last-child {
+  @apply mb-0;
+}
+
+.chat-markdown h1 {
+  @apply mb-3 mt-2 text-lg font-semibold text-white;
+}
+
+.chat-markdown h2 {
+  @apply mb-2 mt-4 text-base font-semibold text-white;
+}
+
+.chat-markdown h3 {
+  @apply mb-2 mt-3 text-sm font-semibold text-white;
+}
+
+.chat-markdown h4 {
+  @apply mb-2 mt-3 text-sm font-medium text-gray-100;
+}
+
+.chat-markdown ul {
+  @apply mb-3 ml-5 list-disc;
+}
+
+.chat-markdown ol {
+  @apply mb-3 ml-5 list-decimal;
+}
+
+.chat-markdown li {
+  @apply mb-1;
+}
+
+.chat-markdown li:last-child {
+  @apply mb-0;
+}
+
+.chat-markdown a {
+  @apply text-primary-300 underline underline-offset-2 transition-colors hover:text-primary-500;
+}
+
+.chat-markdown pre {
+  @apply mb-3 overflow-x-auto rounded-md border border-dark-border bg-dark-bg p-3 font-mono text-xs text-gray-100;
+}
+
+.chat-markdown code {
+  @apply rounded border border-dark-border bg-dark-bg px-1.5 py-0.5 font-mono text-[11px] text-gray-100;
+}
+
+.chat-markdown pre code {
+  @apply border-0 bg-transparent p-0 text-xs;
+}
+
+.chat-markdown blockquote {
+  @apply mb-3 border-l-2 border-primary-500/70 pl-3 text-gray-300;
+}
+
+.chat-markdown hr {
+  @apply my-4 border-dark-border;
+}
+
+.chat-markdown table {
+  @apply mb-3 w-full border-collapse text-xs text-gray-200;
+}
+
+.chat-markdown th {
+  @apply border border-dark-border bg-dark-surface px-2 py-1 text-left text-gray-100;
+}
+
+.chat-markdown td {
+  @apply border border-dark-border px-2 py-1;
+}
+
+.chat-markdown tbody tr:nth-child(even) {
+  @apply bg-dark-bg;
+}
+
+.chat-markdown input[type='checkbox'] {
+  @apply mr-2 accent-primary-500;
+}
+
+.tool-markdown {
+  @apply text-[13px] leading-relaxed text-dark-fg3;
+  font-size: var(--chat-font-tool-size, 0.8125rem);
+  line-height: var(--chat-font-body-line, 1.625);
+}
+
+.tool-markdown > :first-child {
+  @apply mt-0;
+}
+
+.tool-markdown p,
+.tool-markdown ul,
+.tool-markdown ol,
+.tool-markdown pre,
+.tool-markdown blockquote,
+.tool-markdown table {
+  @apply mb-2;
+}
+
+.tool-markdown h1,
+.tool-markdown h2,
+.tool-markdown h3,
+.tool-markdown h4 {
+  @apply mb-1 mt-1 text-sm text-dark-fg2;
+}
+
+.tool-markdown ul,
+.tool-markdown ol {
+  @apply ml-4;
+}
+
+.tool-markdown li {
+  @apply mb-0.5;
+}
+
+.tool-markdown pre {
+  @apply p-2.5 text-[11px];
+}
+
+.chat-timeline-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.chat-timeline-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-timeline-scroll::-webkit-scrollbar-track {
+  @apply bg-dark-bg;
+  border: none;
+}
+
+.chat-timeline-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: none;
+}
+
+.chat-panel-root:hover .chat-timeline-scroll,
+.chat-panel-root:focus-within .chat-timeline-scroll {
+  scrollbar-color: theme("colors.dark.bg4") theme("colors.dark.bg");
+}
+
+.chat-panel-root:hover .chat-timeline-scroll::-webkit-scrollbar-thumb,
+.chat-panel-root:focus-within .chat-timeline-scroll::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-dark-fg4;
+  border: none;
+}

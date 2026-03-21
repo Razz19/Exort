@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": ["node", "svelte"],
+    "paths": {
+      "@/*": ["src/renderer/*"]
+    }
+  },
+  "include": ["src", "electron.vite.config.ts"]
+}

@@ -1,0 +1,17 @@
+node_modules
+.DS_Store
+.env
+.env.*
+!.env.example
+.turbo
+AGENTS.md
+CLAUDE.md
+dist
+out
+coverage
+.vite
+.svelte-kit
+docs
+packages/server/prisma/dev.db
+packages/server/prisma/dev.db-journal
+
