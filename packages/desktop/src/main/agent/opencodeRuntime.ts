@@ -2280,6 +2280,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
       log(`prompt:model provider=default model=${OPEN_CODE_MODEL}`);
     }
     let response: unknown;
+    let usedPromptAsync = false;
     try {
       const promptBody: Record<string, unknown> = {
         parts: [
@@ -2296,7 +2297,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
         };
       }
 
-      response = await runtime.client.session.prompt({
+      const promptPayload = {
         sessionID: sessionId,
         directory: params.workspaceRoot,
         messageID: typeof promptBody.messageID === 'string' ? promptBody.messageID : undefined,
@@ -2308,11 +2309,25 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
             ? (promptBody.tools as Record<string, boolean>)
             : undefined,
         system: typeof promptBody.system === 'string' ? promptBody.system : undefined,
-        variant: typeof promptBody.variant === 'string' ? promptBody.variant : undefined,
         parts: promptBody.parts as Array<{ type: 'text'; text: string }>
-      }, {
-        signal: params.signal
-      });
+      };
+
+      const promptAsync = runtime.client.session.promptAsync;
+      if (typeof promptAsync === 'function') {
+        usedPromptAsync = true;
+        log('prompt:mode async');
+        response = await promptAsync(promptPayload, {
+          signal: params.signal
+        });
+      } else {
+        log('prompt:mode sync');
+        response = await runtime.client.session.prompt({
+          ...promptPayload,
+          variant: typeof promptBody.variant === 'string' ? promptBody.variant : undefined
+        }, {
+          signal: params.signal
+        });
+      }
     } catch (error) {
       if (params.signal.aborted || isAbortLikeError(error)) {
         log('prompt:aborted');
@@ -2336,12 +2351,15 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     );
     log('prompt:response-received');
 
-    if (!streamFinished && !streamedAnyContent && fallbackParts.length === 0) {
+    if (usedPromptAsync) {
+      log('prompt:awaiting-stream');
+      await streamSettled;
+    } else if (!streamFinished && !streamedAnyContent && fallbackParts.length === 0) {
       log('prompt:response:empty-await-stream');
       await Promise.race([streamSettled, wait(1500)]);
     }
 
-    if (!streamFinished && !streamedAnyContent && fallbackParts.length === 0) {
+    if (!usedPromptAsync && !streamFinished && !streamedAnyContent && fallbackParts.length === 0) {
       const emptyMessage = usingExplicitProviderModel
         ? 'Agent returned no response. Check Settings > Providers and reconnect your selected provider.'
         : 'Agent returned no response from ExortAI default model (big-pickle). Retry once, then restart the app if it persists.';

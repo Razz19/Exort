@@ -22,12 +22,12 @@
 
   const requirementOrder: RequirementId[] = ["opencode", "arduino-cli"];
   const requirementDisplayNames: Record<RequirementId, string> = {
-    opencode: "Exort Agent",
+    opencode: "OpenCode",
     "arduino-cli": "Arduino CLI",
   };
   const requirementDescriptions: Record<RequirementId, string> = {
     opencode:
-      "Managed by ExortAi as a private runtime. This does not rely on global OpenCode in terminal PATH.",
+      "Managed by Exort as a private runtime. This does not rely on global OpenCode in terminal PATH.",
     "arduino-cli": "",
   };
   const monacoThemeOptions: Array<{ value: MonacoThemeId; label: string }> = [
@@ -160,10 +160,6 @@
     return `${compact.slice(0, MAX_LEN - 1)}...`;
   }
 
-  function toUiRequirementText(input: string): string {
-    return input.replace(/opencode/gi, "Exort Agent");
-  }
-
   function getVersionText(status: RequirementStatus | undefined): string {
     if (!status) return "Checking...";
     return status.version ?? "Not found";
@@ -174,7 +170,7 @@
   ): string | null {
     if (!status || status.installed) return null;
     if (!status.details) return null;
-    return normalizeStatusText(toUiRequirementText(status.details));
+    return normalizeStatusText(status.details);
   }
 
   function getRequirementMetaLines(
@@ -187,9 +183,7 @@
     if (status.source) {
       lines.push(
         `Source: ${
-          status.source === "managed"
-            ? "Managed runtime"
-            : "System override"
+          status.source === "managed" ? "Managed runtime" : "System override"
         }`,
       );
     }
@@ -201,7 +195,7 @@
     }
     if (status.provisionDiagnostics) {
       lines.push(
-        `Diagnostics: ${normalizeStatusText(toUiRequirementText(status.provisionDiagnostics))}`,
+        `Diagnostics: ${normalizeStatusText(status.provisionDiagnostics)}`,
       );
     }
     lines.push(
@@ -552,7 +546,9 @@
         {/if}
 
         {#if metaLines.length > 0}
-          <div class="rounded border border-dark-border bg-dark-bg px-2 py-1 text-[11px] text-dark-fg3">
+          <div
+            class="rounded border border-dark-border bg-dark-bg px-2 py-1 text-[11px] text-dark-fg3"
+          >
             {#each metaLines as line (line)}
               <p class="break-all">{line}</p>
             {/each}

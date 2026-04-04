@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import type { ToolContext } from './agent/tools/toolShim.js';
+import type { ToolContext } from './agent/toolTypes.js';
 
 import arduinoCompileTool from './agent/tools/arduinoCompile.js';
 

@@ -488,7 +488,7 @@ export async function installRequirement(id: RequirementId): Promise<Requirement
           `[runtime] runtime:isolation:paths config=${isolation.runtimeConfigRoot} data=${isolation.runtimeDataRoot} state=${isolation.runtimeStateRoot}`
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to provision Exort Agent runtime.';
+        const message = error instanceof Error ? error.message : 'Failed to provision OpenCode runtime.';
         logs.push(`[runtime:error] ${message}`);
         lastFailureMessage = `Release URL install succeeded, but managed provisioning failed: ${message}`;
       }
@@ -605,7 +605,7 @@ export async function installRequirement(id: RequirementId): Promise<Requirement
           `[runtime] runtime:isolation:paths config=${isolation.runtimeConfigRoot} data=${isolation.runtimeDataRoot} state=${isolation.runtimeStateRoot}`
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to provision Exort Agent runtime.';
+        const message = error instanceof Error ? error.message : 'Failed to provision OpenCode runtime.';
         logs.push(`[runtime:error] ${message}`);
         lastFailureMessage = `Strategy "${strategy.id}" finished, but managed provisioning failed: ${message}`;
         continue;

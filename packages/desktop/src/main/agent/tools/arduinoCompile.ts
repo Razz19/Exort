@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { type Dirent, promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import { tool } from './toolShim.js';
+import { tool } from '@opencode-ai/plugin';
 
 type ArduinoCompileArgs = {
   sketchPath?: string;

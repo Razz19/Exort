@@ -86,7 +86,7 @@
   >
     {#if visibleMessages.length === 0}
       <div class="card p-4 text-sm text-dark-fg3">
-        Start by asking Exort Agent to inspect your workspace.
+        Start by asking Agent to inspect your workspace.
       </div>
     {/if}
 
