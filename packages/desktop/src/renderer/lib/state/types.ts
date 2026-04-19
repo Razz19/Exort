@@ -46,6 +46,7 @@ export type WorkspaceState = {
   workspaceName: string;
   lastOpenedAt: string;
   boardFqbn: string;
+  boardOptionSelections: Record<string, string>;
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;

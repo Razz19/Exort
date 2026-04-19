@@ -154,6 +154,21 @@ type ArduinoBoardOption = {
   fqbn: string;
   platform: string;
 };
+type ArduinoBoardConfigOptionValue = {
+  id: string;
+  label: string;
+  selected: boolean;
+};
+type ArduinoBoardConfigOption = {
+  id: string;
+  label: string;
+  values: ArduinoBoardConfigOptionValue[];
+};
+type ArduinoBoardDetails = {
+  baseFqbn: string;
+  boardName: string;
+  configOptions: ArduinoBoardConfigOption[];
+};
 type ArduinoCoreTier = 'official' | 'certified' | 'partner' | 'community';
 type ArduinoCorePackage = {
   id: string;
@@ -290,6 +305,7 @@ type WorkspaceState = {
   workspaceName: string;
   lastOpenedAt: string;
   boardFqbn: string;
+  boardOptionSelections: Record<string, string>;
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;
@@ -398,6 +414,12 @@ const electronAPI = {
     ipcRenderer.invoke('arduino:list-ports') as Promise<{ ok: boolean; ports?: ArduinoPortOption[]; error?: string }>,
   listArduinoBoards: () =>
     ipcRenderer.invoke('arduino:list-boards') as Promise<{ ok: boolean; boards?: ArduinoBoardOption[]; error?: string }>,
+  getArduinoBoardDetails: (payload: { fqbn: string }) =>
+    ipcRenderer.invoke('arduino:get-board-details', payload) as Promise<{
+      ok: boolean;
+      details?: ArduinoBoardDetails;
+      error?: string;
+    }>,
   listArduinoInstalledCores: () =>
     ipcRenderer.invoke('arduino:list-installed-cores') as Promise<{ ok: boolean; cores?: ArduinoCorePackage[]; error?: string }>,
   listArduinoCatalogCores: () =>

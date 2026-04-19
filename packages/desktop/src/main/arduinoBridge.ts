@@ -18,6 +18,24 @@ type ArduinoBoardOption = {
   platform: string;
 };
 
+type ArduinoBoardConfigOptionValue = {
+  id: string;
+  label: string;
+  selected: boolean;
+};
+
+type ArduinoBoardConfigOption = {
+  id: string;
+  label: string;
+  values: ArduinoBoardConfigOptionValue[];
+};
+
+type ArduinoBoardDetails = {
+  baseFqbn: string;
+  boardName: string;
+  configOptions: ArduinoBoardConfigOption[];
+};
+
 type ArduinoCoreTier = 'official' | 'certified' | 'partner' | 'community';
 
 type ArduinoCorePackage = {
@@ -82,6 +100,13 @@ type ListPortsResponse =
 
 type ListBoardsResponse =
   | { ok: true; boards: ArduinoBoardOption[] }
+  | {
+      ok: false;
+      error: string;
+    };
+
+type GetBoardDetailsResponse =
+  | { ok: true; details: ArduinoBoardDetails }
   | {
       ok: false;
       error: string;
@@ -215,6 +240,47 @@ function asStringArray(value: unknown): string[] {
 
 function asBoolean(value: unknown): boolean {
   return value === true;
+}
+
+function toBaseBoardFqbn(fqbn: string): string {
+  const parts = fqbn.split(':');
+  if (parts.length <= 3) return fqbn;
+  return parts.slice(0, 3).join(':');
+}
+
+function normalizeBoardConfigOptions(configOptionsInput: unknown): ArduinoBoardConfigOption[] {
+  if (!Array.isArray(configOptionsInput)) return [];
+
+  const normalized: ArduinoBoardConfigOption[] = [];
+  for (const item of configOptionsInput) {
+    const optionRecord = asRecord(item);
+    const id = asNonBlankString(optionRecord.option);
+    if (!id) continue;
+
+    const values = Array.isArray(optionRecord.values)
+      ? optionRecord.values
+          .map((value) => asRecord(value))
+          .map((value): ArduinoBoardConfigOptionValue | null => {
+            const valueId = asNonBlankString(value.value);
+            if (!valueId) return null;
+
+            return {
+              id: valueId,
+              label: asNonBlankString(value.value_label) ?? valueId,
+              selected: asBoolean(value.selected)
+            };
+          })
+          .filter((value): value is ArduinoBoardConfigOptionValue => value !== null)
+      : [];
+
+    normalized.push({
+      id,
+      label: asNonBlankString(optionRecord.option_label) ?? id,
+      values
+    });
+  }
+
+  return normalized;
 }
 
 function isValidCoreId(value: string): boolean {
@@ -551,6 +617,40 @@ export async function listInstalledBoards(): Promise<ListBoardsResponse> {
 
   const boards = [...byFqbn.values()].sort((left, right) => left.name.localeCompare(right.name));
   return { ok: true, boards };
+}
+
+export async function getBoardDetails(fqbnInput: string): Promise<GetBoardDetailsResponse> {
+  const fqbn = asNonBlankString(fqbnInput);
+  if (!fqbn) {
+    return { ok: false, error: 'Board FQBN is required.' };
+  }
+
+  const runResult = await runArduinoCli(['board', 'details', '-b', fqbn, '--format', 'json']);
+  if (runResult.error) {
+    return { ok: false, error: runResult.error };
+  }
+  if (runResult.exitCode !== 0) {
+    const detail = runResult.stderr.trim() || runResult.stdout.trim() || `arduino-cli exited with code ${runResult.exitCode}`;
+    return { ok: false, error: detail };
+  }
+
+  const parsed = parseJson<Record<string, unknown>>(runResult.stdout);
+  if (!parsed) {
+    return { ok: false, error: 'Failed to parse board details from arduino-cli output.' };
+  }
+
+  const details = asRecord(parsed);
+  const baseFqbn = asNonBlankString(details.fqbn) ?? toBaseBoardFqbn(fqbn);
+  const boardName = asNonBlankString(details.name) ?? baseFqbn;
+
+  return {
+    ok: true,
+    details: {
+      baseFqbn,
+      boardName,
+      configOptions: normalizeBoardConfigOptions(details.config_options)
+    }
+  };
 }
 
 export async function listInstalledCores(): Promise<ListCorePackagesResponse> {

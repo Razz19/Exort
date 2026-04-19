@@ -71,6 +71,25 @@
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
   type SettingsTab = "general" | "providers" | "boards";
 
+  function buildEffectiveBoardFqbn(
+    baseFqbn: string,
+    optionSelections: Record<string, string>,
+  ): string {
+    const normalizedBase = baseFqbn.trim();
+    if (!normalizedBase) return "";
+
+    const optionEntries = Object.entries(optionSelections)
+      .map(([optionId, valueId]) => [optionId.trim(), valueId.trim()] as const)
+      .filter(([optionId, valueId]) => optionId.length > 0 && valueId.length > 0)
+      .sort(([leftId], [rightId]) => leftId.localeCompare(rightId));
+
+    if (optionEntries.length === 0) return normalizedBase;
+    const optionSuffix = optionEntries
+      .map(([optionId, valueId]) => `${optionId}=${valueId}`)
+      .join(",");
+    return `${normalizedBase}:${optionSuffix}`;
+  }
+
   let agentBusy = $state(false);
   let stoppingAgentTurn = $state(false);
   let activeAgentRequestId = $state<string | null>(null);
@@ -134,6 +153,12 @@
     appStateSnapshot.appearance.monacoTheme,
   );
   let selectedBoardFqbn = $derived(activeWorkspaceState?.boardFqbn ?? "");
+  let boardOptionSelections = $derived(
+    activeWorkspaceState?.boardOptionSelections ?? {},
+  );
+  let effectiveBoardFqbn = $derived.by(() =>
+    buildEffectiveBoardFqbn(selectedBoardFqbn, boardOptionSelections),
+  );
   let selectedPort = $derived(activeWorkspaceState?.serialPort ?? "");
   let favoriteBoardFqbns = $derived(
     workspaceManagerSnapshot.favoriteBoardFqbns ?? [],
@@ -1414,6 +1439,16 @@
     if (!activeWorkspace) return;
     persistWorkspaceMetadata(activeWorkspace, {
       boardFqbn: fqbn,
+      boardOptionSelections: {},
+    });
+  }
+
+  function handleBoardOptionSelectionsChange(
+    nextSelections: Record<string, string>,
+  ): void {
+    if (!activeWorkspace) return;
+    persistWorkspaceMetadata(activeWorkspace, {
+      boardOptionSelections: nextSelections,
     });
   }
 
@@ -2395,9 +2430,12 @@
     {activeFilePath}
     activeFileDirty={activeFile?.dirty ?? false}
     {selectedBoardFqbn}
+    {boardOptionSelections}
+    {effectiveBoardFqbn}
     {selectedPort}
     {favoriteBoardFqbns}
     onBoardChange={handleBoardChange}
+    onBoardOptionSelectionsChange={handleBoardOptionSelectionsChange}
     onPortChange={handlePortChange}
     onToggleFavoriteBoard={handleToggleFavoriteBoard}
     onOpenBoardsManager={() => openSettingsModal("boards")}

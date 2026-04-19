@@ -13,22 +13,13 @@
     X,
   } from "lucide-svelte";
   import type {
+    ArduinoBoardDetails,
+    ArduinoBoardOption,
     ArduinoCommandOutputEnvelope,
     ArduinoOutputEvent,
     ArduinoOperation,
+    ArduinoPortOption,
   } from "../lib/types";
-
-  type ArduinoPortOption = {
-    address: string;
-    label: string;
-    protocol: string;
-  };
-
-  type ArduinoBoardOption = {
-    name: string;
-    fqbn: string;
-    platform: string;
-  };
 
   type ArduinoUploadResult = {
     ok: boolean;
@@ -46,9 +37,12 @@
     activeFileDirty,
     selectedPort = "",
     selectedBoardFqbn = "",
+    boardOptionSelections = {},
+    effectiveBoardFqbn = "",
     favoriteBoardFqbns = [],
     onPortChange = () => {},
     onBoardChange = () => {},
+    onBoardOptionSelectionsChange = () => {},
     onToggleFavoriteBoard = () => {},
     onOpenBoardsManager = () => {},
     onSaveActiveFile,
@@ -62,9 +56,14 @@
     activeFileDirty: boolean;
     selectedPort: string;
     selectedBoardFqbn: string;
+    boardOptionSelections: Record<string, string>;
+    effectiveBoardFqbn: string;
     favoriteBoardFqbns: string[];
     onPortChange: (port: string) => void;
     onBoardChange: (fqbn: string) => void;
+    onBoardOptionSelectionsChange: (
+      selections: Record<string, string>,
+    ) => void;
     onToggleFavoriteBoard: (fqbn: string) => void;
     onOpenBoardsManager: () => void;
     onSaveActiveFile: () => Promise<void> | void;
@@ -81,6 +80,12 @@
   const safeSetBoard = (fqbn: string) => {
     if (typeof onBoardChange === "function") {
       onBoardChange(fqbn);
+    }
+  };
+
+  const safeSetBoardOptionSelections = (selections: Record<string, string>) => {
+    if (typeof onBoardOptionSelectionsChange === "function") {
+      onBoardOptionSelectionsChange(selections);
     }
   };
 
@@ -114,9 +119,16 @@
   let boardsError = $state<string | null>(null);
   let portsDropdownOpen = $state(false);
   let boardsDropdownOpen = $state(false);
+  let boardSettingsDropdownOpen = $state(false);
   let boardSearch = $state("");
   let portsDropdownElement: HTMLDivElement | null = null;
   let boardsDropdownElement: HTMLDivElement | null = null;
+  let boardSettingsDropdownElement: HTMLDivElement | null = null;
+  let boardSettingsBusy = $state(false);
+  let boardSettingsError = $state<string | null>(null);
+  let boardCurrentDetails = $state<ArduinoBoardDetails | null>(null);
+  let boardBaseDetails = $state<ArduinoBoardDetails | null>(null);
+  let boardSettingsRequestId = 0;
 
   let isActiveIno = $derived(
     !!activeFilePath && activeFilePath.toLowerCase().endsWith(".ino"),
@@ -193,7 +205,9 @@
     );
   };
   let favoriteBoardSet = $derived.by(() => new Set(favoriteBoardFqbns));
-  let overlayOpen = $derived(portsDropdownOpen || boardsDropdownOpen);
+  let overlayOpen = $derived(
+    portsDropdownOpen || boardsDropdownOpen || boardSettingsDropdownOpen,
+  );
   let favoriteBoardsOrdered = $derived.by(() => {
     if (favoriteBoardFqbns.length === 0 || boards.length === 0) return [];
     const boardByFqbn = new Map(boards.map((board) => [board.fqbn, board]));
@@ -220,6 +234,80 @@
       return !query || boardMatchesQuery(board, query);
     });
   });
+  let selectedBoardSettingsCount = $derived(
+    Object.keys(boardOptionSelections).length,
+  );
+  let boardSettingsButtonLabel = $derived.by(() => {
+    if (!selectedBoardFqbn) return "Settings";
+    if (selectedBoardSettingsCount === 0) return "Settings";
+    return `Settings (${selectedBoardSettingsCount})`;
+  });
+  let boardSettingsTooltip = $derived.by(() => {
+    if (!selectedBoardFqbn) return "Select a board first";
+    return "Configure board-specific settings";
+  });
+
+  function getSelectedBoardOptionValues(
+    details: ArduinoBoardDetails | null,
+  ): Record<string, string> {
+    if (!details) return {};
+
+    const selectedEntries = details.configOptions
+      .map((option) => {
+        const selectedValue = option.values.find((value) => value.selected);
+        if (!selectedValue) return null;
+        return [option.id, selectedValue.id] as const;
+      })
+      .filter((entry): entry is readonly [string, string] => entry !== null);
+
+    return Object.fromEntries(selectedEntries);
+  }
+
+  function shallowEqualSelections(
+    left: Record<string, string>,
+    right: Record<string, string>,
+  ): boolean {
+    const leftKeys = Object.keys(left).sort();
+    const rightKeys = Object.keys(right).sort();
+    if (leftKeys.length !== rightKeys.length) return false;
+
+    for (let index = 0; index < leftKeys.length; index += 1) {
+      const key = leftKeys[index];
+      if (key !== rightKeys[index]) return false;
+      if (left[key] !== right[key]) return false;
+    }
+
+    return true;
+  }
+
+  function sanitizeBoardOptionSelections(
+    nextSelections: Record<string, string>,
+    details: ArduinoBoardDetails | null,
+    defaultSelections: Record<string, string>,
+  ): Record<string, string> {
+    if (!details) return {};
+
+    const validByOptionId = new Map(
+      details.configOptions.map((option) => [
+        option.id,
+        new Set(option.values.map((value) => value.id)),
+      ]),
+    );
+
+    const sanitizedEntries = Object.entries(nextSelections).filter(
+      ([optionId, valueId]) => {
+        const validValues = validByOptionId.get(optionId);
+        if (!validValues || !validValues.has(valueId)) return false;
+        return defaultSelections[optionId] !== valueId;
+      },
+    );
+
+    return Object.fromEntries(sanitizedEntries);
+  }
+
+  let boardDefaultSelections = $derived.by(() =>
+    getSelectedBoardOptionValues(boardBaseDetails),
+  );
 
   onMount(() => {
     void refreshPorts();
@@ -254,11 +342,20 @@
       ) {
         boardsDropdownOpen = false;
       }
+      if (
+        boardSettingsDropdownOpen &&
+        boardSettingsDropdownElement &&
+        target &&
+        !boardSettingsDropdownElement.contains(target)
+      ) {
+        boardSettingsDropdownOpen = false;
+      }
     };
     const onDocumentKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       portsDropdownOpen = false;
       boardsDropdownOpen = false;
+      boardSettingsDropdownOpen = false;
     };
 
     window.electronAPI.onArduinoCommandOutput(outputListener);
@@ -287,6 +384,7 @@
     portsDropdownOpen = !portsDropdownOpen;
     if (portsDropdownOpen) {
       boardsDropdownOpen = false;
+      boardSettingsDropdownOpen = false;
       void refreshPorts();
     }
   }
@@ -295,8 +393,86 @@
     boardsDropdownOpen = !boardsDropdownOpen;
     if (boardsDropdownOpen) {
       portsDropdownOpen = false;
+      boardSettingsDropdownOpen = false;
       boardSearch = "";
       void refreshBoards();
+    }
+  }
+
+  async function refreshBoardSettings(): Promise<void> {
+    const baseFqbn = selectedBoardFqbn.trim();
+    if (!baseFqbn) {
+      boardCurrentDetails = null;
+      boardBaseDetails = null;
+      boardSettingsError = null;
+      boardSettingsBusy = false;
+      return;
+    }
+
+    const currentFqbn = effectiveBoardFqbn.trim() || baseFqbn;
+    const currentRequestId = ++boardSettingsRequestId;
+    boardSettingsBusy = true;
+    boardSettingsError = null;
+
+    try {
+      const currentPromise = window.electronAPI.getArduinoBoardDetails({
+        fqbn: currentFqbn,
+      });
+      const basePromise =
+        currentFqbn === baseFqbn
+          ? currentPromise
+          : window.electronAPI.getArduinoBoardDetails({ fqbn: baseFqbn });
+      const [currentResponse, baseResponse] = await Promise.all([
+        currentPromise,
+        basePromise,
+      ]);
+
+      if (currentRequestId !== boardSettingsRequestId) return;
+      if (!currentResponse.ok || !currentResponse.details) {
+        boardCurrentDetails = null;
+        boardBaseDetails = null;
+        boardSettingsError =
+          currentResponse.error ?? "Failed to load board settings.";
+        return;
+      }
+
+      const nextCurrentDetails = currentResponse.details;
+      const nextBaseDetails = baseResponse.ok && baseResponse.details
+        ? baseResponse.details
+        : nextCurrentDetails;
+      boardCurrentDetails = nextCurrentDetails;
+      boardBaseDetails = nextBaseDetails;
+
+      const cleanedSelections = sanitizeBoardOptionSelections(
+        boardOptionSelections,
+        nextCurrentDetails,
+        getSelectedBoardOptionValues(nextBaseDetails),
+      );
+      if (!shallowEqualSelections(cleanedSelections, boardOptionSelections)) {
+        safeSetBoardOptionSelections(cleanedSelections);
+      }
+    } catch (error) {
+      if (currentRequestId !== boardSettingsRequestId) return;
+      boardCurrentDetails = null;
+      boardBaseDetails = null;
+      boardSettingsError =
+        error instanceof Error
+          ? error.message
+          : "Failed to load board settings.";
+    } finally {
+      if (currentRequestId === boardSettingsRequestId) {
+        boardSettingsBusy = false;
+      }
+    }
+  }
+
+  function toggleBoardSettingsDropdown(): void {
+    if (!selectedBoardFqbn) return;
+
+    boardSettingsDropdownOpen = !boardSettingsDropdownOpen;
+    if (boardSettingsDropdownOpen) {
+      portsDropdownOpen = false;
+      boardsDropdownOpen = false;
     }
   }
 
@@ -308,10 +484,34 @@
   function handleBoardSelection(fqbn: string): void {
     safeSetBoard(fqbn);
     boardsDropdownOpen = false;
+    boardSettingsDropdownOpen = false;
+  }
+
+  function handleBoardOptionSelection(
+    optionId: string,
+    valueId: string,
+  ): void {
+    if (!selectedBoardFqbn) return;
+
+    const nextSelections = { ...boardOptionSelections };
+    if (boardDefaultSelections[optionId] === valueId) {
+      delete nextSelections[optionId];
+    } else {
+      nextSelections[optionId] = valueId;
+    }
+
+    safeSetBoardOptionSelections(
+      sanitizeBoardOptionSelections(
+        nextSelections,
+        boardCurrentDetails,
+        boardDefaultSelections,
+      ),
+    );
   }
 
   function handleOpenBoardsManager(): void {
     boardsDropdownOpen = false;
+    boardSettingsDropdownOpen = false;
     safeOpenBoardsManager();
   }
 
@@ -435,7 +635,7 @@
         requestId,
         workspaceRoot: activeWorkspaceRoot,
         activeFilePath,
-        fqbn: selectedBoardFqbn,
+        fqbn: effectiveBoardFqbn,
       });
 
       if (!response.ok || !response.result) {
@@ -502,7 +702,7 @@
       requestId,
       workspaceRoot: activeWorkspaceRoot,
       activeFilePath,
-      fqbn: selectedBoardFqbn,
+      fqbn: effectiveBoardFqbn,
       port: selectedPort,
     });
 
@@ -515,7 +715,7 @@
         requestId,
         workspaceRoot: activeWorkspaceRoot,
         activeFilePath,
-        fqbn: selectedBoardFqbn,
+        fqbn: effectiveBoardFqbn,
         port: selectedPort,
       });
 
@@ -574,6 +774,30 @@
 
     void uploadActiveSketch();
   }
+
+  function isBoardOptionValueSelected(
+    optionId: string,
+    valueId: string,
+  ): boolean {
+    const effectiveValue =
+      boardOptionSelections[optionId] ?? boardDefaultSelections[optionId] ?? null;
+    return effectiveValue === valueId;
+  }
+
+  $effect(() => {
+    if (!boardSettingsDropdownOpen) return;
+    selectedBoardFqbn;
+    effectiveBoardFqbn;
+    void refreshBoardSettings();
+  });
+
+  $effect(() => {
+    if (selectedBoardFqbn) return;
+    boardSettingsDropdownOpen = false;
+    boardCurrentDetails = null;
+    boardBaseDetails = null;
+    boardSettingsError = null;
+  });
 </script>
 
 <header
@@ -776,6 +1000,90 @@
                 <span>Install boards</span>
               </button>
             </div>
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2" bind:this={boardSettingsDropdownElement}>
+      <span class="w-14 shrink-0 text-right text-xs text-dark-fg3">
+        Config
+      </span>
+      <div class="relative w-44 shrink-0">
+        <button
+          class={dropdownTriggerClass}
+          onclick={toggleBoardSettingsDropdown}
+          disabled={!selectedBoardFqbn}
+          title={boardSettingsTooltip}
+          aria-label="Configure board settings"
+          aria-expanded={boardSettingsDropdownOpen}
+        >
+          <span class="truncate">{boardSettingsButtonLabel}</span>
+          <ChevronDown
+            class={`h-4 w-4 text-dark-fg3 transition-transform ${boardSettingsDropdownOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {#if boardSettingsDropdownOpen}
+          <div
+            class={`${dropdownPanelClass} max-h-[28rem] w-80 overflow-y-auto p-2`}
+          >
+            <div class="mb-2 border-b border-dark-border pb-2">
+              <div class="flex items-center gap-2 text-sm text-dark-fg1">
+                <Settings2 class="h-4 w-4 shrink-0" />
+                <span class="truncate">Board settings</span>
+              </div>
+              <div class="mt-1 text-xs text-dark-fg4">
+                {boardCurrentDetails?.boardName ?? selectedBoardLabel}
+              </div>
+            </div>
+
+            {#if boardSettingsBusy && !boardCurrentDetails}
+              <div class="px-1 py-2 text-sm text-dark-fg3">
+                Loading board settings...
+              </div>
+            {:else if boardSettingsError}
+              <div class="px-1 py-2 text-sm text-dark-red">
+                {boardSettingsError}
+              </div>
+            {:else if boardCurrentDetails}
+              {#if boardCurrentDetails.configOptions.length === 0}
+                <div class="px-1 py-2 text-sm text-dark-fg3">
+                  This board has no configurable board settings.
+                </div>
+              {:else}
+                <div class="space-y-3">
+                  {#each boardCurrentDetails.configOptions as option (option.id)}
+                    <section>
+                      <div class="mb-1 px-1 text-xs font-medium uppercase tracking-wide text-dark-fg4">
+                        {option.label}
+                      </div>
+                      <div class="space-y-1">
+                        {#each option.values as value (value.id)}
+                          <button
+                            class={`w-full rounded-md border px-2 py-1.5 text-left text-sm transition-colors duration-150 ${
+                              isBoardOptionValueSelected(option.id, value.id)
+                                ? "border-primary-500 bg-dark-bgH text-primary-300"
+                                : "border-dark-border bg-dark-bg text-dark-fg2 hover:bg-dark-bgH hover:text-dark-fg0"
+                            }`}
+                            onclick={() =>
+                              handleBoardOptionSelection(option.id, value.id)}
+                            title={value.label}
+                            aria-label={`Set ${option.label} to ${value.label}`}
+                          >
+                            <span class="block truncate">{value.label}</span>
+                          </button>
+                        {/each}
+                      </div>
+                    </section>
+                  {/each}
+                </div>
+              {/if}
+            {:else}
+              <div class="px-1 py-2 text-sm text-dark-fg3">
+                Board settings unavailable.
+              </div>
+            {/if}
           </div>
         {/if}
       </div>

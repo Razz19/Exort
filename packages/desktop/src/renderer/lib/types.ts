@@ -132,6 +132,36 @@ export type TurnResult = {
   text: string;
 };
 
+export type ArduinoPortOption = {
+  address: string;
+  label: string;
+  protocol: string;
+};
+
+export type ArduinoBoardOption = {
+  name: string;
+  fqbn: string;
+  platform: string;
+};
+
+export type ArduinoBoardConfigOptionValue = {
+  id: string;
+  label: string;
+  selected: boolean;
+};
+
+export type ArduinoBoardConfigOption = {
+  id: string;
+  label: string;
+  values: ArduinoBoardConfigOptionValue[];
+};
+
+export type ArduinoBoardDetails = {
+  baseFqbn: string;
+  boardName: string;
+  configOptions: ArduinoBoardConfigOption[];
+};
+
 export type ArduinoOperation = 'compile' | 'upload';
 
 export type ArduinoOutputStream = 'stdout' | 'stderr';

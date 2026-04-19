@@ -151,6 +151,21 @@ type ArduinoBoardOption = {
   fqbn: string;
   platform: string;
 };
+type ArduinoBoardConfigOptionValue = {
+  id: string;
+  label: string;
+  selected: boolean;
+};
+type ArduinoBoardConfigOption = {
+  id: string;
+  label: string;
+  values: ArduinoBoardConfigOptionValue[];
+};
+type ArduinoBoardDetails = {
+  baseFqbn: string;
+  boardName: string;
+  configOptions: ArduinoBoardConfigOption[];
+};
 type ArduinoCoreTier = 'official' | 'certified' | 'partner' | 'community';
 type ArduinoCorePackage = {
   id: string;
@@ -287,6 +302,7 @@ type WorkspaceState = {
   workspaceName: string;
   lastOpenedAt: string;
   boardFqbn: string;
+  boardOptionSelections: Record<string, string>;
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;
@@ -362,6 +378,9 @@ declare global {
       }) => Promise<{ ok: boolean; result?: RequirementInstallResult; error?: string }>;
       listArduinoPorts: () => Promise<{ ok: boolean; ports?: ArduinoPortOption[]; error?: string }>;
       listArduinoBoards: () => Promise<{ ok: boolean; boards?: ArduinoBoardOption[]; error?: string }>;
+      getArduinoBoardDetails: (payload: {
+        fqbn: string;
+      }) => Promise<{ ok: boolean; details?: ArduinoBoardDetails; error?: string }>;
       listArduinoInstalledCores: () => Promise<{ ok: boolean; cores?: ArduinoCorePackage[]; error?: string }>;
       listArduinoCatalogCores: () => Promise<{ ok: boolean; cores?: ArduinoCorePackage[]; error?: string }>;
       updateArduinoCoreIndex: () => Promise<{ ok: boolean; error?: string }>;

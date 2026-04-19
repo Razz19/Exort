@@ -40,6 +40,21 @@ function asUniqueStringArray(value: unknown): string[] {
   return Array.from(new Set(asStringArray(value)));
 }
 
+function asStringRecord(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, item]) => {
+      const normalizedKey = asNonBlankString(key);
+      const normalizedValue = asNonBlankString(item);
+      if (!normalizedKey || !normalizedValue) return null;
+      return [normalizedKey, normalizedValue] as const;
+    })
+    .filter((item): item is readonly [string, string] => item !== null);
+
+  return Object.fromEntries(entries);
+}
+
 function sanitizePaneTab(value: unknown): PaneTab {
   if (value === 'monitor') return 'monitor';
   return 'code';
@@ -108,6 +123,7 @@ export function createDefaultWorkspaceState(rootPath: string, workspaceName = ''
     workspaceName,
     lastOpenedAt: new Date(0).toISOString(),
     boardFqbn: '',
+    boardOptionSelections: {},
     serialPort: '',
     serialBaudRate: SERIAL_BAUD_RATE_DEFAULT,
     serialMonitorShowTimestamps: true,
@@ -203,6 +219,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
   const workspaceName = asNonBlankString(candidate.workspaceName) ?? '';
   const lastOpenedAt = asNonBlankString(candidate.lastOpenedAt) ?? defaults.lastOpenedAt;
   const boardFqbn = asNonBlankString(candidate.boardFqbn) ?? '';
+  const boardOptionSelections = asStringRecord(candidate.boardOptionSelections);
   const serialPort = asNonBlankString(candidate.serialPort) ?? '';
   const serialBaudRate =
     typeof candidate.serialBaudRate === 'number' && Number.isFinite(candidate.serialBaudRate)
@@ -224,6 +241,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
     workspaceName,
     lastOpenedAt,
     boardFqbn,
+    boardOptionSelections,
     serialPort,
     serialBaudRate,
     serialMonitorShowTimestamps,

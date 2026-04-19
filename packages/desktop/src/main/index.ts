@@ -21,6 +21,7 @@ import {
 } from './agent/opencodeRuntime.js';
 import {
   compileOpenSketchWithArduinoTool,
+  getBoardDetails,
   installCore,
   listCatalogCores,
   listConnectedSerialPorts,
@@ -83,6 +84,7 @@ type WorkspaceState = {
   workspaceName: string;
   lastOpenedAt: string;
   boardFqbn: string;
+  boardOptionSelections: Record<string, string>;
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;
@@ -112,6 +114,24 @@ type ArduinoCommandOutputEnvelope = {
   operation: 'compile' | 'upload';
   stream: 'stdout' | 'stderr';
   chunk: string;
+};
+
+type ArduinoBoardConfigOptionValue = {
+  id: string;
+  label: string;
+  selected: boolean;
+};
+
+type ArduinoBoardConfigOption = {
+  id: string;
+  label: string;
+  values: ArduinoBoardConfigOptionValue[];
+};
+
+type ArduinoBoardDetails = {
+  baseFqbn: string;
+  boardName: string;
+  configOptions: ArduinoBoardConfigOption[];
 };
 
 const CHAT_MIN_WIDTH_PCT = 25;
@@ -170,6 +190,21 @@ function asUniqueStringArray(value: unknown): string[] {
   return Array.from(new Set(asStringArray(value)));
 }
 
+function asStringRecord(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, item]) => {
+      const normalizedKey = asNonBlankString(key);
+      const normalizedValue = asNonBlankString(item);
+      if (!normalizedKey || !normalizedValue) return null;
+      return [normalizedKey, normalizedValue] as const;
+    })
+    .filter((item): item is readonly [string, string] => item !== null);
+
+  return Object.fromEntries(entries);
+}
+
 function sanitizePaneTab(value: unknown): PaneTab {
   if (value === 'monitor') return 'monitor';
   return 'code';
@@ -223,6 +258,7 @@ function createDefaultWorkspaceState(rootPath: string, workspaceName = ''): Work
     workspaceName,
     lastOpenedAt: new Date(0).toISOString(),
     boardFqbn: '',
+    boardOptionSelections: {},
     serialPort: '',
     serialBaudRate: SERIAL_BAUD_RATE_DEFAULT,
     serialMonitorShowTimestamps: true,
@@ -321,6 +357,7 @@ function sanitizeWorkspaceState(input: unknown, rootPath: string): WorkspaceStat
     workspaceName: asNonBlankString(candidate.workspaceName) ?? '',
     lastOpenedAt: asNonBlankString(candidate.lastOpenedAt) ?? defaults.lastOpenedAt,
     boardFqbn: asNonBlankString(candidate.boardFqbn) ?? '',
+    boardOptionSelections: asStringRecord(candidate.boardOptionSelections),
     serialPort: asNonBlankString(candidate.serialPort) ?? '',
     serialBaudRate:
       typeof candidate.serialBaudRate === 'number' && Number.isFinite(candidate.serialBaudRate)
@@ -1041,6 +1078,18 @@ app.whenReady().then(() => {
   ipcMain.handle('arduino:list-boards', async () => {
     return listInstalledBoards();
   });
+
+  ipcMain.handle(
+    'arduino:get-board-details',
+    async (
+      _event,
+      payload: {
+        fqbn: string;
+      }
+    ): Promise<{ ok: boolean; details?: ArduinoBoardDetails; error?: string }> => {
+      return getBoardDetails(payload?.fqbn);
+    }
+  );
 
   ipcMain.handle('arduino:list-installed-cores', async () => {
     return listInstalledCores();
