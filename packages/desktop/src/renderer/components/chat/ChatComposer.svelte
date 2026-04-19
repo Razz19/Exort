@@ -5,6 +5,7 @@
   import Square from "lucide-svelte/icons/square";
   import { appStateStore, patchAppState } from "../../lib/state/stateManager";
   import type { OpenAIProviderState } from "../../lib/types";
+  import { OPEN_CODE_MODEL } from "../../../shared/openCodeModel.js";
 
   let { activeWorkspaceRoot, busy, stopping, onSend, onStop } = $props<{
     activeWorkspaceRoot: string | null;
@@ -30,10 +31,10 @@
   let canSend = $derived(!busy && prompt.trim().length > 0);
   let modelOptions = $derived(providerState?.models ?? []);
   let selectedModelLabel = $derived.by(() => {
-    if (!providerState?.connected || !selectedModelId) return "Exort default";
+    if (!providerState?.connected || !selectedModelId) return OPEN_CODE_MODEL;
     return (
       modelOptions.find((item) => item.id === selectedModelId)?.name ??
-      "Exort default"
+      OPEN_CODE_MODEL
     );
   });
 
@@ -265,7 +266,7 @@
               <div class="space-y-2.5">
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="font-medium text-dark-fg1">Model</span>
-                  <span class="text-dark-fg4">Exort default available</span>
+                  <span class="text-dark-fg4">{OPEN_CODE_MODEL}</span>
                 </div>
 
                 {#if providerLoading}
@@ -287,7 +288,7 @@
                       }`}
                       onclick={useExortDefault}
                     >
-                      <span class="block truncate">Use Exort default</span>
+                      <span class="block truncate">{OPEN_CODE_MODEL}</span>
                     </button>
                     {#if providerState.connected}
                       <div class="text-[11px] text-dark-fg4">

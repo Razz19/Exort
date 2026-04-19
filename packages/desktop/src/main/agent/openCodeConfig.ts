@@ -1,6 +1,8 @@
 import type { Config, ServerOptions } from '@opencode-ai/sdk';
 
-export const OPEN_CODE_MODEL = 'opencode/big-pickle';
+import { OPEN_CODE_MODEL } from '../../shared/openCodeModel.js';
+
+export { OPEN_CODE_MODEL } from '../../shared/openCodeModel.js';
 
 // const OPEN_CODE_SYSTEM_PROMPT = `
 // You are ExortAi, an embedded development coding assistant.
