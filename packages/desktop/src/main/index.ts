@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell, webContents } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell, webContents } from 'electron';
 import Store from 'electron-store';
 import { promises as fs, watch, watchFile, unwatchFile, type FSWatcher } from 'node:fs';
 import path from 'node:path';
@@ -410,6 +410,7 @@ const store = new Store<StoreSchema>({
 });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const APP_ICON_PATH = path.join(__dirname, '../../resources/exort_logo.png');
 const activeAgentTurns = new Map<string, AbortController>();
 const activeArduinoUploads = new Map<string, AbortController>();
 type WatchedWorkspaceTree = {
@@ -575,6 +576,7 @@ function createWindow(): void {
     minWidth: 1120,
     minHeight: 680,
     backgroundColor: '#0f1117',
+    icon: APP_ICON_PATH,
     titleBarStyle: isMac ? 'hiddenInset' : undefined,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.mjs'),
@@ -592,6 +594,13 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  if (process.platform === 'darwin') {
+    const appIcon = nativeImage.createFromPath(APP_ICON_PATH);
+    if (!appIcon.isEmpty()) {
+      app.dock?.setIcon(appIcon);
+    }
+  }
+
   ipcMain.handle('app:open-browser-url', async (_event, payload: { url: string }) => {
     const url = asNonBlankString(payload?.url);
     if (!url) {

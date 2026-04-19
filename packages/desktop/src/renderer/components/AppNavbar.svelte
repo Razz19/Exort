@@ -61,9 +61,7 @@
     favoriteBoardFqbns: string[];
     onPortChange: (port: string) => void;
     onBoardChange: (fqbn: string) => void;
-    onBoardOptionSelectionsChange: (
-      selections: Record<string, string>,
-    ) => void;
+    onBoardOptionSelectionsChange: (selections: Record<string, string>) => void;
     onToggleFavoriteBoard: (fqbn: string) => void;
     onOpenBoardsManager: () => void;
     onSaveActiveFile: () => Promise<void> | void;
@@ -437,9 +435,10 @@
       }
 
       const nextCurrentDetails = currentResponse.details;
-      const nextBaseDetails = baseResponse.ok && baseResponse.details
-        ? baseResponse.details
-        : nextCurrentDetails;
+      const nextBaseDetails =
+        baseResponse.ok && baseResponse.details
+          ? baseResponse.details
+          : nextCurrentDetails;
       boardCurrentDetails = nextCurrentDetails;
       boardBaseDetails = nextBaseDetails;
 
@@ -487,10 +486,7 @@
     boardSettingsDropdownOpen = false;
   }
 
-  function handleBoardOptionSelection(
-    optionId: string,
-    valueId: string,
-  ): void {
+  function handleBoardOptionSelection(optionId: string, valueId: string): void {
     if (!selectedBoardFqbn) return;
 
     const nextSelections = { ...boardOptionSelections };
@@ -780,7 +776,9 @@
     valueId: string,
   ): boolean {
     const effectiveValue =
-      boardOptionSelections[optionId] ?? boardDefaultSelections[optionId] ?? null;
+      boardOptionSelections[optionId] ??
+      boardDefaultSelections[optionId] ??
+      null;
     return effectiveValue === valueId;
   }
 
@@ -1005,7 +1003,10 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2" bind:this={boardSettingsDropdownElement}>
+    <div
+      class="flex items-center gap-2"
+      bind:this={boardSettingsDropdownElement}
+    >
       <span class="w-14 shrink-0 text-right text-xs text-dark-fg3">
         Config
       </span>
@@ -1026,7 +1027,7 @@
 
         {#if boardSettingsDropdownOpen}
           <div
-            class={`${dropdownPanelClass} max-h-[28rem] w-80 overflow-y-auto p-2`}
+            class={`${dropdownPanelClass} max-h-[28rem] w-[20rem] overflow-y-auto p-2`}
           >
             <div class="mb-2 border-b border-dark-border pb-2">
               <div class="flex items-center gap-2 text-sm text-dark-fg1">
@@ -1055,7 +1056,9 @@
                 <div class="space-y-3">
                   {#each boardCurrentDetails.configOptions as option (option.id)}
                     <section>
-                      <div class="mb-1 px-1 text-xs font-medium uppercase tracking-wide text-dark-fg4">
+                      <div
+                        class="mb-1 px-1 text-xs font-medium uppercase tracking-wide text-dark-fg4"
+                      >
                         {option.label}
                       </div>
                       <div class="space-y-1">
