@@ -160,6 +160,14 @@
     return `${compact.slice(0, MAX_LEN - 1)}...`;
   }
 
+  function formatRequirementInstallMessage(
+    id: RequirementId,
+    input: string,
+  ): string {
+    const displayName = requirementDisplayNames[id];
+    return input.replace(/\bopencode\b/gi, displayName);
+  }
+
   function getVersionText(status: RequirementStatus | undefined): string {
     if (!status) return "Checking...";
     return status.version ?? "Not found";
@@ -289,11 +297,11 @@
       const result = response.result;
       if (result.ok) {
         statusMessage = normalizeStatusMessage(
-          toUiRequirementText(result.message),
+          formatRequirementInstallMessage(id, result.message),
         );
       } else {
         errorMessage = normalizeStatusMessage(
-          toUiRequirementText(result.message),
+          formatRequirementInstallMessage(id, result.message),
         );
         manualCommands = result.manualCommands ?? [];
       }

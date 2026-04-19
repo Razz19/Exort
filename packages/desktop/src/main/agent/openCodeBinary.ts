@@ -7,6 +7,9 @@ import { spawn } from 'node:child_process';
 export const EXORTAI_MANAGED_OPENCODE_VERSION = '1.1.51';
 
 const INSTALL_TIMEOUT_MS = 8 * 60 * 1000;
+const EXORT_RUNTIME_APP_DIR = 'Exort';
+const EXORT_RUNTIME_SEGMENTS = ['runtime', 'opencode'] as const;
+const LEGACY_ELECTRON_APP_NAME_SEGMENTS = ['@exortai', 'desktop'] as const;
 let lastProvisionDiagnostics: string | null = null;
 
 export type OpenCodeBinarySource = 'managed' | 'system';
@@ -76,42 +79,60 @@ function allowSystemBinaryOverride(): boolean {
   return process.env.EXORTAI_ALLOW_SYSTEM_OPENCODE?.trim() === '1';
 }
 
-async function getElectronUserDataDir(): Promise<string | null> {
-  try {
-    const electronModule = (await import('electron')) as {
-      app?: {
-        isReady?: () => boolean;
-        getPath?: (name: string) => string;
-      };
-    };
-
-    const app = electronModule.app;
-    if (!app || typeof app.isReady !== 'function' || typeof app.getPath !== 'function') {
-      return null;
-    }
-
-    if (!app.isReady()) {
-      return null;
-    }
-
-    const userData = app.getPath('userData');
-    if (!userData || !userData.trim()) return null;
-    return userData;
-  } catch {
-    return null;
+function getPlatformManagedDataRoot(): string {
+  if (process.platform === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA?.trim();
+    return localAppData && localAppData.length > 0
+      ? path.resolve(localAppData)
+      : path.join(os.homedir(), 'AppData', 'Local');
   }
+
+  if (process.platform === 'darwin') {
+    return path.join(os.homedir(), 'Library', 'Application Support');
+  }
+
+  const xdgDataHome = process.env.XDG_DATA_HOME?.trim();
+  return xdgDataHome && xdgDataHome.length > 0 ? path.resolve(xdgDataHome) : path.join(os.homedir(), '.local', 'share');
+}
+
+function getLegacyElectronUserDataRoot(): string {
+  if (process.platform === 'win32') {
+    const roamingAppData = process.env.APPDATA?.trim();
+    const appDataRoot =
+      roamingAppData && roamingAppData.length > 0
+        ? path.resolve(roamingAppData)
+        : path.join(os.homedir(), 'AppData', 'Roaming');
+    return path.join(appDataRoot, ...LEGACY_ELECTRON_APP_NAME_SEGMENTS);
+  }
+
+  if (process.platform === 'darwin') {
+    return path.join(os.homedir(), 'Library', 'Application Support', ...LEGACY_ELECTRON_APP_NAME_SEGMENTS);
+  }
+
+  const xdgConfigHome = process.env.XDG_CONFIG_HOME?.trim();
+  const appDataRoot =
+    xdgConfigHome && xdgConfigHome.length > 0 ? path.resolve(xdgConfigHome) : path.join(os.homedir(), '.config');
+  return path.join(appDataRoot, ...LEGACY_ELECTRON_APP_NAME_SEGMENTS);
 }
 
 async function getManagedRoot(): Promise<string> {
   const fromEnv = getManagedRootFromEnv();
   if (fromEnv) return fromEnv;
 
-  const userData = await getElectronUserDataDir();
-  if (userData) {
-    return path.join(userData, 'runtime', 'opencode');
-  }
+  return path.join(getPlatformManagedDataRoot(), EXORT_RUNTIME_APP_DIR, ...EXORT_RUNTIME_SEGMENTS);
+}
 
-  return path.join(os.homedir(), '.exortai', 'runtime', 'opencode');
+function getManagedBinaryPath(managedRoot: string, platformKey: string): string {
+  return path.join(managedRoot, 'managed', EXORTAI_MANAGED_OPENCODE_VERSION, platformKey, getBinaryName());
+}
+
+function getLegacyManagedRoots(canonicalRoot: string): string[] {
+  const candidates = new Set<string>();
+  candidates.add(path.join(getLegacyElectronUserDataRoot(), ...EXORT_RUNTIME_SEGMENTS));
+  candidates.add(path.join(os.homedir(), '.exortai', ...EXORT_RUNTIME_SEGMENTS));
+
+  const canonical = path.resolve(canonicalRoot);
+  return [...candidates].map((candidate) => path.resolve(candidate)).filter((candidate) => candidate !== canonical);
 }
 
 function quoteForShell(value: string): string {
@@ -295,6 +316,44 @@ async function installFromLocalCopy(targetBinaryPath: string): Promise<InstallRe
   };
 }
 
+async function adoptLegacyManagedBinary(params: {
+  canonicalRoot: string;
+  platformKey: string;
+  targetBinaryPath: string;
+  log?: OpenCodeLog;
+}): Promise<InstallResult> {
+  const legacyRoots = getLegacyManagedRoots(params.canonicalRoot);
+
+  for (const legacyRoot of legacyRoots) {
+    const legacyBinaryPath = getManagedBinaryPath(legacyRoot, params.platformKey);
+    if (!existsSync(legacyBinaryPath)) continue;
+
+    try {
+      const version = await runVersionCommand(legacyBinaryPath);
+      if (!version.ok) continue;
+
+      await mkdir(path.dirname(params.targetBinaryPath), { recursive: true });
+      await copyFile(legacyBinaryPath, params.targetBinaryPath);
+      await ensureExecutable(params.targetBinaryPath);
+
+      const copiedVersion = await runVersionCommand(params.targetBinaryPath);
+      if (!copiedVersion.ok) {
+        continue;
+      }
+
+      params.log?.(`runtime:binary:migrate:legacy source=${legacyBinaryPath} target=${params.targetBinaryPath}`);
+      return { ok: true };
+    } catch {
+      // Continue with the next legacy location.
+    }
+  }
+
+  return {
+    ok: false,
+    detail: 'No usable legacy managed OpenCode binary was found to migrate into the canonical runtime directory.'
+  };
+}
+
 async function runVersionCommand(binaryPath: string): Promise<VersionResult> {
   return new Promise((resolve) => {
     const proc = spawn(binaryPath, ['--version'], {
@@ -356,7 +415,7 @@ export async function resolveManagedOpenCodeBinary(): Promise<ManagedOpenCodeBin
   const managedRoot = await getManagedRoot();
   const platformKey = getPlatformKey();
   const managedInstallRoot = path.join(managedRoot, 'managed', EXORTAI_MANAGED_OPENCODE_VERSION, platformKey);
-  const managedBinaryPath = path.join(managedInstallRoot, getBinaryName());
+  const managedBinaryPath = getManagedBinaryPath(managedRoot, platformKey);
 
   if (sourceOverride && allowSystemBinaryOverride()) {
     return {
@@ -433,10 +492,22 @@ export async function ensureManagedOpenCodeBinary(options: EnsureOptions = {}): 
   }
 
   if (!installIfMissing) {
-    throw new Error('Managed Exort Agent runtime is not installed. Open Settings > Requirements and install Exort Agent.');
+    throw new Error('OpenCode runtime is not installed. Open Settings > Requirements and install it!');
   }
 
   log?.(`runtime:binary:provision:start source=managed version=${resolved.managedVersion} target=${resolved.binaryPath}`);
+
+  const migratedLegacy = await adoptLegacyManagedBinary({
+    canonicalRoot: resolved.managedRoot,
+    platformKey: resolved.platformKey,
+    targetBinaryPath: resolved.binaryPath,
+    log
+  });
+  if (migratedLegacy.ok) {
+    lastProvisionDiagnostics = null;
+    return resolved;
+  }
+  attemptErrors.push(`legacy-migrate: ${migratedLegacy.detail ?? 'failed'}`);
 
   const localCopy = await installFromLocalCopy(resolved.binaryPath);
   if (localCopy.ok) {
@@ -452,6 +523,14 @@ export async function ensureManagedOpenCodeBinary(options: EnsureOptions = {}): 
 
 export async function getManagedOpenCodeStatus(): Promise<ManagedOpenCodeStatus> {
   const resolved = await resolveManagedOpenCodeBinary();
+
+  if (resolved.source === 'managed' && !existsSync(resolved.binaryPath)) {
+    await adoptLegacyManagedBinary({
+      canonicalRoot: resolved.managedRoot,
+      platformKey: resolved.platformKey,
+      targetBinaryPath: resolved.binaryPath
+    });
+  }
 
   if (!existsSync(resolved.binaryPath)) {
     const details =

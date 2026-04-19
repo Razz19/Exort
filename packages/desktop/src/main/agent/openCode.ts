@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { OPEN_CODE_MODEL, openCodeServerOptions } from './openCodeConfig.js';
-import { ensureManagedOpenCodeBinary } from './openCodeBinary.js';
+import { ensureManagedOpenCodeBinary, resolveManagedOpenCodeBinary } from './openCodeBinary.js';
 import { ensureOpenCodeIsolation } from './openCodeIsolation.js';
 import { startOpenCodeSidecar } from './openCodeSidecar.js';
 
@@ -108,6 +108,7 @@ export type OpenCodeClient = {
 export type OpenCodeRuntime = {
   client: OpenCodeClient;
   server?: OpenCodeServer;
+  binaryPath: string;
 };
 
 let runtimePromise: Promise<OpenCodeRuntime> | null = null;
@@ -294,6 +295,7 @@ async function createOpenCodeRuntime(log?: OpenCodeLog): Promise<OpenCodeRuntime
 
     return {
       client,
+      binaryPath: managedBinary.binaryPath,
       server: {
         url: sidecar.url,
         close: sidecar.close
@@ -307,7 +309,37 @@ async function createOpenCodeRuntime(log?: OpenCodeLog): Promise<OpenCodeRuntime
   }
 }
 
+async function runtimeRequiresRecycle(log?: OpenCodeLog): Promise<boolean> {
+  if (!runtimePromise) return false;
+
+  const runtime = await runtimePromise.catch((error) => {
+    log?.(`runtime:resolve:error ${getErrorMessage(error)}`);
+    runtimePromise = null;
+    return null;
+  });
+  if (!runtime) return false;
+
+  const currentBinaryPath = path.resolve(runtime.binaryPath);
+  if (!existsSync(currentBinaryPath)) {
+    log?.(`runtime:recycle reason=binary-missing path=${currentBinaryPath}`);
+    return true;
+  }
+
+  const expectedBinary = await resolveManagedOpenCodeBinary();
+  const expectedBinaryPath = path.resolve(expectedBinary.binaryPath);
+  if (currentBinaryPath !== expectedBinaryPath) {
+    log?.(`runtime:recycle reason=binary-path-changed from=${currentBinaryPath} to=${expectedBinaryPath}`);
+    return true;
+  }
+
+  return false;
+}
+
 export async function getOpenCodeRuntime(log?: OpenCodeLog): Promise<OpenCodeRuntime> {
+  if (await runtimeRequiresRecycle(log)) {
+    await shutdownOpenCode(log);
+  }
+
   if (!runtimePromise) {
     runtimePromise = createOpenCodeRuntime(log).catch((error) => {
       // Reset singleton on init failure so next turn can retry initialization.

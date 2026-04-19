@@ -1071,6 +1071,9 @@ app.whenReady().then(() => {
 
     try {
       const result = await installRequirement(id);
+      if (id === 'opencode' && result.ok) {
+        await shutdownOpenCodeRuntime();
+      }
       return { ok: true, result };
     } catch (error) {
       return {
