@@ -14,6 +14,7 @@
     "lint": "echo 'No lint configured for @exortai/desktop'"
   },
   "dependencies": {
+    "@opencode-ai/plugin": "1.2.10",
     "@opencode-ai/sdk": "^1.1.51",
     "dompurify": "^3.3.1",
     "electron-store": "^10.1.0",

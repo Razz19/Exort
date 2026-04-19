@@ -7,5 +7,5 @@
       "@/*": ["src/renderer/*"]
     }
   },
-  "include": ["src", "electron.vite.config.ts"]
+  "include": ["src", "opencode-agent", "electron.vite.config.ts"]
 }

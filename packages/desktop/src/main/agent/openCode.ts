@@ -222,9 +222,10 @@ function normalizeOpenCodeClient(value: unknown, v2Client?: unknown): OpenCodeCl
 function resolveOpenCodeConfigDir(): string {
   const runtimeDirectory = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
+    path.resolve(runtimeDirectory, '../../../opencode-agent'),
     runtimeDirectory,
     path.resolve(runtimeDirectory, 'agent'),
-    path.resolve(runtimeDirectory, '../../src/main/agent'),
+    path.resolve(process.cwd(), 'packages/desktop/opencode-agent'),
     path.resolve(process.cwd(), 'packages/desktop/src/main/agent')
   ];
 

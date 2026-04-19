@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import type { ToolContext } from './agent/toolTypes.js';
 
-import arduinoCompileTool from './agent/tools/arduinoCompile.js';
+import arduinoCompileTool from '../../opencode-agent/tools/arduinoCompile.js';
 
 type ArduinoPortOption = {
   address: string;
