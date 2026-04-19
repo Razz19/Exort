@@ -1027,7 +1027,7 @@
 
         {#if boardSettingsDropdownOpen}
           <div
-            class={`${dropdownPanelClass} max-h-[28rem] w-[20rem] overflow-y-auto p-2`}
+            class={`${dropdownPanelClass} max-h-[28rem] w-[22rem] overflow-y-auto p-2`}
           >
             <div class="mb-2 border-b border-dark-border pb-2">
               <div class="flex items-center gap-2 text-sm text-dark-fg1">
