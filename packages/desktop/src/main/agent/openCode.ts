@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { cp, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -112,6 +113,8 @@ export type OpenCodeRuntime = {
 };
 
 let runtimePromise: Promise<OpenCodeRuntime> | null = null;
+const OPENCODE_CONFIG_DIR_NAME = 'opencode-config';
+const OPENCODE_TOOLS_DIR_NAME = 'tools';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -220,28 +223,40 @@ function normalizeOpenCodeClient(value: unknown, v2Client?: unknown): OpenCodeCl
   };
 }
 
-function resolveOpenCodeConfigDir(): string {
+function isOpenCodeConfigDir(candidate: string): boolean {
+  return existsSync(path.join(candidate, OPENCODE_TOOLS_DIR_NAME));
+}
+
+function resolveOpenCodeConfigSourceDir(): string {
   const runtimeDirectory = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.resolve(runtimeDirectory, '../../../opencode-agent'),
-    runtimeDirectory,
-    path.resolve(runtimeDirectory, 'agent'),
-    path.resolve(process.cwd(), 'packages/desktop/opencode-agent'),
-    path.resolve(process.cwd(), 'packages/desktop/src/main/agent')
+    path.resolve(runtimeDirectory, OPENCODE_CONFIG_DIR_NAME),
+    runtimeDirectory
   ];
 
   for (const candidate of candidates) {
-    if (existsSync(path.join(candidate, 'tools'))) {
+    if (isOpenCodeConfigDir(candidate)) {
       return candidate;
     }
   }
 
-  return path.resolve(runtimeDirectory, '../../src/main/agent');
+  throw new Error(
+    'OpenCode config directory not found. Expected sidecar tools under out/main/opencode-config or src/main/agent.'
+  );
 }
 
-function ensureOpenCodeConfigDir(log?: OpenCodeLog): void {
-  const resolved = resolveOpenCodeConfigDir();
+async function ensureOpenCodeConfigDir(managedRoot: string, log?: OpenCodeLog): Promise<void> {
+  const sourceDir = resolveOpenCodeConfigSourceDir();
+  const resolved = path.join(managedRoot, 'config', OPENCODE_CONFIG_DIR_NAME);
   const previous = process.env.OPENCODE_CONFIG_DIR?.trim();
+
+  await mkdir(path.dirname(resolved), { recursive: true });
+  await rm(resolved, { recursive: true, force: true });
+  await cp(sourceDir, resolved, {
+    recursive: true,
+    force: true,
+    filter: (source) => path.basename(source) !== 'node_modules'
+  });
 
   process.env.OPENCODE_CONFIG_DIR = resolved;
 
@@ -250,14 +265,13 @@ function ensureOpenCodeConfigDir(log?: OpenCodeLog): void {
     return;
   }
 
-  log?.(`config:dir:set path=${resolved}`);
+  log?.(`config:dir:set path=${resolved} source=${sourceDir}`);
 }
 
 async function createOpenCodeRuntime(log?: OpenCodeLog): Promise<OpenCodeRuntime> {
-  ensureOpenCodeConfigDir(log);
-
   log?.('runtime:create:start');
   const managedBinary = await ensureManagedOpenCodeBinary({ log, installIfMissing: false });
+  await ensureOpenCodeConfigDir(managedBinary.managedRoot, log);
   const isolation = await ensureOpenCodeIsolation();
 
   const sidecar = await startOpenCodeSidecar({
