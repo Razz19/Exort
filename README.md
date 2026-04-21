@@ -85,6 +85,7 @@ npm run typecheck
 From the repo root:
 
 ```bash
+npm run lint
 npm run dev
 npm run build
 npm run typecheck
@@ -93,16 +94,17 @@ npm run typecheck
 Desktop package only:
 
 ```bash
-npm run dev --workspace @Exort/desktop
-npm run build --workspace @Exort/desktop
-npm run typecheck --workspace @Exort/desktop
+npm run lint --workspace @exort/desktop
+npm run dev --workspace @exort/desktop
+npm run build --workspace @exort/desktop
+npm run typecheck --workspace @exort/desktop
 ```
 
 Requirement helpers:
 
 ```bash
-npm run requirements:status --workspace @Exort/desktop
-npm run requirements:install --workspace @Exort/desktop
+npm run requirements:status --workspace @exort/desktop
+npm run requirements:install --workspace @exort/desktop
 ```
 
 ## Project Layout

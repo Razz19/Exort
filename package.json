@@ -6,10 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm --workspace @exortai/desktop run dev",
-    "build": "npm --workspace @exortai/desktop run build",
+    "dev": "npm --workspace @exort/desktop run dev",
+    "build": "npm --workspace @exort/desktop run build",
     "lint": "turbo run lint",
-    "typecheck": "npm --workspace @exortai/desktop run typecheck",
+    "typecheck": "npm --workspace @exort/desktop run typecheck",
     "format": "turbo run format"
   },
   "devDependencies": {

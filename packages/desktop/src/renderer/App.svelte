@@ -174,7 +174,7 @@
     openFileOrder.filter(
       (filePath) =>
         !!openFiles[filePath] &&
-        (!!activeWorkspace
+        (activeWorkspace
           ? isPathInWorkspace(filePath, activeWorkspace.rootPath)
           : true),
     ),
