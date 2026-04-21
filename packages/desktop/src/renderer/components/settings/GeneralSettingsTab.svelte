@@ -419,7 +419,7 @@
       <div>
         <h3 class="text-sm font-semibold text-dark-fg">Requirements</h3>
         <p class="text-xs text-dark-fg4">
-          Manage external dependencies required by ExortAi desktop features.
+          Manage external dependencies required by Exort desktop features.
         </p>
       </div>
       <button

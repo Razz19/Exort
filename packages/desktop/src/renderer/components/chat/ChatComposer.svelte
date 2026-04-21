@@ -226,7 +226,7 @@
       bind:this={textareaEl}
       bind:value={prompt}
       maxlength={MAX_PROMPT_CHARS}
-      placeholder="Ask ExortAi..."
+      placeholder="Ask Exort..."
       style="min-height: 44px; max-height: 120px;"
       onkeydown={(event) => {
         if (event.key === "Enter" && !event.shiftKey) {

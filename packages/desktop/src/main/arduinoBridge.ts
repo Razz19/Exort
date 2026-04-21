@@ -531,7 +531,7 @@ async function resolveSketchTarget(workspaceRootInput: unknown, activeFilePathIn
 }
 
 async function createWorkspaceTempEnv(workspaceRoot: string): Promise<NodeJS.ProcessEnv> {
-  const tempRoot = path.join(workspaceRoot, '.exortai', 'tmp');
+  const tempRoot = path.join(workspaceRoot, '.exort', 'tmp');
   await fs.mkdir(tempRoot, { recursive: true });
 
   return {
@@ -838,9 +838,6 @@ export async function uploadOpenSketch(
 
   const commandArgs = ['compile', target.value.sketchDirectoryAbsolute, '--fqbn', fqbn, '--upload', '--port', port];
   const command = ['arduino-cli', ...commandArgs];
-  console.log(
-    `[ArduinoUpload] bridge:start requestId=${requestId} fqbn=${fqbn} port=${port} sketch=${target.value.relativeSketchPath}`
-  );
 
   const env = await createWorkspaceTempEnv(target.value.workspaceRoot);
   const runResult = await runArduinoCli(commandArgs, {
@@ -880,8 +877,5 @@ export async function uploadOpenSketch(
     error: runResult.error
   };
 
-  console.log(
-    `[ArduinoUpload] bridge:done requestId=${requestId} status=${result.status} exitCode=${result.exitCode ?? 'null'}`
-  );
   return { ok: true, result };
 }

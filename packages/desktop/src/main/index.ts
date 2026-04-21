@@ -539,7 +539,7 @@ function clearWorkspaceTreeWatch(rootPath: string, entry: WatchedWorkspaceTree):
 function createSerialExportFilename(port: string | null): string {
   const normalizedPort = (port ?? 'unknown-port').replace(/[^a-zA-Z0-9._-]+/g, '_');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `exortai-serial-monitor-${normalizedPort}-${timestamp}.csv`;
+  return `exort-serial-monitor-${normalizedPort}-${timestamp}.csv`;
 }
 
 function pruneMissingWorkspace(rootPath: string): void {

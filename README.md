@@ -140,6 +140,10 @@ This is the desktop-first, local-first version of Exort being prepared for open 
 - No hosted auth/quota portal is required
 - Runtime setup happens from inside the desktop app
 
+## License
+
+Exort is licensed under `AGPL-3.0-only`. See [LICENSE](/Users/razz/projects/Exort/LICENSE).
+
 ## Contributing
 
 If you want to contribute, start by running the desktop app locally and working inside `packages/desktop`.

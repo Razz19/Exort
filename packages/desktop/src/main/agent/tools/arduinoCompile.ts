@@ -272,7 +272,7 @@ async function runArduinoCompile(
   signal: AbortSignal | undefined,
   outputChunkCallback?: OutputChunkCallback
 ): Promise<CompileRunResult> {
-  const tempRoot = path.join(workspaceRoot, '.exortai', 'tmp');
+  const tempRoot = path.join(workspaceRoot, '.exort', 'tmp');
   await fs.mkdir(tempRoot, { recursive: true });
 
   const runtimeEnv: NodeJS.ProcessEnv = {

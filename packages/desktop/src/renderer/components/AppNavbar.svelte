@@ -671,14 +671,10 @@
     if (!uploadBusy || !uploadRequestId || uploadCancelBusy) return;
 
     uploadCancelBusy = true;
-    console.log("[NavbarUpload] cancel requested", uploadRequestId);
     try {
-      const response =
-        await window.electronAPI.cancelArduinoUpload(uploadRequestId);
-      console.log("[NavbarUpload] cancel response", response);
+      await window.electronAPI.cancelArduinoUpload(uploadRequestId);
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      console.error("[NavbarUpload] cancel error", detail);
+      void error;
     } finally {
       uploadCancelBusy = false;
     }
@@ -693,14 +689,6 @@
     uploadCancelBusy = false;
     activeOutputRequestIds.add(requestId);
     emitStart(requestId, "upload");
-
-    console.log("[NavbarUpload] start", {
-      requestId,
-      workspaceRoot: activeWorkspaceRoot,
-      activeFilePath,
-      fqbn: effectiveBoardFqbn,
-      port: selectedPort,
-    });
 
     try {
       if (activeFileDirty) {
@@ -718,22 +706,11 @@
       if (!response.ok || !response.result) {
         const detail =
           response.error ?? "Upload failed before running upload command.";
-        console.log("[NavbarUpload] finished", {
-          requestId,
-          status: "error",
-          detail,
-        });
         emitFinish(requestId, "upload", "error", detail, null);
         return;
       }
 
       const result = response.result as ArduinoUploadResult;
-      console.log("[NavbarUpload] finished", {
-        requestId,
-        status: result.status,
-        ok: result.ok,
-        exitCode: result.exitCode,
-      });
 
       const status =
         result.status === "uploaded"
@@ -752,7 +729,6 @@
     } catch (error) {
       const detail =
         error instanceof Error ? error.message : "Upload failed unexpectedly.";
-      console.error("[NavbarUpload] error", detail);
       emitFinish(requestId, "upload", "error", detail, null);
     } finally {
       activeOutputRequestIds.delete(requestId);
@@ -804,7 +780,7 @@
   }`}
 >
   <!-- <div class="flex flex-wrap items-center gap-3">
-    <h1 class="text-lg font-semibold text-white">ExortAi Desktop</h1>
+    <h1 class="text-lg font-semibold text-white">Exort Desktop</h1>
     {#if userEmail}
       <span class="rounded border border-dark-border bg-dark-bg px-2 py-1 text-xs text-gray-300">{userEmail}</span>
     {/if}

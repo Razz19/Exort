@@ -192,7 +192,7 @@
           class={`h-2 w-2 rounded-full ${isUser ? "bg-dark-blue2" : "bg-dark-aqua2"}`}
         ></span> -->
         <!-- <span class="text-xs font-medium uppercase tracking-wide text-dark-fg3">
-          {isUser ? "You" : "ExortAi"}
+          {isUser ? "You" : "Exort"}
         </span> -->
         {#if createdAtLabel}
           <span class="text-[11px] text-dark-fg4">{createdAtLabel}</span>

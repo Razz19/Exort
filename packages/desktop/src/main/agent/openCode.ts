@@ -301,7 +301,7 @@ async function createOpenCodeRuntime(log?: OpenCodeLog): Promise<OpenCodeRuntime
 
     const client = normalizeOpenCodeClient(clientCandidate, clientCandidate);
     if (!client) {
-      throw new Error('OpenCode SDK client shape is not compatible with ExortAi integration');
+      throw new Error('OpenCode SDK client shape is not compatible with Exort integration');
     }
 
     log?.('runtime:create:ready');

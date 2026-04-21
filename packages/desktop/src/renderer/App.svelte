@@ -67,7 +67,6 @@
   } from "./lib/types";
 
   const OPENAI_PROVIDER_ID = "openai";
-  const debugAgentStream = import.meta.env.DEV;
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
   type SettingsTab = "general" | "providers" | "boards";
 
@@ -447,13 +446,6 @@
       window.clearTimeout(autosaveTimer);
       autosaveTimer = null;
     }
-  });
-
-  $effect(() => {
-    console.log("[StateManager]", {
-      appState: appStateSnapshot,
-      workspaceState: workspaceManagerSnapshot,
-    });
   });
 
   $effect(() => {
@@ -2006,19 +1998,9 @@
             modelID: resolvedModelId,
           };
         }
-      } else if (debugAgentStream && providerStateResponse.error) {
-        console.warn(
-          "[AgentStream] provider preflight fallback to ExortAI default model",
-          providerStateResponse.error,
-        );
       }
     } catch (error) {
-      if (debugAgentStream) {
-        console.warn(
-          "[AgentStream] provider preflight failed, using ExortAI default model",
-          error,
-        );
-      }
+      void error;
     }
 
     let completion = "";
@@ -2104,17 +2086,6 @@
       });
       setSyncStateForWorkspaceRoot(turnWorkspaceRoot, nextSyncState);
 
-      if (debugAgentStream) {
-        if (streamEvent.type === "content") {
-          console.log("[AgentStream] content delta", {
-            length: streamEvent.content.length,
-            preview: streamEvent.content.slice(0, 120),
-          });
-        } else {
-          console.log("[AgentStream] event", streamEvent);
-        }
-      }
-
       if (streamEvent.type === "content") {
         if (
           streamEvent.partId &&
@@ -2151,9 +2122,6 @@
         if (mergedContent !== completion) {
           completion = mergedContent;
           updateLastAssistant(completion, turnWorkspaceRoot);
-        }
-        if (debugAgentStream) {
-          console.log("[AgentStream] completion size", completion.length);
         }
         return;
       }
@@ -2302,9 +2270,6 @@
       if (payload.requestId !== requestId) return;
       const line = payload.line.trim();
       if (!line.startsWith("task:")) return;
-      if (debugAgentStream) {
-        console.log("[AgentLog] line", line);
-      }
       const parsed = parseTaskMessage(line.replace(/^task:/, ""));
       if (!parsed) return;
       appendStep({
@@ -2331,10 +2296,6 @@
       if (!run.ok) {
         throw new Error(run.error ?? "Agent runtime failed");
       }
-      if (debugAgentStream) {
-        console.log("[AgentStream] run ok");
-      }
-
       if (completion.trim().length === 0) {
         const history = await window.electronAPI.getAgentHistory({
           workspaceRoot: turnWorkspaceRoot,
@@ -2356,17 +2317,7 @@
               assistantMessageId,
               completion,
             );
-            if (debugAgentStream) {
-              console.log(
-                "[AgentStream] fallback history applied",
-                completion.length,
-              );
-            }
-          } else if (debugAgentStream) {
-            console.log("[AgentStream] fallback history empty");
           }
-        } else if (debugAgentStream) {
-          console.log("[AgentStream] history fetch failed", history.error);
         }
       }
 

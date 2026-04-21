@@ -49,14 +49,14 @@ function buildIsolationPaths(managedRoot: string): IsolationPaths {
 function buildEnvOverrides(paths: IsolationPaths): NodeJS.ProcessEnv {
   if (process.platform === 'win32') {
     return {
-      EXORTAI_OPENCODE_ISOLATED: '1',
+      EXORT_OPENCODE_ISOLATED: '1',
       APPDATA: paths.runtimeConfigRoot,
       LOCALAPPDATA: paths.runtimeDataRoot
     };
   }
 
   return {
-    EXORTAI_OPENCODE_ISOLATED: '1',
+    EXORT_OPENCODE_ISOLATED: '1',
     XDG_CONFIG_HOME: paths.runtimeConfigRoot,
     XDG_DATA_HOME: paths.runtimeDataRoot,
     XDG_STATE_HOME: paths.runtimeStateRoot

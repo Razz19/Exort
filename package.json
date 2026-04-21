@@ -1,7 +1,12 @@
 {
   "name": "exort",
   "version": "0.1.0",
+  "license": "AGPL-3.0-only",
   "packageManager": "npm@10.8.2",
+  "author": {
+    "name": "Ehsan Motamedi",
+    "email": ""
+  },
   "workspaces": [
     "packages/*"
   ],
