@@ -20,6 +20,7 @@ Exort is a desktop app for embedded development with an OpenCode-powered AI codi
 - Board manager for installing and managing cores
 - Built-in Serial Monitor and Serial Plotter
 - Workspace state and chat history persisted locally
+- Supports Arduino CLI board platforms, including Arduino, ESP32, ESP8266, RP2040, STM32, Teensy, and more
 
 ## Core Features
 
@@ -27,38 +28,16 @@ Exort is built around the parts of embedded development that usually end up scat
 
 ![Exort feature highlights](assets/features.png)
 
-### Serial Monitor
-
-Watch live device output without leaving the app.
-
-### Serial Plotter
-
-Plot numeric serial data directly inside Exort while you iterate on firmware.
-
-### Board Manager
-
-Install and manage Arduino cores and related tooling from the desktop UI.
-
-### Project Manager
-
-Open, switch between, and persist multiple embedded workspaces without leaving the app.
-
-### Provider Connection
-
-Use free OpenCode models out of the box, or connect your own model provider setup for the workflows you already use.
-
-### Embedded Agent
-
-Use an agent designed for embedded work: it can inspect the workspace, edit files, compile sketches, and guide upload flows from inside Exort.
+- `Serial Monitor`: watch live device output without leaving the app.
+- `Serial Plotter`: plot numeric serial data directly inside Exort while you iterate on firmware.
+- `Board Manager`: install and manage Arduino cores and related tooling from the desktop UI.
+- `Project Manager`: open, switch between, and persist multiple embedded workspaces without leaving the app.
+- `Provider Connection`: use free OpenCode models out of the box, or connect your own model provider setup for the workflows you already use.
+- `Embedded Agent`: use an agent designed for embedded work that can inspect the workspace, edit files, compile sketches, and guide upload flows from inside Exort.
 
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js
-- npm
-- Desktop dependencies required by Electron on your OS
 
 ### Install
 
@@ -87,19 +66,19 @@ npm run build
 
 1. Open a workspace.
 2. Ask Exort Agent to inspect the project or make a change.
-3. Edit and review files in Monaco.
+3. Edit and review files.
 4. Select a board and serial port.
 5. Compile or upload the active sketch.
 6. Inspect output in Serial Monitor or Plotter.
 
 
-## Architecture Notes
+<!-- ## Architecture Notes
 
 - The Exort Agent / OpenCode runtime is hosted in the Electron main process
 - The renderer talks to native capabilities through `window.electronAPI`
 - Workspace state, open files, and chat history are persisted locally
 - Logs stay in the terminal rather than an in-app log console
-
+ -->
 
 
 ## License
