@@ -13,6 +13,8 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_INCLUDE: optional
 
     steps:
       - name: Check out repository
@@ -25,7 +27,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=optional
 
       - name: Lint
         run: npm run lint
