@@ -1,19 +1,21 @@
 # Exort
 
-Local-first desktop AI workspace for embedded development.
+Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent. Write code, compile, upload, and interact with your hardware all in one place.
 
-Exort brings the workflow for Arduino and embedded projects into one desktop app: AI-assisted coding, a real editor, board and port controls, compile/upload flows, serial output, and plotting.
-
-- Local-first: the agent runtime runs on your machine, not through an Exort backend
-- Desktop-only: Electron app built for an integrated embedded workflow
-- Embedded-focused: code, boards, serial output, and debugging in one place
 
 ![Exort application screenshot](assets/app.png)
+
+
+ > _You can run with free OpenCode models, or connect your own provider setup for models such as ChatGPT and Claude🔥_
 
 ## Highlights
 
 - AI chat and code editing in the same workspace
+- Multi-workspace project management with persisted local state
 - Monaco editor with project file tree and tabbed editing
+- OpenCode runtime with free default models
+- Bring-your-own-model workflow for your own provider credentials
+- Embedded-focused agent workflow for compile, upload, and iteration
 - Arduino compile and upload flows from the app
 - Board manager for installing and managing cores
 - Built-in Serial Monitor and Serial Plotter
@@ -37,13 +39,18 @@ Plot numeric serial data directly inside Exort while you iterate on firmware.
 
 Install and manage Arduino cores and related tooling from the desktop UI.
 
-## Desktop-Only
+### Project Manager
 
-This repository is intentionally desktop-only.
+Open, switch between, and persist multiple embedded workspaces without leaving the app.
 
-- `packages/desktop` contains the Electron + Svelte app
-- Older backend, hosted auth, and quota flows are out of scope
-- Native capabilities stay in the Electron main process and are exposed to the renderer through preload IPC
+### Provider Connection
+
+Use free OpenCode models out of the box, or connect your own model provider setup for the workflows you already use.
+
+### Embedded Agent
+
+Use an agent designed for embedded work: it can inspect the workspace, edit files, compile sketches, and guide upload flows from inside Exort.
+
 
 ## Getting Started
 
