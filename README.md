@@ -1,33 +1,49 @@
 # Exort
 
-Exort is a local-first desktop AI coding workspace for embedded development.
+Local-first desktop AI workspace for embedded development.
 
-Ship firmware faster with an AI workspace that understands the way embedded development actually happens: code, boards, ports, serial output, and iterative debugging in one place.
+Exort brings the workflow for Arduino and embedded projects into one desktop app: AI-assisted coding, a real editor, board and port controls, compile/upload flows, serial output, and plotting.
 
-It combines an AI chat workflow with a code editor, workspace explorer, Arduino tooling, and serial monitoring in a single Electron app. The agent runtime runs on your machine, not through an Exort backend service.
+- Local-first: the agent runtime runs on your machine, not through an Exort backend
+- Desktop-only: Electron app built for an integrated embedded workflow
+- Embedded-focused: code, boards, serial output, and debugging in one place
 
+![Exort application screenshot](assets/app.png)
 
-## What It Does
+## Highlights
 
-- Open local workspaces and keep their state on disk.
-- Restore chat history and active sessions per workspace.
-- Edit project files with Monaco.
-- Stream Exort Agent output directly into the desktop chat UI.
-- Connect ChatGPT/OpenAI from the app settings.
-- Manage Arduino cores, boards, and ports.
-- Compile and upload the active `.ino` sketch.
-- Use a built-in Serial Monitor and line plotter.
+- AI chat and code editing in the same workspace
+- Monaco editor with project file tree and tabbed editing
+- Arduino compile and upload flows from the app
+- Board manager for installing and managing cores
+- Built-in Serial Monitor and Serial Plotter
+- Workspace state and chat history persisted locally
 
+## Core Features
+
+Exort is built around the parts of embedded development that usually end up scattered across multiple tools.
+
+![Exort feature highlights](assets/features.png)
+
+### Serial Monitor
+
+Watch live device output without leaving the app.
+
+### Serial Plotter
+
+Plot numeric serial data directly inside Exort while you iterate on firmware.
+
+### Board Manager
+
+Install and manage Arduino cores and related tooling from the desktop UI.
 
 ## Desktop-Only
 
 This repository is intentionally desktop-only.
 
-- `packages/desktop` contains the Electron + Svelte app.
-- Older backend/web auth and quota flows are not part of this project.
-- OpenCode integration stays in the Electron main process and is exposed to the renderer through preload IPC.
-
-
+- `packages/desktop` contains the Electron + Svelte app
+- Older backend, hosted auth, and quota flows are out of scope
+- Native capabilities stay in the Electron main process and are exposed to the renderer through preload IPC
 
 ## Getting Started
 
@@ -43,22 +59,34 @@ This repository is intentionally desktop-only.
 npm install
 ```
 
-### Run In Development
+### Development
 
 ```bash
 npm run dev
 ```
 
-### Build
+### Validation
 
 ```bash
+npm run lint
+npm run typecheck
 npm run build
 ```
 
-### Typecheck
+### Desktop Package Only
 
 ```bash
-npm run typecheck
+npm run lint --workspace @exort/desktop
+npm run dev --workspace @exort/desktop
+npm run build --workspace @exort/desktop
+npm run typecheck --workspace @exort/desktop
+```
+
+### Runtime Requirement Helpers
+
+```bash
+npm run requirements:status --workspace @exort/desktop
+npm run requirements:install --workspace @exort/desktop
 ```
 
 ## First Run
@@ -68,10 +96,10 @@ npm run typecheck
 3. In Settings, install the required runtimes if they are missing:
    - Exort Agent
    - Arduino CLI
-4. In Settings > Providers, connect ChatGPT/OpenAI with OAuth or an API key.
+4. In Settings > Providers, connect OpenAI with OAuth or an API key.
 5. Open an `.ino` file to compile or upload to a selected board.
 
-## Core Workflow
+## Workflow
 
 1. Open a workspace.
 2. Ask Exort Agent to inspect the project or make a change.
@@ -79,33 +107,6 @@ npm run typecheck
 4. Select a board and serial port.
 5. Compile or upload the active sketch.
 6. Inspect output in Serial Monitor or Plotter.
-
-## Package Scripts
-
-From the repo root:
-
-```bash
-npm run lint
-npm run dev
-npm run build
-npm run typecheck
-```
-
-Desktop package only:
-
-```bash
-npm run lint --workspace @exort/desktop
-npm run dev --workspace @exort/desktop
-npm run build --workspace @exort/desktop
-npm run typecheck --workspace @exort/desktop
-```
-
-Requirement helpers:
-
-```bash
-npm run requirements:status --workspace @exort/desktop
-npm run requirements:install --workspace @exort/desktop
-```
 
 ## Project Layout
 
@@ -116,33 +117,25 @@ packages/
 
 ## Architecture Notes
 
-- The Exort Agent / OpenCode runtime is hosted in the Electron main process.
-- The renderer only talks to native capabilities through `window.electronAPI`.
-- Workspace state, open files, and chat history are persisted locally.
-- Logs stay in the terminal rather than an in-app log console.
+- The Exort Agent / OpenCode runtime is hosted in the Electron main process
+- The renderer talks to native capabilities through `window.electronAPI`
+- Workspace state, open files, and chat history are persisted locally
+- Logs stay in the terminal rather than an in-app log console
 
-## Current Scope
+## Scope
 
 Exort is focused on a local embedded workflow:
 
 - AI-assisted coding against your current workspace
-- Arduino compile/upload flows
+- Arduino compile and upload flows
 - Serial monitoring and plotting
 - Multi-workspace desktop editing
 
 Controller and simulator features are intentionally not included in this version.
 
-## Open Source Release Notes
-
-This is the desktop-first, local-first version of Exort being prepared for open source release.
-
-- No Exort backend dependency is required
-- No hosted auth/quota portal is required
-- Runtime setup happens from inside the desktop app
-
 ## License
 
-Exort is licensed under `AGPL-3.0-only`. See [LICENSE](/Users/razz/projects/Exort/LICENSE).
+Exort is licensed under `AGPL-3.0-only`. See [LICENSE](LICENSE).
 
 ## Contributing
 
