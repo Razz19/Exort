@@ -4,6 +4,7 @@ asar: true
 npmRebuild: true
 directories:
   output: release
+  buildResources: resources
 files:
   - out/**/*
   - package.json
@@ -11,10 +12,12 @@ files:
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 mac:
   category: public.app-category.developer-tools
+  icon: resources/icon.icns
   target:
     - dmg
     - zip
 win:
+  icon: resources/icon.ico
   target:
     - nsis
 nsis:

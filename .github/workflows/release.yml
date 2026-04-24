@@ -91,7 +91,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-windows-x64
-          path: packages/desktop/release/**
+          path: |
+            packages/desktop/release/*.exe
+            packages/desktop/release/*.yml
+            packages/desktop/release/*.blockmap
           if-no-files-found: error
 
   build-macos-arm64:
@@ -126,7 +129,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-macos-arm64
-          path: packages/desktop/release/**
+          path: |
+            packages/desktop/release/*.dmg
+            packages/desktop/release/*.zip
+            packages/desktop/release/*.blockmap
           if-no-files-found: error
 
   build-macos-x64:
@@ -161,7 +167,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-macos-x64
-          path: packages/desktop/release/**
+          path: |
+            packages/desktop/release/*.dmg
+            packages/desktop/release/*.zip
+            packages/desktop/release/*.blockmap
           if-no-files-found: error
 
   release:
@@ -185,5 +194,10 @@ jobs:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: Exort ${{ needs.validate.outputs.tag }}
           draft: true
-          generate_release_notes: true
-          files: release-assets/**/*
+          overwrite_files: true
+          files: |
+            release-assets/*.exe
+            release-assets/*.yml
+            release-assets/*.dmg
+            release-assets/*.zip
+            release-assets/*.blockmap
