@@ -173,12 +173,49 @@ jobs:
             packages/desktop/release/*.blockmap
           if-no-files-found: error
 
+  build-linux:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --include=optional
+
+      - name: Install root Electron and Rollup native package
+        shell: bash
+        run: |
+          ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
+          ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
+
+      - name: Build desktop release artifacts
+        run: npm --workspace @exort/desktop run release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: exort-linux-x64
+          path: |
+            packages/desktop/release/*.AppImage
+            packages/desktop/release/*.yml
+            packages/desktop/release/*.blockmap
+          if-no-files-found: error
+
   release:
     needs:
       - validate
       - build-windows
       - build-macos-arm64
       - build-macos-x64
+      - build-linux
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
@@ -200,4 +237,5 @@ jobs:
             release-assets/*.yml
             release-assets/*.dmg
             release-assets/*.zip
+            release-assets/*.AppImage
             release-assets/*.blockmap

@@ -20,6 +20,11 @@ win:
   icon: resources/icon.ico
   target:
     - nsis
+linux:
+  category: Development
+  icon: resources/exort_logo.png
+  target:
+    - AppImage
 nsis:
   oneClick: false
   perMachine: false
