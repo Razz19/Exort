@@ -36,6 +36,16 @@ export default defineConfig({
   },
   renderer: {
     envPrefix: ['RENDERER_VITE_', 'VITE_'],
-    plugins: [svelte()]
+    plugins: [svelte()],
+    server: {
+      host: '127.0.0.1',
+      port: 7373,
+      strictPort: true
+    },
+    preview: {
+      host: '127.0.0.1',
+      port: 4173,
+      strictPort: true
+    }
   }
 });
