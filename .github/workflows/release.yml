@@ -77,6 +77,13 @@ jobs:
       - name: Install dependencies
         run: npm install --include=optional
 
+      - name: Install root Electron and Rollup native package
+        shell: bash
+        run: |
+          ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
+          ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-win32-x64-msvc@${ROLLUP_VERSION}"
+
       - name: Build desktop release artifacts
         run: npm --workspace @exort/desktop run release
 
@@ -102,6 +109,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install --include=optional
+
+      - name: Install root Electron and Rollup native package
+        shell: bash
+        run: |
+          ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
+          ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-arm64@${ROLLUP_VERSION}"
 
       - name: Build desktop release artifacts
         env:
@@ -130,6 +144,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install --include=optional
+
+      - name: Install root Electron and Rollup native package
+        shell: bash
+        run: |
+          ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
+          ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-x64@${ROLLUP_VERSION}"
 
       - name: Build desktop release artifacts
         env:
