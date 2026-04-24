@@ -91,10 +91,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-windows-x64
-          path: |
-            packages/desktop/release/*.exe
-            packages/desktop/release/*.yml
-            packages/desktop/release/*.blockmap
+          path: packages/desktop/release/*.exe
           if-no-files-found: error
 
   build-macos-arm64:
@@ -129,10 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-macos-arm64
-          path: |
-            packages/desktop/release/*.dmg
-            packages/desktop/release/*.zip
-            packages/desktop/release/*.blockmap
+          path: packages/desktop/release/*-mac-arm64.dmg
           if-no-files-found: error
 
   build-macos-x64:
@@ -167,10 +161,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-macos-x64
-          path: |
-            packages/desktop/release/*.dmg
-            packages/desktop/release/*.zip
-            packages/desktop/release/*.blockmap
+          path: packages/desktop/release/*-mac-x64.dmg
           if-no-files-found: error
 
   build-linux:
@@ -203,10 +194,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-linux-x64
-          path: |
-            packages/desktop/release/*.AppImage
-            packages/desktop/release/*.yml
-            packages/desktop/release/*.blockmap
+          path: packages/desktop/release/*.AppImage
           if-no-files-found: error
 
   release:
@@ -234,8 +222,5 @@ jobs:
           overwrite_files: true
           files: |
             release-assets/*.exe
-            release-assets/*.yml
             release-assets/*.dmg
-            release-assets/*.zip
             release-assets/*.AppImage
-            release-assets/*.blockmap
