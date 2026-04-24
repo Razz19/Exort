@@ -20,6 +20,10 @@
     XCircle,
   } from "lucide-svelte";
 
+  let { onRequirementsUpdated = () => {} } = $props<{
+    onRequirementsUpdated?: (requirements: RequirementStatus[]) => void;
+  }>();
+
   const requirementOrder: RequirementId[] = ["opencode", "arduino-cli"];
   const requirementDisplayNames: Record<RequirementId, string> = {
     opencode: "OpenCode",
@@ -251,6 +255,9 @@
       }
 
       requirements = response.requirements ?? [];
+      if (typeof onRequirementsUpdated === "function") {
+        onRequirementsUpdated(requirements);
+      }
       if (refresh) {
         statusMessage = normalizeStatusMessage(
           "Requirements status refreshed.",

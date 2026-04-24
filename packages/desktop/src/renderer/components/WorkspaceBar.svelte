@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Settings } from "lucide-svelte";
+  import { Plus, Settings } from "lucide-svelte";
   import WorkspacePreviewFlyout from "./WorkspacePreviewFlyout.svelte";
   import type { AgentSessionSummary } from "../lib/types";
 
@@ -244,7 +244,7 @@
     aria-label="Open workspace folder"
     title="Open folder"
   >
-    +
+    <Plus class=" h-5 w-5" />
   </button>
   <div
     class="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto px-2"
@@ -270,7 +270,8 @@
               event.currentTarget as HTMLButtonElement,
             )}
           onblur={() => stopPreview(workspace.id)}
-          oncontextmenu={(event) => openWorkspaceContextMenu(workspace.id, event)}
+          oncontextmenu={(event) =>
+            openWorkspaceContextMenu(workspace.id, event)}
           title={workspace.rootPath}
           aria-label={`Select workspace ${getWorkspaceDisplayName(workspace)}`}
         >

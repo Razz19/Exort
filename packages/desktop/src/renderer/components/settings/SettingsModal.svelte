@@ -10,10 +10,12 @@
     onClose,
     initialTab = "general",
     activeWorkspaceRoot = null,
+    onRequirementsUpdated = () => {},
   } = $props<{
     onClose: () => void;
     initialTab?: SettingsTab;
     activeWorkspaceRoot?: string | null;
+    onRequirementsUpdated?: (requirements: RequirementStatus[]) => void;
   }>();
 
   let activeTab = $state<SettingsTab>("general");
@@ -118,7 +120,7 @@
 
       <div class="min-h-0 flex-1 overflow-y-auto p-5">
         {#if activeTab === "general"}
-          <GeneralSettingsTab />
+          <GeneralSettingsTab {onRequirementsUpdated} />
         {:else if activeTab === "providers"}
           <ProvidersSettingsTab {activeWorkspaceRoot} />
         {:else}

@@ -124,6 +124,7 @@
   let settingsModalOpen = $state(false);
   let navbarOverlayOpen = $state(false);
   let settingsModalTab = $state<SettingsTab>("general");
+  let arduinoEnvironmentRefreshKey = $state(0);
   let outputRun = $state<ArduinoOutputRun | null>(null);
   let draggingSplitter = $state<"outer" | "inner" | null>(null);
   let outerSplitContainerEl = $state<HTMLDivElement | null>(null);
@@ -661,6 +662,14 @@
 
   function closeSettingsModal(): void {
     settingsModalOpen = false;
+  }
+
+  function handleRequirementsUpdated(requirements: RequirementStatus[]): void {
+    const hasArduinoCliStatus = requirements.some(
+      (requirement) => requirement.id === "arduino-cli",
+    );
+    if (!hasArduinoCliStatus) return;
+    arduinoEnvironmentRefreshKey += 1;
   }
 
   async function selectWorkspace(
@@ -2393,6 +2402,7 @@
     onSaveActiveFile={saveActiveFile}
     onArduinoOutputEvent={handleArduinoOutputEvent}
     onOverlayOpenChange={handleNavbarOverlayOpenChange}
+    {arduinoEnvironmentRefreshKey}
   />
 
   <div
@@ -2524,6 +2534,7 @@
       onClose={closeSettingsModal}
       initialTab={settingsModalTab}
       activeWorkspaceRoot={activeWorkspace?.rootPath ?? null}
+      onRequirementsUpdated={handleRequirementsUpdated}
     />
   {/if}
 </div>

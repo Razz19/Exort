@@ -14,10 +14,10 @@
   }>();
 </script>
 
-<div class="border-b border-dark-border px-4 py-3">
+<div class="border-b border-dark-border px-4 py-1">
   <div class="flex items-start justify-between gap-2">
     <div class="min-w-0">
-      <h2 class="truncate text-lg font-semibold text-dark-fg0">
+      <h2 class="truncate text-[15px] p-1 font-semibold text-dark-fg0">
         {workspaceTitle}
       </h2>
     </div>

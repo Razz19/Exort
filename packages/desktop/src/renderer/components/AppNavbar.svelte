@@ -3,11 +3,13 @@
   import { SvelteSet } from "svelte/reactivity";
   import {
     ChevronDown,
+    CircleCheckBig,
     Hammer,
     Loader,
     RefreshCw,
     Search,
     Settings2,
+    SquareCheckBig,
     Star,
     Upload,
     X,
@@ -48,6 +50,7 @@
     onSaveActiveFile,
     onArduinoOutputEvent = () => {},
     onOverlayOpenChange = () => {},
+    arduinoEnvironmentRefreshKey = 0,
   } = $props<{
     userEmail: string | null;
     statusText: string;
@@ -67,6 +70,7 @@
     onSaveActiveFile: () => Promise<void> | void;
     onArduinoOutputEvent: (event: ArduinoOutputEvent) => void;
     onOverlayOpenChange: (open: boolean) => void;
+    arduinoEnvironmentRefreshKey?: number;
   }>();
 
   const safeSetPort = (port: string) => {
@@ -115,6 +119,7 @@
   let uploadRequestId = $state<string | null>(null);
   let portsError = $state<string | null>(null);
   let boardsError = $state<string | null>(null);
+  let arduinoCliInstalled = $state<boolean | null>(null);
   let portsDropdownOpen = $state(false);
   let boardsDropdownOpen = $state(false);
   let boardSettingsDropdownOpen = $state(false);
@@ -169,11 +174,11 @@
     return "Compile and upload active sketch";
   });
   const primaryIconButtonClass =
-    "inline-flex h-9 w-9 items-center justify-center rounded-md border border-primary-500 bg-primary-600 text-dark-fg0 transition-colors duration-150 hover:bg-primary-700  disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex h-8 w-8 items-center justify-center rounded-md border border-primary-500 bg-primary-600 text-dark-fg0 transition-colors duration-150 hover:bg-primary-700  disabled:cursor-not-allowed disabled:opacity-50";
   const cancelIconButtonClass =
-    "inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-red bg-dark-bg text-dark-red transition-colors duration-150 hover:border-dark-red hover:text-dark-red  disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex h-8 w-8 items-center justify-center rounded-md border border-dark-red bg-dark-bg text-dark-red transition-colors duration-150 hover:border-dark-red hover:text-dark-red  disabled:cursor-not-allowed disabled:opacity-50";
   const dropdownTriggerClass =
-    "input-field inline-flex h-9 w-full items-center justify-between gap-2 rounded-md py-1.5 text-left text-dark-fg focus:ring-0 [-webkit-app-region:no-drag]";
+    "input-field inline-flex h-8 w-full items-center justify-between gap-2 rounded-md py-2 text-left text-dark-fg focus:ring-0 [-webkit-app-region:no-drag]";
   const dropdownPanelClass =
     "absolute right-0 top-full z-30 mt-1 max-h-72 w-full overflow-x-hidden overflow-y-auto rounded-md border border-dark-border bg-dark-surface p-1 shadow-lg shadow-dark-bg/40 [-webkit-app-region:no-drag]";
   const dropdownItemClass =
@@ -244,6 +249,24 @@
     if (!selectedBoardFqbn) return "Select a board first";
     return "Configure board-specific settings";
   });
+  let arduinoCliMissingFromErrors = $derived.by(() => {
+    const missingPattern = "arduino-cli not found in path";
+    return [portsError, boardsError].some((message) =>
+      message?.toLowerCase().includes(missingPattern),
+    );
+  });
+  let navbarErrorMessage = $derived.by(() => {
+    if (arduinoCliInstalled === false || arduinoCliMissingFromErrors) {
+      return "Arduino CLI is not installed, you can install it in the settings";
+    }
+
+    const messages = [
+      portsError ? `Ports: ${portsError}` : null,
+      boardsError ? `Boards: ${boardsError}` : null,
+    ].filter((value): value is string => value !== null);
+
+    return messages.length > 0 ? messages.join(" ") : null;
+  });
 
   function getSelectedBoardOptionValues(
     details: ArduinoBoardDetails | null,
@@ -308,9 +331,6 @@
   );
 
   onMount(() => {
-    void refreshPorts();
-    void refreshBoards();
-
     const outputListener = (payload: ArduinoCommandOutputEnvelope) => {
       if (!activeOutputRequestIds.has(payload.requestId)) return;
 
@@ -615,6 +635,31 @@
     }
   }
 
+  async function refreshArduinoCliRequirement(): Promise<void> {
+    try {
+      const response = await window.electronAPI.getRequirementsStatus();
+      if (!response.ok) {
+        arduinoCliInstalled = null;
+        return;
+      }
+
+      const arduinoCliStatus = response.requirements?.find(
+        (requirement) => requirement.id === "arduino-cli",
+      );
+      arduinoCliInstalled = arduinoCliStatus?.installed ?? null;
+    } catch {
+      arduinoCliInstalled = null;
+    }
+  }
+
+  async function refreshArduinoEnvironment(): Promise<void> {
+    await Promise.all([
+      refreshArduinoCliRequirement(),
+      refreshPorts(),
+      refreshBoards(),
+    ]);
+  }
+
   async function compileActiveSketch(): Promise<void> {
     if (compileDisabled || !activeWorkspaceRoot || !activeFilePath) return;
 
@@ -766,6 +811,11 @@
   });
 
   $effect(() => {
+    arduinoEnvironmentRefreshKey;
+    void refreshArduinoEnvironment();
+  });
+
+  $effect(() => {
     if (selectedBoardFqbn) return;
     boardSettingsDropdownOpen = false;
     boardCurrentDetails = null;
@@ -787,330 +837,334 @@
     <span class="text-xs text-gray-400">{statusText}</span>
   </div> -->
 
-  <div class="flex flex-wrap items-end justify-end gap-2">
-    <div class="flex items-center gap-2" bind:this={portsDropdownElement}>
-      <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Port</span>
-      <div class="relative w-64 shrink-0">
-        <button
-          class={dropdownTriggerClass}
-          onclick={togglePortsDropdown}
-          disabled={uploadBusy}
-          title={selectedPortLabel}
-          aria-label="Select serial port"
-          aria-expanded={portsDropdownOpen}
-        >
-          <span class="truncate">{selectedPortLabel}</span>
-          <ChevronDown
-            class={`h-4 w-4 text-dark-fg3 transition-transform ${portsDropdownOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {#if portsDropdownOpen}
-          <div class={dropdownPanelClass}>
-            <button
-              class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2 border border-dark-border`}
-              onclick={() => void refreshPorts()}
-              disabled={portsBusy || uploadBusy}
-              aria-label="Refresh connected serial ports"
-            >
-              <RefreshCw class={`h-4 w-4 ${portsBusy ? "animate-spin" : ""}`} />
-              <span>{portsBusy ? "Refreshing ports..." : "Refresh ports"}</span>
-            </button>
-
-            {#if ports.length === 0}
-              <div class="px-2 py-1.5 text-sm text-dark-fg3">
-                {portsBusy ? "Loading ports..." : "No serial ports found"}
-              </div>
-            {:else}
-              {#each ports as port (port.address)}
-                <button
-                  class={`${dropdownItemClass} ${port.address === selectedPort ? "bg-dark-bgH text-primary-300" : ""}`}
-                  onclick={() => handlePortSelection(port.address)}
-                  title={port.address}
-                  aria-label={`Select ${port.label}`}
-                >
-                  <span class="block truncate">{port.label}</span>
-                  <span class="block truncate text-xs text-dark-fg4">
-                    {port.address}
-                  </span>
-                </button>
-              {/each}
-            {/if}
-          </div>
-        {/if}
-      </div>
+  <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+    <div class="min-h-[1rem] flex-1 pt-0.5 text-xs">
+      {#if navbarErrorMessage}
+        <span class="text-dark-red">{navbarErrorMessage}</span>
+      {/if}
     </div>
 
-    <div class="flex items-center gap-2" bind:this={boardsDropdownElement}>
-      <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Board</span>
-      <div class="relative w-72 shrink-0">
-        <button
-          class={dropdownTriggerClass}
-          onclick={toggleBoardsDropdown}
-          disabled={boardsBusy}
-          title={selectedBoardLabel}
-          aria-label="Select board"
-          aria-expanded={boardsDropdownOpen}
-        >
-          <span class="truncate">{selectedBoardLabel}</span>
-          <ChevronDown
-            class={`h-4 w-4 text-dark-fg3 transition-transform ${boardsDropdownOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {#if boardsDropdownOpen}
-          <div
-            class={`${dropdownPanelClass} flex max-h-[28rem] flex-col overflow-hidden p-0`}
+    <div class="flex flex-wrap items-end justify-end gap-2">
+      <div class="flex items-center gap-2" bind:this={portsDropdownElement}>
+        <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Port</span>
+        <div class="relative w-64 shrink-0">
+          <button
+            class={dropdownTriggerClass}
+            onclick={togglePortsDropdown}
+            disabled={uploadBusy}
+            title={selectedPortLabel}
+            aria-label="Select serial port"
+            aria-expanded={portsDropdownOpen}
           >
-            <div class="p-1">
-              <div
-                class="input-field flex h-8 items-center gap-2 rounded-md px-2 py-1"
-              >
-                <Search class="h-4 w-4 shrink-0 text-dark-fg4" />
-                <input
-                  class="h-full w-full bg-transparent p-0 text-sm text-dark-fg placeholder:text-dark-fg4"
-                  placeholder="Search boards..."
-                  bind:value={boardSearch}
-                />
-              </div>
-            </div>
+            <span class="truncate text-dark-fg0">{selectedPortLabel}</span>
+            <ChevronDown
+              class={`h-4 w-4 text-dark-fg3 transition-transform ${portsDropdownOpen ? "rotate-180" : ""}`}
+            />
+          </button>
 
-            <div class="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
-              <!-- <button
+          {#if portsDropdownOpen}
+            <div class={dropdownPanelClass}>
+              <button
+                class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2 border border-dark-border`}
+                onclick={() => void refreshPorts()}
+                disabled={portsBusy || uploadBusy}
+                aria-label="Refresh connected serial ports"
+              >
+                <RefreshCw
+                  class={`h-4 w-4 ${portsBusy ? "animate-spin" : ""}`}
+                />
+                <span
+                  >{portsBusy ? "Refreshing ports..." : "Refresh ports"}</span
+                >
+              </button>
+
+              {#if ports.length === 0}
+                <div class="px-2 py-1.5 text-sm text-dark-fg3">
+                  {portsBusy ? "Loading ports..." : "No serial ports found"}
+                </div>
+              {:else}
+                {#each ports as port (port.address)}
+                  <button
+                    class={`${dropdownItemClass} ${port.address === selectedPort ? "bg-dark-bgH text-primary-300" : ""}`}
+                    onclick={() => handlePortSelection(port.address)}
+                    title={port.address}
+                    aria-label={`Select ${port.label}`}
+                  >
+                    <span class="block truncate">{port.label}</span>
+                    <span class="block truncate text-xs text-dark-fg4">
+                      {port.address}
+                    </span>
+                  </button>
+                {/each}
+              {/if}
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2" bind:this={boardsDropdownElement}>
+        <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Board</span
+        >
+        <div class="relative w-72 shrink-0">
+          <button
+            class={dropdownTriggerClass}
+            onclick={toggleBoardsDropdown}
+            disabled={boardsBusy}
+            title={selectedBoardLabel}
+            aria-label="Select board"
+            aria-expanded={boardsDropdownOpen}
+          >
+            <span class="truncate text-dark-fg0">{selectedBoardLabel}</span>
+            <ChevronDown
+              class={`h-4 w-4 text-dark-fg3 transition-transform ${boardsDropdownOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {#if boardsDropdownOpen}
+            <div
+              class={`${dropdownPanelClass} flex max-h-[28rem] flex-col overflow-hidden p-0`}
+            >
+              <div class="p-1">
+                <div
+                  class="input-field flex h-8 items-center gap-2 rounded-md px-2 py-1"
+                >
+                  <Search class="h-4 w-4 shrink-0 text-dark-fg4" />
+                  <input
+                    class="h-full w-full bg-transparent p-0 text-sm focus:outline-none text-dark-fg placeholder:text-dark-fg4"
+                    placeholder="Search boards..."
+                    bind:value={boardSearch}
+                  />
+                </div>
+              </div>
+
+              <div class="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
+                <!-- <button
                 class={`${dropdownItemClass} ${!selectedBoardFqbn ? "bg-dark-bgH text-primary-300" : ""}`}
                 onclick={() => handleBoardSelection("")}
               >
                 Select board
               </button> -->
 
-              {#if filteredFavoriteBoards.length > 0}
-                <div
-                  class="px-2 py-1 text-xs uppercase tracking-wide text-dark-fg4"
-                >
-                  Favorites
-                </div>
-                {#each filteredFavoriteBoards as board (board.fqbn)}
-                  <div
-                    class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${board.fqbn === selectedBoardFqbn ? "bg-dark-bgH" : "hover:bg-dark-bgH"}`}
-                  >
-                    <button
-                      class={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150  ${board.fqbn === selectedBoardFqbn ? "text-primary-300" : "text-dark-fg2 hover:text-dark-fg0"}`}
-                      onclick={() => handleBoardSelection(board.fqbn)}
-                      aria-label={`Select ${board.name}`}
-                    >
-                      <span
-                        class="block overflow-hidden whitespace-normal break-words leading-snug"
-                        style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"
-                      >
-                        {board.name}
-                      </span>
-                    </button>
-
-                    <button
-                      class="inline-flex h-7 w-7 items-center justify-center rounded-md text-dark-yellow transition-colors duration-150 hover:text-dark-yellow2"
-                      onclick={(event) =>
-                        handleFavoriteToggleClick(event, board.fqbn)}
-                      title="Remove from favorites"
-                      aria-label={`Remove ${board.name} from favorites`}
-                    >
-                      <Star class="h-4 w-4 fill-current" />
-                    </button>
-                  </div>
-                {/each}
-              {/if}
-
-              {#if filteredRegularBoards.length > 0}
                 {#if filteredFavoriteBoards.length > 0}
-                  <div class="my-1 border-t border-dark-border"></div>
-                {/if}
-                {#each filteredRegularBoards as board (board.fqbn)}
                   <div
-                    class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${board.fqbn === selectedBoardFqbn ? "bg-dark-bgH" : "hover:bg-dark-bgH"}`}
+                    class="px-2 py-1 text-xs uppercase tracking-wide text-dark-fg4"
                   >
-                    <button
-                      class={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150  ${board.fqbn === selectedBoardFqbn ? "text-primary-300" : "text-dark-fg2 hover:text-dark-fg0"}`}
-                      onclick={() => handleBoardSelection(board.fqbn)}
-                      aria-label={`Select ${board.name}`}
-                    >
-                      <span
-                        class="block overflow-hidden whitespace-normal break-words leading-snug"
-                        style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"
-                      >
-                        {board.name}
-                      </span>
-                    </button>
-
-                    <button
-                      class="inline-flex h-7 w-7 items-center justify-center rounded-md text-dark-fg4 transition-colors duration-150 hover:text-dark-yellow"
-                      onclick={(event) =>
-                        handleFavoriteToggleClick(event, board.fqbn)}
-                      title="Add to favorites"
-                      aria-label={`Add ${board.name} to favorites`}
-                    >
-                      <Star class="h-4 w-4" />
-                    </button>
+                    Favorites
                   </div>
-                {/each}
-              {/if}
-
-              {#if filteredFavoriteBoards.length === 0 && filteredRegularBoards.length === 0}
-                <div class="px-2 py-1.5 text-sm text-dark-fg3">
-                  {boardsBusy
-                    ? "Loading boards..."
-                    : boardSearch.trim()
-                      ? "No boards match your search"
-                      : "No boards available"}
-                </div>
-              {/if}
-            </div>
-
-            <div class="border-t border-dark-border p-1">
-              <button
-                class={`${dropdownItemClass} inline-flex items-center gap-2 border border-dark-border`}
-                onclick={handleOpenBoardsManager}
-                aria-label="Open boards manager"
-              >
-                <Settings2 class="h-4 w-4" />
-                <span>Install boards</span>
-              </button>
-            </div>
-          </div>
-        {/if}
-      </div>
-    </div>
-
-    <div
-      class="flex items-center gap-2"
-      bind:this={boardSettingsDropdownElement}
-    >
-      <span class="w-14 shrink-0 text-right text-xs text-dark-fg3">
-        Config
-      </span>
-      <div class="relative w-44 shrink-0">
-        <button
-          class={dropdownTriggerClass}
-          onclick={toggleBoardSettingsDropdown}
-          disabled={!selectedBoardFqbn}
-          title={boardSettingsTooltip}
-          aria-label="Configure board settings"
-          aria-expanded={boardSettingsDropdownOpen}
-        >
-          <span class="truncate">{boardSettingsButtonLabel}</span>
-          <ChevronDown
-            class={`h-4 w-4 text-dark-fg3 transition-transform ${boardSettingsDropdownOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {#if boardSettingsDropdownOpen}
-          <div
-            class={`${dropdownPanelClass} max-h-[28rem] w-[22rem] overflow-y-auto p-2`}
-          >
-            <div class="mb-2 border-b border-dark-border pb-2">
-              <div class="flex items-center gap-2 text-sm text-dark-fg1">
-                <Settings2 class="h-4 w-4 shrink-0" />
-                <span class="truncate">Board settings</span>
-              </div>
-              <div class="mt-1 text-xs text-dark-fg4">
-                {boardCurrentDetails?.boardName ?? selectedBoardLabel}
-              </div>
-            </div>
-
-            {#if boardSettingsBusy && !boardCurrentDetails}
-              <div class="px-1 py-2 text-sm text-dark-fg3">
-                Loading board settings...
-              </div>
-            {:else if boardSettingsError}
-              <div class="px-1 py-2 text-sm text-dark-red">
-                {boardSettingsError}
-              </div>
-            {:else if boardCurrentDetails}
-              {#if boardCurrentDetails.configOptions.length === 0}
-                <div class="px-1 py-2 text-sm text-dark-fg3">
-                  This board has no configurable board settings.
-                </div>
-              {:else}
-                <div class="space-y-3">
-                  {#each boardCurrentDetails.configOptions as option (option.id)}
-                    <section>
-                      <div
-                        class="mb-1 px-1 text-xs font-medium uppercase tracking-wide text-dark-fg4"
+                  {#each filteredFavoriteBoards as board (board.fqbn)}
+                    <div
+                      class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${board.fqbn === selectedBoardFqbn ? "bg-dark-bgH" : "hover:bg-dark-bgH"}`}
+                    >
+                      <button
+                        class={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150  ${board.fqbn === selectedBoardFqbn ? "text-primary-300" : "text-dark-fg2 hover:text-dark-fg0"}`}
+                        onclick={() => handleBoardSelection(board.fqbn)}
+                        aria-label={`Select ${board.name}`}
                       >
-                        {option.label}
-                      </div>
-                      <div class="space-y-1">
-                        {#each option.values as value (value.id)}
-                          <button
-                            class={`w-full rounded-md border px-2 py-1.5 text-left text-sm transition-colors duration-150 ${
-                              isBoardOptionValueSelected(option.id, value.id)
-                                ? "border-primary-500 bg-dark-bgH text-primary-300"
-                                : "border-dark-border bg-dark-bg text-dark-fg2 hover:bg-dark-bgH hover:text-dark-fg0"
-                            }`}
-                            onclick={() =>
-                              handleBoardOptionSelection(option.id, value.id)}
-                            title={value.label}
-                            aria-label={`Set ${option.label} to ${value.label}`}
-                          >
-                            <span class="block truncate">{value.label}</span>
-                          </button>
-                        {/each}
-                      </div>
-                    </section>
+                        <span
+                          class="block overflow-hidden whitespace-normal break-words leading-snug"
+                          style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"
+                        >
+                          {board.name}
+                        </span>
+                      </button>
+
+                      <button
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md text-dark-yellow transition-colors duration-150 hover:text-dark-yellow2"
+                        onclick={(event) =>
+                          handleFavoriteToggleClick(event, board.fqbn)}
+                        title="Remove from favorites"
+                        aria-label={`Remove ${board.name} from favorites`}
+                      >
+                        <Star class="h-4 w-4 fill-current" />
+                      </button>
+                    </div>
                   {/each}
+                {/if}
+
+                {#if filteredRegularBoards.length > 0}
+                  {#if filteredFavoriteBoards.length > 0}
+                    <div class="my-1 border-t border-dark-border"></div>
+                  {/if}
+                  {#each filteredRegularBoards as board (board.fqbn)}
+                    <div
+                      class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${board.fqbn === selectedBoardFqbn ? "bg-dark-bgH" : "hover:bg-dark-bgH"}`}
+                    >
+                      <button
+                        class={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150  ${board.fqbn === selectedBoardFqbn ? "text-primary-300" : "text-dark-fg2 hover:text-dark-fg0"}`}
+                        onclick={() => handleBoardSelection(board.fqbn)}
+                        aria-label={`Select ${board.name}`}
+                      >
+                        <span
+                          class="block overflow-hidden whitespace-normal break-words leading-snug"
+                          style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"
+                        >
+                          {board.name}
+                        </span>
+                      </button>
+
+                      <button
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md text-dark-fg4 transition-colors duration-150 hover:text-dark-yellow"
+                        onclick={(event) =>
+                          handleFavoriteToggleClick(event, board.fqbn)}
+                        title="Add to favorites"
+                        aria-label={`Add ${board.name} to favorites`}
+                      >
+                        <Star class="h-4 w-4" />
+                      </button>
+                    </div>
+                  {/each}
+                {/if}
+
+                {#if filteredFavoriteBoards.length === 0 && filteredRegularBoards.length === 0}
+                  <div class="px-2 py-1.5 text-sm text-dark-fg3">
+                    {boardsBusy
+                      ? "Loading boards..."
+                      : boardSearch.trim()
+                        ? "No boards match your search"
+                        : "No boards available"}
+                  </div>
+                {/if}
+              </div>
+
+              <div class="border-t border-dark-border p-1">
+                <button
+                  class={`${dropdownItemClass} inline-flex items-center gap-2 border border-dark-border`}
+                  onclick={handleOpenBoardsManager}
+                  aria-label="Open boards manager"
+                >
+                  <Settings2 class="h-4 w-4" />
+                  <span>Install boards</span>
+                </button>
+              </div>
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <div
+        class="flex items-center gap-2"
+        bind:this={boardSettingsDropdownElement}
+      >
+        <span class="w-14 shrink-0 text-right text-xs text-dark-fg3">
+          Config
+        </span>
+        <div class="relative w-44 shrink-0">
+          <button
+            class={dropdownTriggerClass}
+            onclick={toggleBoardSettingsDropdown}
+            disabled={!selectedBoardFqbn}
+            title={boardSettingsTooltip}
+            aria-label="Configure board settings"
+            aria-expanded={boardSettingsDropdownOpen}
+          >
+            <span class="truncate text-dark-fg0"
+              >{boardSettingsButtonLabel}</span
+            >
+            <ChevronDown
+              class={`h-4 w-4 text-dark-fg3 transition-transform ${boardSettingsDropdownOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {#if boardSettingsDropdownOpen}
+            <div
+              class={`${dropdownPanelClass} max-h-[28rem] w-[22rem] overflow-y-auto p-2`}
+            >
+              <div class="mb-2 border-b border-dark-border pb-2">
+                <div class="flex items-center gap-2 text-sm text-dark-fg1">
+                  <Settings2 class="h-4 w-4 shrink-0" />
+                  <span class="truncate">Board settings</span>
+                </div>
+                <div class="mt-1 text-xs text-dark-fg4">
+                  {boardCurrentDetails?.boardName ?? selectedBoardLabel}
+                </div>
+              </div>
+
+              {#if boardSettingsBusy && !boardCurrentDetails}
+                <div class="px-1 py-2 text-sm text-dark-fg3">
+                  Loading board settings...
+                </div>
+              {:else if boardSettingsError}
+                <div class="px-1 py-2 text-sm text-dark-red">
+                  {boardSettingsError}
+                </div>
+              {:else if boardCurrentDetails}
+                {#if boardCurrentDetails.configOptions.length === 0}
+                  <div class="px-1 py-2 text-sm text-dark-fg3">
+                    This board has no configurable board settings.
+                  </div>
+                {:else}
+                  <div class="space-y-3">
+                    {#each boardCurrentDetails.configOptions as option (option.id)}
+                      <section>
+                        <div
+                          class="mb-1 px-1 text-xs font-medium uppercase tracking-wide text-dark-fg4"
+                        >
+                          {option.label}
+                        </div>
+                        <div class="space-y-1">
+                          {#each option.values as value (value.id)}
+                            <button
+                              class={`w-full rounded-md border px-2 py-1.5 text-left text-sm transition-colors duration-150 ${
+                                isBoardOptionValueSelected(option.id, value.id)
+                                  ? "border-primary-500 bg-dark-bgH text-primary-300"
+                                  : "border-dark-border bg-dark-bg text-dark-fg2 hover:bg-dark-bgH hover:text-dark-fg0"
+                              }`}
+                              onclick={() =>
+                                handleBoardOptionSelection(option.id, value.id)}
+                              title={value.label}
+                              aria-label={`Set ${option.label} to ${value.label}`}
+                            >
+                              <span class="block truncate">{value.label}</span>
+                            </button>
+                          {/each}
+                        </div>
+                      </section>
+                    {/each}
+                  </div>
+                {/if}
+              {:else}
+                <div class="px-1 py-2 text-sm text-dark-fg3">
+                  Board settings unavailable.
                 </div>
               {/if}
-            {:else}
-              <div class="px-1 py-2 text-sm text-dark-fg3">
-                Board settings unavailable.
-              </div>
-            {/if}
-          </div>
-        {/if}
+            </div>
+          {/if}
+        </div>
       </div>
-    </div>
 
-    <button
-      class={`${primaryIconButtonClass} [-webkit-app-region:no-drag]`}
-      onclick={() => void compileActiveSketch()}
-      disabled={compileDisabled}
-      title={compileTooltip}
-      aria-label="Compile active sketch"
-    >
-      {#if compileBusy}
-        <Loader class="h-4 w-4 animate-spin" />
-      {:else}
-        <Hammer class="h-4 w-4" />
-      {/if}
-      <span class="sr-only">Compile</span>
-    </button>
-
-    <button
-      class={`${uploadBusy ? cancelIconButtonClass : primaryIconButtonClass} [-webkit-app-region:no-drag]`}
-      onclick={onUploadButtonClick}
-      disabled={uploadButtonDisabled}
-      title={uploadTooltip}
-      aria-label={uploadBusy ? "Cancel upload" : "Upload active sketch"}
-    >
-      {#if uploadBusy}
-        {#if uploadCancelBusy}
-          <Loader class="h-4 w-4 animate-spin" />
+      <button
+        class={`${primaryIconButtonClass} ml-2 [-webkit-app-region:no-drag]`}
+        onclick={() => void compileActiveSketch()}
+        disabled={compileDisabled}
+        title={compileTooltip}
+        aria-label="Compile active sketch"
+      >
+        {#if compileBusy}
+          <Loader class="h-5 w-5 animate-spin" />
         {:else}
-          <X class="h-4 w-4" />
+          <SquareCheckBig class="h-5 w-5" />
         {/if}
-      {:else}
-        <Upload class="h-4 w-4" />
-      {/if}
-      <span class="sr-only">{uploadBusy ? "Cancel upload" : "Upload"}</span>
-    </button>
-  </div>
+        <span class="sr-only">Compile</span>
+      </button>
 
-  {#if portsError || boardsError}
-    <div class="mt-2 flex flex-wrap items-center gap-3 text-xs">
-      {#if portsError}
-        <span class="text-dark-red">Ports: {portsError}</span>
-      {/if}
-      {#if boardsError}
-        <span class="text-dark-red">Boards: {boardsError}</span>
-      {/if}
+      <button
+        class={`${uploadBusy ? cancelIconButtonClass : primaryIconButtonClass} [-webkit-app-region:no-drag]`}
+        onclick={onUploadButtonClick}
+        disabled={uploadButtonDisabled}
+        title={uploadTooltip}
+        aria-label={uploadBusy ? "Cancel upload" : "Upload active sketch"}
+      >
+        {#if uploadBusy}
+          {#if uploadCancelBusy}
+            <Loader class="h-5 w-5 animate-spin" />
+          {:else}
+            <X class="h-5 w-5" />
+          {/if}
+        {:else}
+          <Upload class="h-5 w-5" />
+        {/if}
+        <span class="sr-only">{uploadBusy ? "Cancel upload" : "Upload"}</span>
+      </button>
     </div>
-  {/if}
+  </div>
 </header>
