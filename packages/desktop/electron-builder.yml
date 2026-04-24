@@ -1,0 +1,23 @@
+appId: ai.exort.desktop
+productName: Exort
+asar: true
+npmRebuild: true
+directories:
+  output: release
+files:
+  - out/**/*
+  - package.json
+  - resources/**/*
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+    - zip
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

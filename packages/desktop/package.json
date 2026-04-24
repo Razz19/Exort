@@ -1,13 +1,19 @@
 {
   "name": "@exort/desktop",
+  "description": "Exort desktop app for embedded development with an OpenCode-powered AI coding agent.",
   "version": "0.1.0",
   "license": "AGPL-3.0-only",
   "private": true,
+  "author": {
+    "name": "Ehsan Motamedi",
+    "email": ""
+  },
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "release": "npm run build && electron-builder --config electron-builder.yml --publish never",
     "preview": "electron-vite preview",
     "requirements:status": "tsx src/main/requirements/cli.ts status",
     "requirements:install": "tsx src/main/requirements/cli.ts install",
@@ -32,7 +38,8 @@
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@types/node": "^22.10.5",
     "autoprefixer": "^10.4.20",
-    "electron": "^34.0.2",
+    "electron": "34.0.2",
+    "electron-builder": "^24.13.3",
     "electron-vite": "^3.0.0",
     "eslint": "^9.25.0",
     "eslint-plugin-svelte": "^2.46.1",

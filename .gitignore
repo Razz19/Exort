@@ -11,7 +11,7 @@ out
 coverage
 .vite
 .svelte-kit
-docs
+docs/*
+packages/desktop/release
 packages/server/prisma/dev.db
 packages/server/prisma/dev.db-journal
-
