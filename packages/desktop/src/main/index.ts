@@ -1,4 +1,14 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell, webContents } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeImage,
+  shell,
+  webContents,
+  type MenuItemConstructorOptions
+} from 'electron';
 import Store from 'electron-store';
 import { promises as fs, watch, watchFile, unwatchFile, type FSWatcher } from 'node:fs';
 import path from 'node:path';
@@ -139,10 +149,45 @@ const CHAT_MAX_WIDTH_PCT = 65;
 const EDITOR_MIN_WIDTH_PCT = 45;
 const EDITOR_MAX_WIDTH_PCT = 85;
 const MAX_RECENT_WORKSPACES = 12;
+const APP_NAME = 'Exort';
 const SERIAL_BAUD_RATE_DEFAULT = 9600;
 const SERIAL_BUFFER_SIZE_DEFAULT = 500;
 const SERIAL_BUFFER_SIZE_MIN = 100;
 const SERIAL_BUFFER_SIZE_MAX = 5000;
+
+app.setName(APP_NAME);
+
+function configureApplicationMenu(): void {
+  const template: MenuItemConstructorOptions[] = process.platform === 'darwin'
+    ? [
+        {
+          label: APP_NAME,
+          submenu: [
+            { label: `About ${APP_NAME}`, role: 'about' },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { label: `Hide ${APP_NAME}`, role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { label: `Quit ${APP_NAME}`, role: 'quit' }
+          ]
+        },
+        { role: 'fileMenu' },
+        { role: 'editMenu' },
+        { role: 'viewMenu' },
+        { role: 'windowMenu' }
+      ]
+    : [
+        { role: 'fileMenu' },
+        { role: 'editMenu' },
+        { role: 'viewMenu' },
+        { role: 'windowMenu' }
+      ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -577,6 +622,7 @@ function createWindow(): void {
     minHeight: 680,
     backgroundColor: '#0f1117',
     icon: APP_ICON_PATH,
+    title: APP_NAME,
     titleBarStyle: isMac ? 'hiddenInset' : undefined,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.mjs'),
@@ -594,6 +640,11 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  app.setAboutPanelOptions({
+    applicationName: APP_NAME
+  });
+  configureApplicationMenu();
+
   if (process.platform === 'darwin') {
     const appIcon = nativeImage.createFromPath(APP_ICON_PATH);
     if (!appIcon.isEmpty()) {
