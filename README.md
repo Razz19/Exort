@@ -2,6 +2,8 @@
 
 Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent. Write code, compile, upload, and interact with your hardware all in one place.
 
+This repo also contains a separate SSR web landing app in `packages/web`, built with SvelteKit and Tailwind CSS. No backend or hosted platform is introduced as part of that package.
+
 
 ![Exort application screenshot](assets/app.png)
 
@@ -49,6 +51,8 @@ npm install
 
 ```bash
 npm run dev
+npm run dev:web
+npm run dev:all
 ```
 
 ### Validation
@@ -56,7 +60,11 @@ npm run dev
 ```bash
 npm run lint
 npm run typecheck
+npm run typecheck:web
+npm run typecheck:all
 npm run build
+npm run build:web
+npm run build:all
 ```
 
 

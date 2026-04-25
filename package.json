@@ -13,12 +13,19 @@
   ],
   "scripts": {
     "dev": "npm --workspace @exort/desktop run dev",
+    "dev:web": "npm --workspace @exort/web run dev",
+    "dev:all": "turbo run dev",
     "build": "npm --workspace @exort/desktop run build",
+    "build:web": "npm --workspace @exort/web run build",
+    "build:all": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "npm --workspace @exort/desktop run typecheck",
+    "typecheck:web": "npm --workspace @exort/web run typecheck",
+    "typecheck:all": "turbo run typecheck",
     "format": "turbo run format"
   },
   "devDependencies": {
+    "electron": "34.0.2",
     "turbo": "^2.3.3",
     "typescript": "^5.7.3"
   }
