@@ -163,7 +163,6 @@ type LoadOpenCodeSessionHistoryParams = {
 
 const workspaceSessions = new Map<string, string>();
 const loggedSessionIds = new Set<string>();
-const ANSI_BLUE = '\u001b[34m';
 const ANSI_GREEN = '\u001b[32m';
 const ANSI_RESET = '\u001b[0m';
 
@@ -2105,10 +2104,6 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
         .map((part) => getFirstString(part.type) ?? 'unknown')
         .filter((value) => value.length > 0)
         .join(',');
-      log(`${ANSI_BLUE}history:row id=${id} role=${role} parts=${partTypes || 'none'} contentLen=${content.length}${ANSI_RESET}`);
-      if (role === 'assistant' && content.length === 0) {
-        log(`${ANSI_BLUE}history:row:empty id=${id} raw=${serializeForLog(row, 2500)}${ANSI_RESET}`);
-      }
       if (!content) {
         return null;
       }

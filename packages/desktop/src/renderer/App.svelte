@@ -1976,11 +1976,6 @@
       turnWorkspaceRoot,
       [],
     );
-    console.info("[ExortDebug] turn:init", {
-      workspaceRoot: turnWorkspaceRoot,
-      sessionId: turnSessionId,
-      assistantMessageId,
-    });
 
     const persistedModelId = appStateSnapshot.providers.openai.selectedModelId;
     try {
@@ -2079,11 +2074,6 @@
           assistantMessageId,
           streamEvent.messageId,
         );
-        console.info("[ExortDebug] turn:assistant-message-updated", {
-          fromMessageId: assistantMessageId,
-          toMessageId: streamEvent.messageId,
-          renamed,
-        });
 
         if (renamed) {
           const renamedSyncState = renameMessageIdInSyncState({
@@ -2315,27 +2305,11 @@
       if (!run.ok) {
         throw new Error(run.error ?? "Agent runtime failed");
       }
-      console.info("[ExortDebug] turn:run-complete", {
-        workspaceRoot: turnWorkspaceRoot,
-        sessionId: turnSessionId,
-        assistantMessageId,
-        completionLength: completion.length,
-      });
       if (completion.trim().length === 0) {
         const history = await window.electronAPI.getAgentHistory({
           workspaceRoot: turnWorkspaceRoot,
           limit: 5,
           sessionId: turnSessionId ?? undefined,
-        });
-        console.info("[ExortDebug] turn:history-fallback", {
-          ok: history.ok,
-          error: history.ok ? undefined : history.error,
-          count: history.messages?.length ?? 0,
-          messages: (history.messages ?? []).map((message) => ({
-            id: message.id,
-            role: message.role,
-            contentLength: message.content.length,
-          })),
         });
         if (history.ok) {
           const lastAssistant = [...(history.messages ?? [])]
@@ -2352,18 +2326,6 @@
               assistantMessageId,
               completion,
             );
-            console.info("[ExortDebug] turn:history-fallback-applied", {
-              assistantMessageId,
-              loadedMessageId: lastAssistant.id,
-              contentLength: completion.length,
-              currentMessages: getMessagesForWorkspaceRoot(turnWorkspaceRoot).map(
-                (message) => ({
-                  id: message.id,
-                  role: message.role,
-                  contentLength: message.content.length,
-                }),
-              ),
-            });
           }
         }
       }
