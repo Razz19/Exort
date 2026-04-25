@@ -90,4 +90,4 @@ npm run build:all
 
 
 ## License
-Exort is licensed under `AGPL-3.0-only`. See [LICENSE](LICENSE).
+Exort is licensed under `AGPL-3.0-only`. See [LICENSE](LICENSE)
