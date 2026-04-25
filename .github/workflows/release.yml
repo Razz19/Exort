@@ -82,7 +82,8 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-win32-x64-msvc@${ROLLUP_VERSION}"
+          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-win32-x64-msvc@${ROLLUP_VERSION}"
 
       - name: Build desktop release artifacts
         run: npm --workspace @exort/desktop run release
@@ -115,7 +116,8 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-arm64@${ROLLUP_VERSION}"
+          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-darwin-arm64@${ROLLUP_VERSION}"
 
       - name: Build desktop release artifacts
         env:
@@ -150,7 +152,8 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-x64@${ROLLUP_VERSION}"
+          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-darwin-x64@${ROLLUP_VERSION}"
 
       - name: Build desktop release artifacts
         env:
@@ -185,7 +188,8 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
+          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
+          npm install --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
 
       - name: Build desktop release artifacts
         run: npm --workspace @exort/desktop run release
