@@ -15,6 +15,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "install-app-deps": "electron-builder install-app-deps",
+    "package": "electron-builder --config electron-builder.yml --publish never",
     "release": "npm run build && electron-builder --config electron-builder.yml --publish never",
     "preview": "electron-vite preview",
     "requirements:status": "tsx src/main/requirements/cli.ts status",

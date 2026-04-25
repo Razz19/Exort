@@ -84,11 +84,14 @@ jobs:
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
           npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-win32-x64-msvc@${ROLLUP_VERSION}"
 
+      - name: Build desktop bundle
+        run: npm --workspace @exort/desktop run build
+
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
-      - name: Build desktop release artifacts
-        run: npm --workspace @exort/desktop run release
+      - name: Package desktop release artifacts
+        run: npm --workspace @exort/desktop run package
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -120,13 +123,16 @@ jobs:
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
           npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-arm64@${ROLLUP_VERSION}"
 
+      - name: Build desktop bundle
+        run: npm --workspace @exort/desktop run build
+
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
-      - name: Build desktop release artifacts
+      - name: Package desktop release artifacts
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npm --workspace @exort/desktop run release
+        run: npm --workspace @exort/desktop run package
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -158,13 +164,16 @@ jobs:
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
           npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-x64@${ROLLUP_VERSION}"
 
+      - name: Build desktop bundle
+        run: npm --workspace @exort/desktop run build
+
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
-      - name: Build desktop release artifacts
+      - name: Package desktop release artifacts
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npm --workspace @exort/desktop run release
+        run: npm --workspace @exort/desktop run package
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -196,11 +205,14 @@ jobs:
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
           npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
 
+      - name: Build desktop bundle
+        run: npm --workspace @exort/desktop run build
+
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
-      - name: Build desktop release artifacts
-        run: npm --workspace @exort/desktop run release
+      - name: Package desktop release artifacts
+        run: npm --workspace @exort/desktop run package
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
