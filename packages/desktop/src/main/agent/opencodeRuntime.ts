@@ -163,6 +163,7 @@ type LoadOpenCodeSessionHistoryParams = {
 
 const workspaceSessions = new Map<string, string>();
 const loggedSessionIds = new Set<string>();
+const ANSI_BLUE = '\u001b[34m';
 const ANSI_GREEN = '\u001b[32m';
 const ANSI_RESET = '\u001b[0m';
 
@@ -1924,14 +1925,105 @@ function extractSessionMessageRows(response: unknown): Array<Record<string, unkn
   return [];
 }
 
+function extractHistoryRowParts(row: Record<string, unknown>): Array<Record<string, unknown>> {
+  if (Array.isArray(row.parts)) {
+    return asPartArray(row.parts);
+  }
+
+  const message = asRecord(row.message);
+  if (Array.isArray(message.parts)) {
+    return asPartArray(message.parts);
+  }
+
+  const data = asRecord(row.data);
+  if (Array.isArray(data.parts)) {
+    return asPartArray(data.parts);
+  }
+
+  const dataMessage = asRecord(data.message);
+  if (Array.isArray(dataMessage.parts)) {
+    return asPartArray(dataMessage.parts);
+  }
+
+  return [];
+}
+
+function renderDirectHistoryContent(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (typeof entry === 'string') return entry;
+        const record = asRecord(entry);
+        return getFirstString(record.text, record.content, record.delta) ?? '';
+      })
+      .join('');
+  }
+
+  const record = asRecord(value);
+  return (
+    getFirstString(
+      record.text,
+      record.content,
+      record.delta,
+      record.output,
+      record.response
+    ) ?? ''
+  );
+}
+
+function extractDirectHistoryMessageContent(row: Record<string, unknown>): string {
+  const info = asRecord(row.info);
+  const message = asRecord(row.message);
+  const data = asRecord(row.data);
+  const dataMessage = asRecord(data.message);
+
+  const candidates = [
+    row.content,
+    row.text,
+    row.delta,
+    row.output,
+    row.response,
+    message.content,
+    message.text,
+    message.delta,
+    message.output,
+    message.response,
+    data.content,
+    data.text,
+    data.delta,
+    data.output,
+    data.response,
+    dataMessage.content,
+    dataMessage.text,
+    dataMessage.delta,
+    dataMessage.output,
+    dataMessage.response,
+    info.content,
+    info.text
+  ];
+
+  for (const candidate of candidates) {
+    const content = renderDirectHistoryContent(candidate);
+    if (content.trim().length > 0) {
+      return content;
+    }
+  }
+
+  return '';
+}
+
 function renderHistoryMessageContent(role: 'user' | 'assistant', parts: Array<Record<string, unknown>>): string {
   let content = '';
 
   for (const part of parts) {
     const partType = getFirstString(part.type) ?? '';
 
-    if (partType === 'text') {
-      content += getFirstString(part.text) ?? '';
+    if (partType === 'text' || partType === 'output_text' || partType === 'assistant_text') {
+      content += getFirstString(part.text, part.content, part.delta) ?? '';
       continue;
     }
 
@@ -1989,13 +2081,34 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
   const parsed = rows
     .map((row, index) => {
       const info = asRecord(row.info);
-      const role = getFirstString(info.role);
+      const message = asRecord(row.message);
+      const data = asRecord(row.data);
+      const dataMessage = asRecord(data.message);
+      const role = getFirstString(
+        info.role,
+        row.role,
+        message.role,
+        data.role,
+        dataMessage.role
+      );
       if (role !== 'user' && role !== 'assistant') {
+        const id = getFirstString(info.id, row.id, message.id, dataMessage.id) ?? `${sessionId}-${index}`;
+        log(`history:row:skip id=${id} reason=role role=${getFirstString(info.role, row.role, message.role, data.role, dataMessage.role) ?? 'unknown'}`);
         return null;
       }
 
-      const parts = asPartArray(row.parts);
-      const content = renderHistoryMessageContent(role, parts);
+      const parts = extractHistoryRowParts(row);
+      const content =
+        renderHistoryMessageContent(role, parts) || extractDirectHistoryMessageContent(row);
+      const id = getFirstString(info.id, row.id, message.id, dataMessage.id) ?? `${sessionId}-${index}`;
+      const partTypes = parts
+        .map((part) => getFirstString(part.type) ?? 'unknown')
+        .filter((value) => value.length > 0)
+        .join(',');
+      log(`${ANSI_BLUE}history:row id=${id} role=${role} parts=${partTypes || 'none'} contentLen=${content.length}${ANSI_RESET}`);
+      if (role === 'assistant' && content.length === 0) {
+        log(`${ANSI_BLUE}history:row:empty id=${id} raw=${serializeForLog(row, 2500)}${ANSI_RESET}`);
+      }
       if (!content) {
         return null;
       }
@@ -2003,7 +2116,6 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
       const time = asRecord(info.time);
       const createdAt = toIsoDateTime(time.created);
       const createdEpoch = getFirstNumber(time.created) ?? 0;
-      const id = getFirstString(info.id) ?? `${sessionId}-${index}`;
 
       return {
         id,

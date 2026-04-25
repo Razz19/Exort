@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import type { ToolContext } from './agent/toolTypes.js';
+import { withRuntimePathEnv } from './runtimeEnv.js';
 
 import arduinoCompileTool from './agent/tools/arduinoCompile.js';
 
@@ -412,7 +413,7 @@ async function runArduinoCli(args: string[], options: RunArduinoCliOptions = {})
   return new Promise((resolve) => {
     const proc = spawn('arduino-cli', args, {
       cwd: options.cwd,
-      env: options.env,
+      env: withRuntimePathEnv(options.env),
       signal: options.signal
     });
     let stdout = '';
@@ -535,7 +536,7 @@ async function createWorkspaceTempEnv(workspaceRoot: string): Promise<NodeJS.Pro
   await fs.mkdir(tempRoot, { recursive: true });
 
   return {
-    ...process.env,
+    ...withRuntimePathEnv(),
     TMPDIR: tempRoot,
     TMP: tempRoot,
     TEMP: tempRoot,

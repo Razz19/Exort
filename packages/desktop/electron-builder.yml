@@ -1,6 +1,8 @@
 appId: ai.exort.desktop
 productName: Exort
 asar: true
+asarUnpack:
+  - out/main/opencode-config/**/*
 npmRebuild: true
 directories:
   output: release

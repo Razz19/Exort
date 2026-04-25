@@ -43,6 +43,49 @@ const SKETCH_DISCOVERY_IGNORE = new Set([
   '.vscode'
 ]);
 
+function getRuntimePathKey(env: NodeJS.ProcessEnv): string {
+  if (process.platform !== 'win32') return 'PATH';
+  return Object.keys(env).find((key) => key.toLowerCase() === 'path') ?? 'Path';
+}
+
+function buildRuntimePathEntries(): string[] {
+  const home = process.env.HOME;
+  const entries = process.platform === 'darwin'
+    ? [
+        '/opt/homebrew/bin',
+        '/opt/homebrew/sbin',
+        '/usr/local/bin',
+        '/usr/local/sbin',
+        '/opt/local/bin',
+        '/opt/local/sbin'
+      ]
+    : process.platform === 'linux'
+      ? ['/usr/local/bin', '/usr/local/sbin', '/usr/bin', '/usr/sbin']
+      : [];
+
+  if (home) {
+    entries.push(path.join(home, '.local', 'bin'));
+    entries.push(path.join(home, 'bin'));
+  }
+
+  return entries;
+}
+
+function withToolRuntimePathEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const nextEnv: NodeJS.ProcessEnv = { ...env };
+  const pathKey = getRuntimePathKey(nextEnv);
+  const existingRaw = typeof nextEnv[pathKey] === 'string' ? nextEnv[pathKey] : '';
+  const existingEntries = existingRaw
+    .split(path.delimiter)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  const merged = [...buildRuntimePathEntries(), ...existingEntries].filter(
+    (entry, index, array) => array.indexOf(entry) === index
+  );
+  nextEnv[pathKey] = merged.join(path.delimiter);
+  return nextEnv;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   if (typeof value === 'object' && value !== null) {
     return value as Record<string, unknown>;
@@ -276,7 +319,7 @@ async function runArduinoCompile(
   await fs.mkdir(tempRoot, { recursive: true });
 
   const runtimeEnv: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...withToolRuntimePathEnv(),
     TMPDIR: tempRoot,
     TMP: tempRoot,
     TEMP: tempRoot,

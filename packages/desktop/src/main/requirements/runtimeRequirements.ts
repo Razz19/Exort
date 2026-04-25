@@ -6,6 +6,7 @@ import {
   type OpenCodeBinarySource
 } from '../agent/openCodeBinary.js';
 import { ensureOpenCodeIsolation, getOpenCodeIsolationStatus } from '../agent/openCodeIsolation.js';
+import { withRuntimePathEnv } from '../runtimeEnv.js';
 import { installOpenCodeFromReleaseAssets } from './opencodeReleaseInstaller.js';
 
 export type RequirementId = 'opencode' | 'arduino-cli';
@@ -132,7 +133,7 @@ async function runCommand(params: {
   return new Promise((resolve) => {
     const proc = spawn(params.command, args, {
       shell,
-      env: params.env,
+      env: withRuntimePathEnv(params.env),
       stdio: ['ignore', 'pipe', 'pipe']
     });
 

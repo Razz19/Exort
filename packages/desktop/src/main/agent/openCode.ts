@@ -227,10 +227,26 @@ function isOpenCodeConfigDir(candidate: string): boolean {
   return existsSync(path.join(candidate, OPENCODE_TOOLS_DIR_NAME));
 }
 
+function toAsarUnpackedPath(candidate: string): string {
+  const marker = `${path.sep}app.asar${path.sep}`;
+  if (candidate.includes(marker)) {
+    return candidate.replace(marker, `${path.sep}app.asar.unpacked${path.sep}`);
+  }
+
+  const suffix = `${path.sep}app.asar`;
+  if (candidate.endsWith(suffix)) {
+    return `${candidate.slice(0, -suffix.length)}${path.sep}app.asar.unpacked`;
+  }
+
+  return candidate;
+}
+
 function resolveOpenCodeConfigSourceDir(): string {
   const runtimeDirectory = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
+    path.resolve(toAsarUnpackedPath(runtimeDirectory), OPENCODE_CONFIG_DIR_NAME),
     path.resolve(runtimeDirectory, OPENCODE_CONFIG_DIR_NAME),
+    toAsarUnpackedPath(runtimeDirectory),
     runtimeDirectory
   ];
 
