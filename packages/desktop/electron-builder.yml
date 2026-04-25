@@ -3,7 +3,7 @@ productName: Exort
 asar: true
 asarUnpack:
   - out/main/opencode-config/**/*
-npmRebuild: true
+npmRebuild: false
 directories:
   output: release
   buildResources: resources

@@ -82,10 +82,10 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
-          rm -rf node_modules/7zip-bin
-          npm install --force --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-win32-x64-msvc@${ROLLUP_VERSION}"
-          test -f node_modules/7zip-bin/win/x64/7za.exe
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-win32-x64-msvc@${ROLLUP_VERSION}"
+
+      - name: Rebuild app native dependencies
+        run: npm --workspace @exort/desktop run install-app-deps
 
       - name: Build desktop release artifacts
         run: npm --workspace @exort/desktop run release
@@ -118,10 +118,10 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
-          rm -rf node_modules/7zip-bin
-          npm install --force --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-darwin-arm64@${ROLLUP_VERSION}"
-          test -f node_modules/7zip-bin/mac/arm64/7za
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-arm64@${ROLLUP_VERSION}"
+
+      - name: Rebuild app native dependencies
+        run: npm --workspace @exort/desktop run install-app-deps
 
       - name: Build desktop release artifacts
         env:
@@ -156,10 +156,10 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
-          rm -rf node_modules/7zip-bin
-          npm install --force --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-darwin-x64@${ROLLUP_VERSION}"
-          test -f node_modules/7zip-bin/mac/x64/7za
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-darwin-x64@${ROLLUP_VERSION}"
+
+      - name: Rebuild app native dependencies
+        run: npm --workspace @exort/desktop run install-app-deps
 
       - name: Build desktop release artifacts
         env:
@@ -194,10 +194,10 @@ jobs:
         run: |
           ELECTRON_VERSION="$(node -p "require('./packages/desktop/package.json').devDependencies.electron")"
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
-          SEVENZIP_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/7zip-bin'].version")"
-          rm -rf node_modules/7zip-bin
-          npm install --force --no-save "electron@${ELECTRON_VERSION}" "7zip-bin@${SEVENZIP_VERSION}" "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
-          test -f node_modules/7zip-bin/linux/x64/7za
+          npm install --no-save "electron@${ELECTRON_VERSION}" "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
+
+      - name: Rebuild app native dependencies
+        run: npm --workspace @exort/desktop run install-app-deps
 
       - name: Build desktop release artifacts
         run: npm --workspace @exort/desktop run release
