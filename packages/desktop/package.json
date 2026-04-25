@@ -14,9 +14,9 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "install-app-deps": "electron-builder install-app-deps",
-    "package": "electron-builder --config electron-builder.yml --publish never",
-    "release": "npm run build && electron-builder --config electron-builder.yml --publish never",
+    "install-app-deps": "node ../../node_modules/electron-builder/cli.js install-app-deps",
+    "package": "node ../../node_modules/electron-builder/cli.js --config electron-builder.yml --publish never",
+    "release": "npm run build && node ../../node_modules/electron-builder/cli.js --config electron-builder.yml --publish never",
     "preview": "electron-vite preview",
     "requirements:status": "tsx src/main/requirements/cli.ts status",
     "requirements:install": "tsx src/main/requirements/cli.ts install",

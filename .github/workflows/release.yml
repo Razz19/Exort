@@ -27,9 +27,10 @@ jobs:
         with:
           node-version: 22.21.1
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Typecheck
         run: npm run typecheck
@@ -65,6 +66,7 @@ jobs:
         with:
           node-version: 22.21.1
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -75,7 +77,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Install root Electron and Rollup native package
         shell: bash
@@ -112,9 +114,10 @@ jobs:
         with:
           node-version: 22.21.1
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Install root Electron and Rollup native package
         shell: bash
@@ -153,9 +156,10 @@ jobs:
         with:
           node-version: 22.21.1
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Install root Electron and Rollup native package
         shell: bash
@@ -194,9 +198,10 @@ jobs:
         with:
           node-version: 22.21.1
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Install root Electron and Rollup native package
         shell: bash
@@ -237,14 +242,23 @@ jobs:
           merge-multiple: true
           path: release-assets
 
+      - name: Generate release checksums
+        shell: bash
+        run: |
+          cd release-assets
+          sha256sum *.exe *.dmg *.AppImage > SHA256SUMS.txt
+
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: Exort ${{ needs.validate.outputs.tag }}
           draft: true
+          prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
+          generate_release_notes: true
           overwrite_files: true
           files: |
             release-assets/*.exe
             release-assets/*.dmg
             release-assets/*.AppImage
+            release-assets/SHA256SUMS.txt
