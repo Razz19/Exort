@@ -57,14 +57,12 @@
 <div class="min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]">
   <nav class="sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-      <a href="#top" class="flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--color-surface-strong)] text-lg font-semibold text-[color:var(--color-accent)] shadow-[0_12px_30px_rgba(247,84,0,0.18)]">
-          E
-        </span>
-        <div>
-          <p class="text-base font-semibold tracking-[0.2em] text-white">EXORT</p>
-          <p class="text-xs text-[color:var(--color-text-muted)]">Embedded desktop workspace</p>
-        </div>
+      <a href="#top" class="flex items-center">
+        <img
+          src="/exort-typography-logo3.png"
+          alt="Exort AI"
+          class="h-5 w-auto sm:h-6"
+        />
       </a>
 
       <div class="hidden items-center gap-8 md:flex">
