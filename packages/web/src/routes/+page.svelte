@@ -13,7 +13,7 @@
     'and hardware tools in one app.'
   ];
 
-  const features = [
+  const featureStats = [
     {
       title: 'AI Coding Workspace',
       description:
@@ -43,6 +43,52 @@
       title: 'Board Platform Support',
       description:
         'Work with Arduino CLI platforms including Arduino, ESP32, ESP8266, RP2040, STM32, Teensy, and more from one desktop app.'
+    }
+  ];
+
+  const featureTiles = [
+    {
+      eyebrow: 'Live Workspace',
+      title: 'Desktop flow in motion',
+      description: 'Real Exort session capture inside the app shell.',
+      variant: 'feature-media feature-media--video'
+    },
+    {
+      eyebrow: 'Serial Monitor',
+      title: 'Inspect device output in real time.',
+      description:
+        '',
+      variant: 'feature-media feature-media--image'
+    },
+    {
+      eyebrow: 'Compile And Upload',
+      title: 'Build firmware and push it to the board from one place.',
+      description: 'Keep compile, upload, and verification in the same desktop loop.',
+      variant: 'feature-tile--compact feature-tile--compact-small'
+    },
+    {
+      eyebrow: 'Board And Port',
+      title: 'Connect to real hardware without context switching.',
+      description: 'Select the board, choose the serial port, and move directly into device testing.',
+      variant: 'feature-tile--compact'
+    },
+    {
+      eyebrow: 'Workspace Memory',
+      title: 'Persist projects, tabs, and local state between sessions.',
+      description: 'Return to ongoing embedded work without rebuilding your setup every time.',
+      variant: 'feature-tile--compact'
+    },
+    {
+      eyebrow: 'Plotter',
+      title: 'Visualize live data streams when tuning device behavior.',
+      description: 'Use built-in plotting for signals and telemetry that need more than raw text.',
+      variant: 'feature-tile--compact'
+    },
+    {
+      eyebrow: 'Model Flexibility',
+      title: 'Use OpenCode models or connect your own provider stack.',
+      description: 'Adapt Exort to the models and workflows your team already uses.',
+      variant: 'feature-tile--wide'
     }
   ];
 
@@ -374,21 +420,66 @@
         </p>
       </div>
 
-      <div class="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {#each features as feature, index}
+      <div class="feature-showcase mt-12">
+        <div
+          bind:this={featureCardEls[0]}
+          class={featureTiles[0].variant}
+        >
+          <div class="feature-media__head">
+            <span class="feature-tile__eyebrow">{featureTiles[0].eyebrow}</span>
+          </div>
+          <video
+            class="feature-video"
+            src="/screen-record.mov"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+          ></video>
+          <p class="feature-tile__description">{featureTiles[0].description}</p>
+        </div>
+
+        <div
+          bind:this={featureCardEls[1]}
+          class={featureTiles[1].variant}
+        >
+          <div class="feature-media__head">
+            <span class="feature-tile__eyebrow">{featureTiles[1].eyebrow}</span>
+          </div>
+          <img src="/monitor.png" alt="Exort serial monitor view" class="feature-monitor" />
+          <p class="feature-tile__description">{featureTiles[1].description}</p>
+        </div>
+
+        {#each featureTiles.slice(2, 6) as feature, index}
           <article
-            bind:this={featureCardEls[index]}
-            class="feature-card rounded-3xl bg-[color:var(--color-surface)] p-6 shadow-[0_18px_48px_rgba(0,0,0,0.14)] backdrop-blur-2xl transition hover:bg-[color:var(--color-surface-strong)]"
+            bind:this={featureCardEls[index + 2]}
+            class={`feature-tile ${feature.variant}`}
           >
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--color-surface-strong)] text-sm font-semibold text-[color:var(--color-accent)] shadow-[0_10px_28px_rgba(247,84,0,0.16)]">
-              {feature.title.slice(0, 1)}
+            <div class="feature-tile__copy">
+              <span class="feature-tile__eyebrow">{feature.eyebrow}</span>
+              <h3 class="feature-tile__title feature-tile__title--compact">{feature.title}</h3>
+              <p class="feature-tile__description">{feature.description}</p>
             </div>
-            <h3 class="mt-5 text-xl font-semibold text-white">{feature.title}</h3>
-            <p class="mt-3 text-sm leading-7 text-[color:var(--color-text-muted)]">
-              {feature.description}
-            </p>
           </article>
         {/each}
+
+        <article
+          bind:this={featureCardEls[6]}
+          class={`feature-tile ${featureTiles[6].variant}`}
+        >
+          <div class="feature-tile__copy">
+            <span class="feature-tile__eyebrow">{featureTiles[6].eyebrow}</span>
+            <h3 class="feature-tile__title">{featureTiles[6].title}</h3>
+            <p class="feature-tile__description">{featureTiles[6].description}</p>
+          </div>
+
+          <div class="feature-pills">
+            {#each featureStats as feature}
+              <span class="feature-pill">{feature.title}</span>
+            {/each}
+          </div>
+        </article>
       </div>
     </section>
 
