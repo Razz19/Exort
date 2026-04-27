@@ -88,23 +88,16 @@
   </nav>
 
   <main id="top">
-    <section class="mx-auto grid max-w-7xl gap-16 px-6 pb-16 pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center lg:px-8 lg:pb-24 lg:pt-24">
-      <div class="max-w-2xl">
-        <span class="inline-flex rounded-full bg-[color:var(--color-surface)] px-3 py-1 text-xs font-medium uppercase tracking-[0.28em] text-[color:var(--color-accent-soft)] shadow-[0_10px_30px_rgba(0,0,0,0.14)]">
-          Embedded Development, Unified
-        </span>
-        <h1 class="mt-6 text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-          Build, compile, upload, and debug hardware in one focused desktop app.
+    <section class="mx-auto max-w-7xl px-6 pb-8 pt-14 lg:px-8 lg:pt-20">
+      <div class="max-w-3xl">
+        <h1 class="max-w-4xl text-3xl font-semibold leading-[1.02] text-white sm:text-4xl lg:max-w-5xl lg:text-5xl">
+          Embedded development with AI, code, and hardware tools in one app.
         </h1>
-        <p class="mt-6 text-base leading-8 text-[color:var(--color-text-muted)] sm:text-lg">
-          Exort is a desktop app for embedded development with an OpenCode-powered AI coding
-          agent. It brings AI chat, file editing, board management, compile and upload flows,
-          and serial tooling into a single workspace so embedded iteration stays fast and local.
-          You can run with free OpenCode models or connect your own provider setup for tools like
-          ChatGPT and Claude.
+        <p class="mt-4 max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base">
+          Edit, compile, upload, and monitor devices from one desktop workspace.
         </p>
 
-        <div class="mt-8 flex flex-col gap-4 sm:flex-row">
+        <div class="mt-7 flex flex-col gap-4 sm:flex-row">
           <a
             href="#try-exort"
             class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
@@ -118,31 +111,14 @@
             Explore Features
           </a>
         </div>
-
-        <dl class="mt-10 grid gap-5 pt-8 text-sm text-[color:var(--color-text-muted)] sm:grid-cols-3">
-          <div class="rounded-3xl bg-[color:var(--color-surface)] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
-            <dt class="text-2xl font-semibold text-white">All-in-one</dt>
-            <dd class="mt-2">Editor, agent, board tools, upload flow, and device output.</dd>
-          </div>
-          <div class="rounded-3xl bg-[color:var(--color-surface)] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
-            <dt class="text-2xl font-semibold text-white">Local-first</dt>
-            <dd class="mt-2">Workspace state and chat history are persisted locally.</dd>
-          </div>
-          <div class="rounded-3xl bg-[color:var(--color-surface)] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
-            <dt class="text-2xl font-semibold text-white">Arduino-ready</dt>
-            <dd class="mt-2">Supports Arduino CLI platforms across popular embedded boards.</dd>
-          </div>
-        </dl>
       </div>
 
-      <div class="relative">
-        <div class="overflow-hidden rounded-[2rem] bg-[color:var(--color-surface)] p-3 shadow-[0_30px_120px_rgba(0,0,0,0.26)] backdrop-blur-2xl">
-          <img
-            src="/exort-screenshot.png"
-            alt="Exort desktop application screenshot"
-            class="h-auto w-full rounded-[1.4rem] object-cover"
-          />
-        </div>
+      <div class="mt-10 overflow-hidden rounded-[2rem] bg-[rgba(239,237,238,0.03)] px-4 pt-4 shadow-[0_48px_120px_rgba(0,0,0,0.34)] sm:px-6 sm:pt-6 lg:mt-12 lg:rounded-[2.5rem] lg:px-10 lg:pt-8">
+        <img
+          src="/exort-screenshot.png"
+          alt="Exort desktop application screenshot"
+          class="h-auto w-full rounded-t-[1.5rem] object-cover object-top drop-shadow-[0_36px_80px_rgba(0,0,0,0.45)] lg:rounded-t-[2rem]"
+        />
       </div>
     </section>
 
