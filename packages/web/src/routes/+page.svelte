@@ -86,32 +86,43 @@
   </nav>
 
   <main id="top">
-    <section class="mx-auto max-w-7xl px-6 pb-8 pt-14 lg:px-8 lg:pt-20">
-      <div class="max-w-3xl">
-        <h1 class="max-w-4xl text-3xl font-semibold leading-[1.02] text-white sm:text-4xl lg:max-w-5xl lg:text-5xl">
-          Embedded development with AI, code, and hardware tools in one app.
-        </h1>
-        <p class="mt-4 max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base">
-          Edit, compile, upload, and monitor devices from one desktop workspace.
-        </p>
+    <section class="relative mx-auto max-w-7xl px-6 pb-8 pt-12 lg:px-8 lg:pt-16">
+      <div class="relative z-10 lg:grid lg:grid-cols-[minmax(0,1.28fr)_minmax(16rem,0.72fr)] lg:items-start lg:gap-8 xl:gap-12">
+        <div>
+          <h1 class="max-w-4xl text-3xl font-semibold leading-[1.02] text-white sm:text-4xl lg:max-w-5xl lg:text-5xl">
+            Embedded development with AI, code,
+           and hardware tools in one app.
+          </h1>
+          <p class="mt-4 max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base">
+            Edit, compile, upload, and monitor devices from one desktop workspace.
+          </p>
 
-        <div class="mt-7 flex flex-col gap-4 sm:flex-row">
-          <a
-            href="#try-exort"
-            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
-          >
-            Download Exort
-          </a>
-          <a
-            href="#features"
-            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-surface)] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(0,0,0,0.14)] transition hover:bg-[color:var(--color-surface-strong)]"
-          >
-            Explore Features
-          </a>
+          <div class="mt-6 flex flex-col gap-4 sm:flex-row">
+            <a
+              href="#try-exort"
+              class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
+            >
+              Download Exort
+            </a>
+            <a
+              href="#features"
+              class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-surface)] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(0,0,0,0.14)] transition hover:bg-[color:var(--color-surface-strong)]"
+            >
+              Explore Features
+            </a>
+          </div>
+        </div>
+
+        <div aria-hidden="true" class="pointer-events-none mt-6 hidden justify-end lg:mt-0 lg:flex">
+          <img
+            src="/exort-transparent-hair.png"
+            alt=""
+            class="w-full max-w-[17rem] xl:max-w-[20rem]"
+          />
         </div>
       </div>
 
-      <div class="relative left-1/2 -mt-2 w-[calc(100%+1.5rem)] max-w-none -translate-x-1/2 px-2 sm:-mt-1 sm:w-[calc(100%+3rem)] sm:px-0 lg:-mt-4 lg:w-[calc(100%+6rem)]">
+      <div class="relative left-1/2 z-10 -mt-8 w-[calc(100%+1.5rem)] max-w-none -translate-x-1/2 px-2 sm:-mt-6 sm:w-[calc(100%+3rem)] sm:px-0 lg:-mt-10 lg:w-[calc(100%+6rem)]">
         <img
           src="/exort-screenshot.png"
           alt="Exort desktop application screenshot"
