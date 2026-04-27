@@ -149,24 +149,11 @@
 
         if (heroScreenshotWrap) {
           gsap.from(heroScreenshotWrap, {
-            y: 34,
+            y: 24,
             opacity: 0,
-            duration: 1,
-            delay: 0.38,
-            ease: 'power3.out'
-          });
-        }
-
-        if (heroScreenshot) {
-          gsap.to(heroScreenshot, {
-            scale: 1.05,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: heroSection,
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 0.8
-            }
+            duration: 0.72,
+            delay: 0.22,
+            ease: 'power2.out'
           });
         }
 
@@ -364,7 +351,7 @@
           bind:this={heroScreenshot}
           src="/exort-screenshot.png"
           alt="Exort desktop application screenshot"
-          class="hero-screenshot h-auto w-full object-cover object-top drop-shadow-[0_48px_120px_rgba(0,0,0,0.46)]"
+          class="hero-screenshot h-auto w-full object-cover object-top "
         />
       </div>
     </section>

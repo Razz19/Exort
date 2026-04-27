@@ -65,19 +65,6 @@ html {
   isolation: isolate;
 }
 
-.site-shell::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: clamp(104px, 11vw, 148px) clamp(104px, 11vw, 148px);
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.42));
-}
-
 .site-nav {
   transition:
     background-color 220ms ease,
@@ -92,8 +79,10 @@ html {
 }
 
 .hero-grid {
-  position: absolute;
-  inset: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  margin-bottom: -100vh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
