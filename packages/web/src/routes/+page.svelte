@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <div class="relative left-1/2 mt-4 w-[calc(100%+1.5rem)] max-w-none -translate-x-1/2 px-2 sm:mt-5 sm:w-[calc(100%+3rem)] sm:px-0 lg:mt-3 lg:w-[calc(100%+6rem)]">
+      <div class="relative left-1/2 -mt-2 w-[calc(100%+1.5rem)] max-w-none -translate-x-1/2 px-2 sm:-mt-1 sm:w-[calc(100%+3rem)] sm:px-0 lg:-mt-4 lg:w-[calc(100%+6rem)]">
         <img
           src="/exort-screenshot.png"
           alt="Exort desktop application screenshot"
