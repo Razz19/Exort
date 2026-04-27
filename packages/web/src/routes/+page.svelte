@@ -111,11 +111,11 @@
         </div>
       </div>
 
-      <div class="mt-10 overflow-hidden rounded-[2rem] bg-[rgba(239,237,238,0.03)] px-4 pt-4 shadow-[0_48px_120px_rgba(0,0,0,0.34)] sm:px-6 sm:pt-6 lg:mt-12 lg:rounded-[2.5rem] lg:px-10 lg:pt-8">
+      <div class="relative left-1/2 mt-4 w-[calc(100%+1.5rem)] max-w-none -translate-x-1/2 px-2 sm:mt-5 sm:w-[calc(100%+3rem)] sm:px-0 lg:mt-3 lg:w-[calc(100%+6rem)]">
         <img
           src="/exort-screenshot.png"
           alt="Exort desktop application screenshot"
-          class="h-auto w-full rounded-t-[1.5rem] object-cover object-top drop-shadow-[0_36px_80px_rgba(0,0,0,0.45)] lg:rounded-t-[2rem]"
+          class="h-auto w-full object-cover object-top drop-shadow-[0_48px_120px_rgba(0,0,0,0.46)]"
         />
       </div>
     </section>
