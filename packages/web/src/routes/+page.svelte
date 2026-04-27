@@ -62,6 +62,14 @@
   ];
 
   let isNavScrolled = false;
+  let prefersReducedMotion = false;
+  let isHeroPointerActive = false;
+  let heroPointerTargetX = 50;
+  let heroPointerTargetY = 40;
+  let heroPointerRenderX = 50;
+  let heroPointerRenderY = 40;
+  let heroPointerX = '50%';
+  let heroPointerY = '40%';
   let heroSection: HTMLElement | null = null;
   let heroCopy: HTMLElement | null = null;
   let heroActions: HTMLElement | null = null;
@@ -75,6 +83,59 @@
   let featureCardEls: HTMLElement[] = [];
   let workflowCardEls: HTMLElement[] = [];
   let workflowStepEls: HTMLElement[] = [];
+  let heroTrailFrame = 0;
+  let heroTrailRunning = false;
+
+  const syncHeroTrail = () => {
+    heroPointerRenderX += (heroPointerTargetX - heroPointerRenderX) * 0.18;
+    heroPointerRenderY += (heroPointerTargetY - heroPointerRenderY) * 0.18;
+
+    heroPointerX = `${heroPointerRenderX.toFixed(2)}%`;
+    heroPointerY = `${heroPointerRenderY.toFixed(2)}%`;
+
+    const deltaX = Math.abs(heroPointerTargetX - heroPointerRenderX);
+    const deltaY = Math.abs(heroPointerTargetY - heroPointerRenderY);
+
+    if (isHeroPointerActive || deltaX > 0.05 || deltaY > 0.05) {
+      heroTrailFrame = window.requestAnimationFrame(syncHeroTrail);
+      return;
+    }
+
+    heroTrailRunning = false;
+    heroTrailFrame = 0;
+  };
+
+  const ensureHeroTrail = () => {
+    if (heroTrailRunning || typeof window === 'undefined') {
+      return;
+    }
+
+    heroTrailRunning = true;
+    heroTrailFrame = window.requestAnimationFrame(syncHeroTrail);
+  };
+
+  const handleHeroPointerMove = (event: MouseEvent) => {
+    if (!heroSection || prefersReducedMotion) {
+      return;
+    }
+
+    const rect = heroSection.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+    heroPointerTargetX = x;
+    heroPointerTargetY = y;
+    isHeroPointerActive = true;
+    ensureHeroTrail();
+  };
+
+  const handleHeroPointerEnter = (event: MouseEvent) => {
+    handleHeroPointerMove(event);
+  };
+
+  const handleHeroPointerLeave = () => {
+    isHeroPointerActive = false;
+  };
 
   onMount(() => {
     if (typeof window === 'undefined') {
@@ -89,6 +150,19 @@
     window.addEventListener('scroll', syncNavState, { passive: true });
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotion = mediaQuery.matches;
+    const syncReducedMotion = (event: MediaQueryListEvent) => {
+      prefersReducedMotion = event.matches;
+      if (event.matches) {
+        isHeroPointerActive = false;
+        if (heroTrailFrame) {
+          window.cancelAnimationFrame(heroTrailFrame);
+          heroTrailFrame = 0;
+        }
+        heroTrailRunning = false;
+      }
+    };
+    mediaQuery.addEventListener('change', syncReducedMotion);
 
     let cleanupAnimations = () => {};
 
@@ -236,6 +310,10 @@
 
     return () => {
       window.removeEventListener('scroll', syncNavState);
+      mediaQuery.removeEventListener('change', syncReducedMotion);
+      if (heroTrailFrame) {
+        window.cancelAnimationFrame(heroTrailFrame);
+      }
       cleanupAnimations();
     };
   });
@@ -281,17 +359,27 @@
   </nav>
 
   <main id="top">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <section
       bind:this={heroSection}
+      on:mouseenter={handleHeroPointerEnter}
+      on:mousemove={handleHeroPointerMove}
+      on:mouseleave={handleHeroPointerLeave}
       class="hero-section relative mx-auto max-w-7xl overflow-hidden px-6 pb-8 pt-12 lg:px-8 lg:pt-16"
     >
-      <div class="hero-grid" aria-hidden="true">
+      <div
+        class:hero-grid--active={isHeroPointerActive}
+        class="hero-grid"
+        style={`--wand-x:${heroPointerX};--wand-y:${heroPointerY};`}
+        aria-hidden="true"
+      >
         {#each heroPulseSegments as segment}
           <span
             class="hero-grid__pulse"
             style={`top:${segment.top};left:${segment.left};width:${segment.width};animation-delay:${segment.delay};animation-duration:${segment.duration};`}
           ></span>
         {/each}
+        <span class="hero-grid__highlight"></span>
       </div>
 
       <div class="relative z-10 lg:grid lg:grid-cols-[minmax(0,1.28fr)_minmax(16rem,0.72fr)] lg:items-start lg:gap-8 xl:gap-12">

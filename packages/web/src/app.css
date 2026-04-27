@@ -14,7 +14,9 @@
   --color-accent-soft: rgba(250, 189, 47, 0.82);
   --grid-line: rgba(168, 153, 132, 0.08);
   --grid-line-strong: rgba(168, 153, 132, 0.12);
-  --grid-pulse: rgba(142, 192, 124, 0.4);
+  --grid-line-highlight: rgba(254, 128, 25, 0.6);
+  --grid-line-highlight-soft: rgba(254, 128, 25, 0.24);
+  --grid-pulse: rgba(254, 128, 25, 0.36);
   --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.24);
   --shadow-strong: 0 26px 90px rgba(0, 0, 0, 0.3);
 }
@@ -94,6 +96,36 @@ html {
   background-size: clamp(118px, 12vw, 164px) clamp(118px, 12vw, 164px);
   opacity: 0.56;
   mask-image: radial-gradient(circle at center, black 44%, transparent 100%);
+}
+
+.hero-grid--active {
+  cursor: none;
+}
+
+.hero-grid__highlight {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  background-image:
+    linear-gradient(to right, var(--grid-line-highlight) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-highlight) 1px, transparent 1px);
+  background-size: clamp(118px, 12vw, 164px) clamp(118px, 12vw, 164px);
+  mask-image:
+    radial-gradient(circle at var(--wand-x, 50%) var(--wand-y, 50%), black 0, black 2.8rem, transparent 8.5rem);
+}
+
+.hero-grid--active .hero-grid__highlight {
+  opacity: 1;
+}
+
+.hero-grid__highlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at var(--wand-x, 50%) var(--wand-y, 50%), var(--grid-line-highlight-soft) 0, transparent 7rem);
+  filter: blur(8px);
 }
 
 .hero-grid__pulse {
