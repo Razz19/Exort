@@ -114,11 +114,18 @@
         </div>
 
         <div aria-hidden="true" class="pointer-events-none mt-6 hidden justify-end lg:mt-0 lg:flex">
-          <img
-            src="/exort-transparent-hair.png"
-            alt=""
-            class="w-full max-w-[17rem] xl:max-w-[20rem]"
-          />
+          <div class="relative w-full max-w-[17rem] xl:max-w-[20rem]">
+            <img
+              src="/2d-fire.gif"
+              alt=""
+              class="absolute inset-0 z-0 h-full w-full object-contain opacity-80"
+            />
+            <img
+              src="/exort-transparent-hair.png"
+              alt=""
+              class="relative z-10 w-full"
+            />
+          </div>
         </div>
       </div>
 
