@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+  --color-bg: #020617;
+  --color-surface: rgba(15, 23, 42, 0.78);
+  --color-surface-strong: rgba(30, 41, 59, 0.9);
+  --color-text: #e5eefb;
+  --color-text-muted: #93a4bf;
+  --color-accent: #6ee7f9;
+  --color-accent-soft: #8fe7f6;
+  --color-border: rgba(110, 231, 249, 0.16);
+  --color-border-strong: rgba(110, 231, 249, 0.32);
+}
+
 html,
 body {
   min-height: 100%;
@@ -9,4 +22,27 @@ body {
 
 body {
   margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    'SF Pro Display',
+    'Segoe UI',
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: rgba(110, 231, 249, 0.24);
+  color: white;
 }
