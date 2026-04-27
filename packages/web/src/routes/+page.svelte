@@ -380,9 +380,7 @@
             bind:this={featureCardEls[index]}
             class="feature-card rounded-3xl bg-[color:var(--color-surface)] p-6 shadow-[0_18px_48px_rgba(0,0,0,0.14)] backdrop-blur-2xl transition hover:bg-[color:var(--color-surface-strong)]"
           >
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--color-surface-strong)] text-sm font-semibold text-[color:var(--color-accent)] shadow-[0_10px_28px_rgba(247,84,0,0.16)]">
-              {feature.title.slice(0, 1)}
-            </div>
+            
             <h3 class="mt-5 text-xl font-semibold text-white">{feature.title}</h3>
             <p class="mt-3 text-sm leading-7 text-[color:var(--color-text-muted)]">
               {feature.description}
