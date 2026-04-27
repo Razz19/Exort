@@ -63,6 +63,7 @@
 
   let isNavScrolled = false;
   let prefersReducedMotion = false;
+  let supportsHeroPointerEffect = false;
   let isHeroPointerActive = false;
   let heroPointerTargetX = 50;
   let heroPointerTargetY = 40;
@@ -115,7 +116,7 @@
   };
 
   const handleHeroPointerMove = (event: MouseEvent) => {
-    if (!heroSection || prefersReducedMotion) {
+    if (!heroSection || prefersReducedMotion || !supportsHeroPointerEffect) {
       return;
     }
 
@@ -130,6 +131,10 @@
   };
 
   const handleHeroPointerEnter = (event: MouseEvent) => {
+    if (!supportsHeroPointerEffect) {
+      return;
+    }
+
     handleHeroPointerMove(event);
   };
 
@@ -150,10 +155,24 @@
     window.addEventListener('scroll', syncNavState, { passive: true });
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const pointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
     prefersReducedMotion = mediaQuery.matches;
+    supportsHeroPointerEffect = pointerQuery.matches && !mediaQuery.matches;
     const syncReducedMotion = (event: MediaQueryListEvent) => {
       prefersReducedMotion = event.matches;
-      if (event.matches) {
+      supportsHeroPointerEffect = pointerQuery.matches && !event.matches;
+      if (event.matches || !pointerQuery.matches) {
+        isHeroPointerActive = false;
+        if (heroTrailFrame) {
+          window.cancelAnimationFrame(heroTrailFrame);
+          heroTrailFrame = 0;
+        }
+        heroTrailRunning = false;
+      }
+    };
+    const syncPointerMode = (event: MediaQueryListEvent) => {
+      supportsHeroPointerEffect = event.matches && !mediaQuery.matches;
+      if (!event.matches) {
         isHeroPointerActive = false;
         if (heroTrailFrame) {
           window.cancelAnimationFrame(heroTrailFrame);
@@ -163,6 +182,7 @@
       }
     };
     mediaQuery.addEventListener('change', syncReducedMotion);
+    pointerQuery.addEventListener('change', syncPointerMode);
 
     let cleanupAnimations = () => {};
 
@@ -311,6 +331,7 @@
     return () => {
       window.removeEventListener('scroll', syncNavState);
       mediaQuery.removeEventListener('change', syncReducedMotion);
+      pointerQuery.removeEventListener('change', syncPointerMode);
       if (heroTrailFrame) {
         window.cancelAnimationFrame(heroTrailFrame);
       }
