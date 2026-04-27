@@ -4,17 +4,19 @@
 
 :root {
   color-scheme: dark;
-  --color-bg: #282724;
-  --color-nav: #282724;
-  --color-surface: rgba(239, 237, 238, 0.08);
-  --color-surface-strong: rgba(239, 237, 238, 0.12);
-  --color-text: #efedee;
-  --color-text-muted: rgba(239, 237, 238, 0.72);
-  --color-accent: #f75400;
-  --color-accent-soft: rgba(247, 84, 0, 0.82);
-  --grid-line: rgba(239, 237, 238, 0.085);
-  --grid-line-strong: rgba(239, 237, 238, 0.12);
-  --grid-pulse: rgba(247, 84, 0, 0.44);
+  --color-bg: #282828;
+  --color-nav: #282828;
+  --color-surface: rgba(60, 56, 54, 0.78);
+  --color-surface-strong: rgba(80, 73, 69, 0.9);
+  --color-text: #ebdbb2;
+  --color-text-muted: rgba(213, 196, 161, 0.78);
+  --color-accent: #fe8019;
+  --color-accent-soft: rgba(250, 189, 47, 0.82);
+  --grid-line: rgba(168, 153, 132, 0.08);
+  --grid-line-strong: rgba(168, 153, 132, 0.12);
+  --grid-pulse: rgba(142, 192, 124, 0.4);
+  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.24);
+  --shadow-strong: 0 26px 90px rgba(0, 0, 0, 0.3);
 }
 
 html,
@@ -25,8 +27,8 @@ body {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top center, rgba(255, 255, 255, 0.04), transparent 34rem),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 18rem),
+    radial-gradient(circle at top center, rgba(251, 241, 199, 0.04), transparent 34rem),
+    linear-gradient(180deg, rgba(251, 241, 199, 0.015), transparent 18rem),
     var(--color-bg);
   color: var(--color-text);
   font-family:
@@ -52,7 +54,7 @@ img {
 }
 
 ::selection {
-  background: rgba(247, 84, 0, 0.28);
+  background: rgba(254, 128, 25, 0.28);
   color: white;
 }
 
@@ -73,7 +75,7 @@ html {
 }
 
 .site-nav.nav-scrolled {
-  background-color: rgba(40, 39, 36, 0.92);
+  background-color: rgba(40, 40, 40, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(30px);
 }
@@ -109,7 +111,7 @@ html {
 
 .feature-card {
   position: relative;
-  border: 1px solid rgba(239, 237, 238, 0.07);
+  border: 1px solid rgba(235, 219, 178, 0.07);
   transition:
     transform 220ms ease,
     background-color 220ms ease,
@@ -119,14 +121,14 @@ html {
 
 .feature-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(247, 84, 0, 0.18);
+  border-color: rgba(254, 128, 25, 0.18);
   box-shadow:
     0 22px 48px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(247, 84, 0, 0.08);
+    0 0 0 1px rgba(254, 128, 25, 0.08);
 }
 
 .workflow-step {
-  border: 1px solid rgba(239, 237, 238, 0.04);
+  border: 1px solid rgba(235, 219, 178, 0.04);
   transition:
     transform 260ms ease,
     border-color 260ms ease,
@@ -136,11 +138,11 @@ html {
 
 .workflow-step.is-active {
   transform: translateY(-2px);
-  border-color: rgba(247, 84, 0, 0.16);
-  background-color: rgba(239, 237, 238, 0.15);
+  border-color: rgba(254, 128, 25, 0.16);
+  background-color: rgba(235, 219, 178, 0.15);
   box-shadow:
     0 16px 36px rgba(0, 0, 0, 0.16),
-    inset 0 0 0 1px rgba(247, 84, 0, 0.08);
+    inset 0 0 0 1px rgba(254, 128, 25, 0.08);
 }
 
 @keyframes hero-grid-pulse {

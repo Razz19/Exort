@@ -444,7 +444,7 @@
           <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
             Start with the base setup today and expand the experience later.
           </h2>
-          <p class="mt-4 text-base leading-8 text-slate-300">
+          <p class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]">
             This landing page is a clean foundation for the website. As the product evolves, the
             theme, component system, screenshots, docs links, and download actions can be extended
             without changing the overall structure.
