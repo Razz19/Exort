@@ -12,6 +12,9 @@
   --color-text-muted: rgba(239, 237, 238, 0.72);
   --color-accent: #f75400;
   --color-accent-soft: rgba(247, 84, 0, 0.82);
+  --grid-line: rgba(239, 237, 238, 0.085);
+  --grid-line-strong: rgba(239, 237, 238, 0.12);
+  --grid-pulse: rgba(247, 84, 0, 0.44);
 }
 
 html,
@@ -21,7 +24,10 @@ body {
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  background:
+    radial-gradient(circle at top center, rgba(255, 255, 255, 0.04), transparent 34rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 18rem),
+    var(--color-bg);
   color: var(--color-text);
   font-family:
     'SF Pro Display',
@@ -48,4 +54,148 @@ img {
 ::selection {
   background: rgba(247, 84, 0, 0.28);
   color: white;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.site-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.site-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: clamp(72px, 8vw, 108px) clamp(72px, 8vw, 108px);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.42));
+}
+
+.site-nav {
+  transition:
+    background-color 220ms ease,
+    box-shadow 220ms ease,
+    backdrop-filter 220ms ease;
+}
+
+.site-nav.nav-scrolled {
+  background-color: rgba(40, 39, 36, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(30px);
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 14% 16%, rgba(247, 84, 0, 0.08), transparent 16rem),
+    radial-gradient(circle at 82% 28%, rgba(255, 255, 255, 0.035), transparent 18rem);
+  z-index: 0;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-image:
+    linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
+  background-size: clamp(78px, 8vw, 116px) clamp(78px, 8vw, 116px);
+  opacity: 0.7;
+  mask-image: radial-gradient(circle at center, black 44%, transparent 100%);
+}
+
+.hero-grid__pulse {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--grid-pulse), transparent);
+  opacity: 0;
+  filter: blur(0.2px);
+  animation: hero-grid-pulse 7.8s ease-in-out infinite;
+}
+
+.hero-screenshot {
+  will-change: transform;
+}
+
+.feature-card {
+  position: relative;
+  border: 1px solid rgba(239, 237, 238, 0.07);
+  transition:
+    transform 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(247, 84, 0, 0.18);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(247, 84, 0, 0.08);
+}
+
+.workflow-step {
+  border: 1px solid rgba(239, 237, 238, 0.04);
+  transition:
+    transform 260ms ease,
+    border-color 260ms ease,
+    background-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.workflow-step.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(247, 84, 0, 0.16);
+  background-color: rgba(239, 237, 238, 0.15);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(247, 84, 0, 0.08);
+}
+
+@keyframes hero-grid-pulse {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0.72);
+  }
+  25% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.72;
+    transform: scaleX(1);
+  }
+  75% {
+    opacity: 0.14;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .site-nav,
+  .feature-card,
+  .workflow-step {
+    transition: none;
+  }
+
+  .hero-grid__pulse {
+    animation: none;
+    opacity: 0.12;
+  }
 }
