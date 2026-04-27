@@ -74,7 +74,7 @@ html {
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: clamp(72px, 8vw, 108px) clamp(72px, 8vw, 108px);
+  background-size: clamp(104px, 11vw, 148px) clamp(104px, 11vw, 148px);
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.42));
 }
 
@@ -91,17 +91,6 @@ html {
   backdrop-filter: blur(30px);
 }
 
-.hero-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 14% 16%, rgba(247, 84, 0, 0.08), transparent 16rem),
-    radial-gradient(circle at 82% 28%, rgba(255, 255, 255, 0.035), transparent 18rem);
-  z-index: 0;
-}
-
 .hero-grid {
   position: absolute;
   inset: 0;
@@ -111,8 +100,8 @@ html {
   background-image:
     linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
-  background-size: clamp(78px, 8vw, 116px) clamp(78px, 8vw, 116px);
-  opacity: 0.7;
+  background-size: clamp(118px, 12vw, 164px) clamp(118px, 12vw, 164px);
+  opacity: 0.56;
   mask-image: radial-gradient(circle at center, black 44%, transparent 100%);
 }
 
