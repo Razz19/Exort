@@ -4,15 +4,14 @@
 
 :root {
   color-scheme: dark;
-  --color-bg: #020617;
-  --color-surface: rgba(15, 23, 42, 0.78);
-  --color-surface-strong: rgba(30, 41, 59, 0.9);
-  --color-text: #e5eefb;
-  --color-text-muted: #93a4bf;
-  --color-accent: #6ee7f9;
-  --color-accent-soft: #8fe7f6;
-  --color-border: rgba(110, 231, 249, 0.16);
-  --color-border-strong: rgba(110, 231, 249, 0.32);
+  --color-bg: #282724;
+  --color-nav: #282724;
+  --color-surface: rgba(239, 237, 238, 0.08);
+  --color-surface-strong: rgba(239, 237, 238, 0.12);
+  --color-text: #efedee;
+  --color-text-muted: rgba(239, 237, 238, 0.72);
+  --color-accent: #f75400;
+  --color-accent-soft: rgba(247, 84, 0, 0.82);
 }
 
 html,
@@ -42,7 +41,11 @@ img {
   max-width: 100%;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 ::selection {
-  background: rgba(110, 231, 249, 0.24);
+  background: rgba(247, 84, 0, 0.28);
   color: white;
 }

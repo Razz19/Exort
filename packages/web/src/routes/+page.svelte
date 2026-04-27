@@ -54,11 +54,11 @@
   />
 </svelte:head>
 
-<div class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_28%),linear-gradient(180deg,_rgba(15,23,42,0.96),_rgba(2,6,23,1))] text-[color:var(--color-text)]">
-  <nav class="sticky top-0 z-30 border-b border-white/10 bg-[rgba(3,7,18,0.72)] backdrop-blur-xl">
+<div class="min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]">
+  <nav class="sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
       <a href="#top" class="flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-strong)] text-lg font-semibold text-[color:var(--color-accent)]">
+        <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--color-surface-strong)] text-lg font-semibold text-[color:var(--color-accent)] shadow-[0_12px_30px_rgba(247,84,0,0.18)]">
           E
         </span>
         <div>
@@ -80,7 +80,7 @@
 
       <a
         href="#try-exort"
-        class="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-strong)] px-4 py-2 text-sm font-medium text-white transition hover:border-[color:var(--color-accent)] hover:bg-white/10"
+        class="rounded-full bg-[color:var(--color-surface-strong)] px-4 py-2 text-sm font-medium text-white shadow-[0_10px_30px_rgba(0,0,0,0.18)] transition hover:bg-[color:var(--color-surface)]"
       >
         Download
       </a>
@@ -90,7 +90,7 @@
   <main id="top">
     <section class="mx-auto grid max-w-7xl gap-16 px-6 pb-16 pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center lg:px-8 lg:pb-24 lg:pt-24">
       <div class="max-w-2xl">
-        <span class="inline-flex rounded-full border border-[color:var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-[0.28em] text-[color:var(--color-accent-soft)]">
+        <span class="inline-flex rounded-full bg-[color:var(--color-surface)] px-3 py-1 text-xs font-medium uppercase tracking-[0.28em] text-[color:var(--color-accent-soft)] shadow-[0_10px_30px_rgba(0,0,0,0.14)]">
           Embedded Development, Unified
         </span>
         <h1 class="mt-6 text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
@@ -107,28 +107,28 @@
         <div class="mt-8 flex flex-col gap-4 sm:flex-row">
           <a
             href="#try-exort"
-            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
           >
             Download Exort
           </a>
           <a
             href="#features"
-            class="inline-flex items-center justify-center rounded-full border border-[color:var(--color-border)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-surface)] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(0,0,0,0.14)] transition hover:bg-[color:var(--color-surface-strong)]"
           >
             Explore Features
           </a>
         </div>
 
-        <dl class="mt-10 grid gap-5 border-t border-white/10 pt-8 text-sm text-[color:var(--color-text-muted)] sm:grid-cols-3">
-          <div>
+        <dl class="mt-10 grid gap-5 pt-8 text-sm text-[color:var(--color-text-muted)] sm:grid-cols-3">
+          <div class="rounded-3xl bg-[color:var(--color-surface)] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
             <dt class="text-2xl font-semibold text-white">All-in-one</dt>
             <dd class="mt-2">Editor, agent, board tools, upload flow, and device output.</dd>
           </div>
-          <div>
+          <div class="rounded-3xl bg-[color:var(--color-surface)] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
             <dt class="text-2xl font-semibold text-white">Local-first</dt>
             <dd class="mt-2">Workspace state and chat history are persisted locally.</dd>
           </div>
-          <div>
+          <div class="rounded-3xl bg-[color:var(--color-surface)] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
             <dt class="text-2xl font-semibold text-white">Arduino-ready</dt>
             <dd class="mt-2">Supports Arduino CLI platforms across popular embedded boards.</dd>
           </div>
@@ -136,12 +136,11 @@
       </div>
 
       <div class="relative">
-        <div class="absolute inset-0 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_center,_rgba(56,189,248,0.22),_transparent_60%)] blur-3xl"></div>
-        <div class="overflow-hidden rounded-[2rem] border border-white/10 bg-[color:var(--color-surface)] p-3 shadow-[0_30px_120px_rgba(0,0,0,0.55)]">
+        <div class="overflow-hidden rounded-[2rem] bg-[color:var(--color-surface)] p-3 shadow-[0_30px_120px_rgba(0,0,0,0.26)] backdrop-blur-2xl">
           <img
             src="/exort-screenshot.png"
             alt="Exort desktop application screenshot"
-            class="h-auto w-full rounded-[1.4rem] border border-white/5 object-cover"
+            class="h-auto w-full rounded-[1.4rem] object-cover"
           />
         </div>
       </div>
@@ -163,8 +162,8 @@
 
       <div class="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {#each features as feature}
-          <article class="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_48px_rgba(0,0,0,0.18)] transition hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.06]">
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-strong)] text-sm font-semibold text-[color:var(--color-accent)]">
+          <article class="rounded-3xl bg-[color:var(--color-surface)] p-6 shadow-[0_18px_48px_rgba(0,0,0,0.14)] backdrop-blur-2xl transition hover:bg-[color:var(--color-surface-strong)]">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--color-surface-strong)] text-sm font-semibold text-[color:var(--color-accent)] shadow-[0_10px_28px_rgba(247,84,0,0.16)]">
               {feature.title.slice(0, 1)}
             </div>
             <h3 class="mt-5 text-xl font-semibold text-white">{feature.title}</h3>
@@ -178,7 +177,7 @@
 
     <section id="workflow" class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
       <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div class="rounded-[2rem] border border-white/10 bg-[color:var(--color-surface)] p-8">
+        <div class="rounded-[2rem] bg-[color:var(--color-surface)] p-8 shadow-[0_18px_48px_rgba(0,0,0,0.14)] backdrop-blur-2xl">
           <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
             Workflow
           </span>
@@ -190,11 +189,11 @@
           </p>
         </div>
 
-        <div class="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8">
+        <div class="rounded-[2rem] bg-[color:var(--color-surface)] p-8 shadow-[0_18px_48px_rgba(0,0,0,0.14)] backdrop-blur-2xl">
           <ol class="space-y-5">
             {#each workflowSteps as step, index}
-              <li class="flex gap-4 rounded-3xl border border-white/8 bg-black/10 p-5">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent)] text-sm font-semibold text-slate-950">
+              <li class="flex gap-4 rounded-3xl bg-[color:var(--color-surface-strong)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent)] text-sm font-semibold text-white">
                   0{index + 1}
                 </span>
                 <p class="pt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">{step}</p>
@@ -206,7 +205,7 @@
     </section>
 
     <section id="try-exort" class="mx-auto max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24">
-      <div class="rounded-[2rem] border border-[color:var(--color-border-strong)] bg-[linear-gradient(135deg,rgba(56,189,248,0.18),rgba(15,23,42,0.92))] p-8 sm:p-10 lg:p-12">
+      <div class="rounded-[2rem] bg-[color:var(--color-surface)] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:p-10 lg:p-12">
         <div class="max-w-3xl">
           <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
             Try Exort Now
@@ -224,26 +223,26 @@
         <div class="mt-8 flex flex-col gap-4 sm:flex-row">
           <a
             href="#workflow"
-            class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
           >
             Start With Exort
           </a>
           <a
             href="#top"
-            class="inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/8"
+            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-surface-strong)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.14)] transition hover:bg-[color:var(--color-surface)]"
           >
             Back To Top
           </a>
         </div>
 
         <div class="mt-8 grid gap-4 lg:grid-cols-2">
-          <div class="rounded-3xl border border-white/10 bg-black/20 p-5">
+          <div class="rounded-3xl bg-[color:var(--color-surface-strong)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
             <p class="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-accent-soft)]">
               Install
             </p>
             <code class="mt-3 block text-sm text-slate-100">npm install</code>
           </div>
-          <div class="rounded-3xl border border-white/10 bg-black/20 p-5">
+          <div class="rounded-3xl bg-[color:var(--color-surface-strong)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
             <p class="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-accent-soft)]">
               Run
             </p>
@@ -254,7 +253,7 @@
     </section>
   </main>
 
-  <footer class="border-t border-white/10">
+  <footer>
     <div class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-[color:var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between lg:px-8">
       <p>Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent.</p>
       <p>AGPL-3.0-only</p>
