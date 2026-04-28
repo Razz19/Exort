@@ -134,6 +134,7 @@
   let featureRotationResumeAt = 0;
   let downloadCardEls: HTMLElement[] = [];
   let downloadOverlayEls: HTMLElement[] = [];
+  let gsapRef: Awaited<typeof import('gsap')>['gsap'] | null = null;
 
   const clearFeatureRotation = () => {
     if (featureRotationTimeout) {
@@ -196,6 +197,46 @@
 
       const image = new Image();
       image.src = feature.image;
+    });
+  };
+
+  const ensureGsap = async () => {
+    if (gsapRef) {
+      return gsapRef;
+    }
+
+    const { gsap } = await import('gsap');
+    gsapRef = gsap;
+    return gsap;
+  };
+
+  const showDownloadOverlay = async (index: number) => {
+    const overlayEl = downloadOverlayEls[index];
+    if (!overlayEl) {
+      return;
+    }
+
+    const gsap = await ensureGsap();
+    gsap.to(overlayEl, {
+      xPercent: 0,
+      duration: 0.42,
+      ease: 'power3.out',
+      overwrite: 'auto'
+    });
+  };
+
+  const hideDownloadOverlay = async (index: number) => {
+    const overlayEl = downloadOverlayEls[index];
+    if (!overlayEl) {
+      return;
+    }
+
+    const gsap = await ensureGsap();
+    gsap.to(overlayEl, {
+      xPercent: 100,
+      duration: 0.34,
+      ease: 'power3.inOut',
+      overwrite: 'auto'
     });
   };
 
@@ -297,14 +338,19 @@
     pointerQuery.addEventListener('change', syncPointerMode);
 
     let cleanupAnimations = () => {};
-    let cleanupDownloadCards = () => {};
 
     const loadAnimations = async () => {
+      const gsap = await ensureGsap();
+      downloadOverlayEls.forEach((overlayEl) => {
+        if (overlayEl) {
+          gsap.set(overlayEl, { xPercent: 100 });
+        }
+      });
+
       if (mediaQuery.matches) {
         return;
       }
 
-      const { gsap } = await import('gsap');
       const { ScrollTrigger } = await import('gsap/ScrollTrigger');
 
       gsap.registerPlugin(ScrollTrigger);
@@ -472,51 +518,6 @@
         ctx.revert();
         ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       };
-
-      const hoverListeners: Array<() => void> = [];
-
-      downloadOverlayEls.forEach((overlayEl, index) => {
-        const cardEl = downloadCardEls[index];
-        if (!overlayEl || !cardEl) {
-          return;
-        }
-
-        gsap.set(overlayEl, { xPercent: 100, autoAlpha: 1 });
-
-        const showOverlay = () => {
-          gsap.to(overlayEl, {
-            xPercent: 0,
-            duration: 0.45,
-            ease: 'power3.out',
-            overwrite: 'auto'
-          });
-        };
-
-        const hideOverlay = () => {
-          gsap.to(overlayEl, {
-            xPercent: 100,
-            duration: 0.36,
-            ease: 'power3.inOut',
-            overwrite: 'auto'
-          });
-        };
-
-        cardEl.addEventListener('mouseenter', showOverlay);
-        cardEl.addEventListener('mouseleave', hideOverlay);
-        cardEl.addEventListener('focusin', showOverlay);
-        cardEl.addEventListener('focusout', hideOverlay);
-
-        hoverListeners.push(() => {
-          cardEl.removeEventListener('mouseenter', showOverlay);
-          cardEl.removeEventListener('mouseleave', hideOverlay);
-          cardEl.removeEventListener('focusin', showOverlay);
-          cardEl.removeEventListener('focusout', hideOverlay);
-        });
-      });
-
-      cleanupDownloadCards = () => {
-        hoverListeners.forEach((cleanup) => cleanup());
-      };
     };
 
     scheduleFeatureRotation(featureRotationDelay);
@@ -531,7 +532,6 @@
         window.cancelAnimationFrame(heroTrailFrame);
       }
       clearFeatureRotation();
-      cleanupDownloadCards();
       cleanupAnimations();
     };
   });
@@ -819,17 +819,21 @@
             Choose your platform to download the right version
           </p>
 
-          <div class="download-grid mt-10 grid w-full max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
+          <div class="download-grid mt-10 grid w-full max-w-[30rem] grid-cols-1 gap-5 sm:grid-cols-2">
             {#each downloads as item, index}
               <article
                 bind:this={downloadCardEls[index]}
-                class="download-card group relative aspect-square overflow-hidden bg-[rgba(60,56,54,0.48)]"
+                class="download-card group relative h-56 w-56 overflow-hidden bg-[rgba(60,56,54,0.48)]"
+                on:mouseenter={() => void showDownloadOverlay(index)}
+                on:mouseleave={() => void hideDownloadOverlay(index)}
+                on:focusin={() => void showDownloadOverlay(index)}
+                on:focusout={() => void hideDownloadOverlay(index)}
               >
                 <div class="download-card__base absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
                   <span class="download-card__icon" aria-hidden="true">
                     {@html item.icon}
                   </span>
-                  <p class="mt-5 text-lg font-light text-[color:var(--color-text)] sm:text-xl">
+                  <p class="mt-4 text-sm font-light text-[color:var(--color-text)] sm:text-base">
                     {item.label}
                   </p>
                 </div>
