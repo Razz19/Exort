@@ -603,12 +603,13 @@
 <div class="site-shell min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]">
   <nav class:nav-scrolled={isNavScrolled} class="site-nav sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-      <a href="#top" class="flex items-center">
+      <a href="#top" class="flex items-center gap-3">
         <img
-          src="/exort-typography-logo3.png"
-          alt="Exort AI"
-          class="h-5 w-auto sm:h-6"
+          src="/exort-logo.png"
+          alt="Exort"
+          class="h-11 w-11 object-contain"
         />
+        <span class="text-base font-medium tracking-[0.02em] text-white sm:text-lg">Exort</span>
       </a>
 
       <div class="hidden items-center gap-8 md:flex">
