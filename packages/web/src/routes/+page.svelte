@@ -739,12 +739,6 @@
             >
               Download Exort
             </a>
-            <a
-              href="#features"
-              class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-surface)] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(0,0,0,0.14)] transition hover:bg-[color:var(--color-surface-strong)]"
-            >
-              Explore Features
-            </a>
           </div>
         </div>
 
