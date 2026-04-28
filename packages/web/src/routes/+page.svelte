@@ -10,7 +10,6 @@
 
   const navItems = [
     { label: "Features", href: "#features" },
-    { label: "Workflow", href: "#workflow" },
     { label: "Download", href: "#try-exort" },
   ];
 
