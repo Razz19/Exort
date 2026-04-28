@@ -138,6 +138,9 @@ html {
 }
 
 .hero-screenshot {
+  display: block;
+  box-shadow: none;
+  filter: none;
   will-change: transform;
 }
 
