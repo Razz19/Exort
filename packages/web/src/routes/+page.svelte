@@ -726,7 +726,7 @@
     <section id="try-exort" class="mx-auto max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24">
       <div
         bind:this={ctaSection}
-        class="rounded-[2rem] bg-[color:var(--color-surface)] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:p-10 lg:p-12"
+        class="p-8 sm:p-10 lg:p-12"
       >
         <div class="flex min-h-[22rem] flex-col items-center justify-center text-center">
           <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
