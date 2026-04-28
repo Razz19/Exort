@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { fade, fly } from 'svelte/transition';
-  import { onMount } from 'svelte';
+  import { fade, fly } from "svelte/transition";
+  import { onMount } from "svelte";
 
   const navItems = [
-    { label: 'Features', href: '#features' },
-    { label: 'Workflow', href: '#workflow' },
-    { label: 'Download', href: '#try-exort' }
+    { label: "Features", href: "#features" },
+    { label: "Workflow", href: "#workflow" },
+    { label: "Download", href: "#try-exort" },
   ];
 
   const headlineLines = [
-    'Embedded development',
-    'with AI, code,',
-    'and hardware tools in one app.'
+    "Embedded development",
+    "with AI, code,",
+    "and hardware tools in one app.",
   ];
 
   const featureRotationDelay = 4000;
@@ -19,48 +19,48 @@
 
   const features = [
     {
-      title: 'Serial Monitor',
+      title: "Serial Monitor",
       description:
-        'Watch live device output in a dedicated pane while you debug firmware behavior, inspect logs, and keep iteration focused inside Exort.',
-      image: '/features/serial-monitor.png'
+        "Watch live device output in a dedicated pane while you debug firmware behavior, inspect logs, and keep iteration focused inside Exort.",
+      image: "/features/serial-monitor.png",
     },
     {
-      title: 'Serial Plotter',
+      title: "Serial Plotter",
       description:
-        'Turn streaming values into readable charts so sensor tuning, calibration, and runtime validation happen without leaving the workspace.',
-      image: '/features/serial-plotter.png'
+        "Turn streaming values into readable charts so sensor tuning, calibration, and runtime validation happen without leaving the workspace.",
+      image: "/features/serial-plotter.png",
     },
     {
-      title: 'Board Manager',
+      title: "Board Manager",
       description:
-        'Manage board platforms from the same app and keep toolchains ready for Arduino, ESP32, RP2040, STM32, Teensy, and more.',
-      image: '/features/board-manager.png'
+        "Manage board platforms from the same app and keep toolchains ready for Arduino, ESP32, RP2040, STM32, Teensy, and more.",
+      image: "/features/board-manager.png",
     },
     {
-      title: 'Project Manager',
+      title: "Project Manager",
       description:
-        'Switch between embedded workspaces, preserve local project state, and keep active files and context organized across sessions.',
-      image: null
+        "Switch between embedded workspaces, preserve local project state, and keep active files and context organized across sessions.",
+      image: null,
     },
     {
-      title: 'Provider Connection',
+      title: "Provider Connection",
       description:
-        'Connect your preferred AI provider setup and route workflows through the models that fit your embedded development stack.',
-      image: null
+        "Connect your preferred AI provider setup and route workflows through the models that fit your embedded development stack.",
+      image: null,
     },
     {
-      title: 'Embedded Agent',
+      title: "Embedded Agent",
       description:
-        'Use the embedded-focused agent to inspect the workspace, edit code, and assist with compile or upload loops from the same environment.',
-      image: null
-    }
+        "Use the embedded-focused agent to inspect the workspace, edit code, and assist with compile or upload loops from the same environment.",
+      image: null,
+    },
   ];
 
   const workflowSteps = [
-    'Open a workspace and let Exort inspect the project.',
-    'Edit files in the Monaco-based editor with AI help close by.',
-    'Select your board and serial port, then compile or upload.',
-    'Use Serial Monitor or Plotter to validate behavior and iterate fast.'
+    "Open a workspace and let Exort inspect the project.",
+    "Edit files in the Monaco-based editor with AI help close by.",
+    "Select your board and serial port, then compile or upload.",
+    "Use Serial Monitor or Plotter to validate behavior and iterate fast.",
   ];
 
   const appleIcon = `<svg viewBox="-1.5 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M57.5708873,7282.19296 C58.2999598,7281.34797 58.7914012,7280.17098 58.6569121,7279 C57.6062792,7279.04 56.3352055,7279.67099 55.5818643,7280.51498 C54.905374,7281.26397 54.3148354,7282.46095 54.4735932,7283.60894 C55.6455696,7283.69593 56.8418148,7283.03894 57.5708873,7282.19296 M60.1989864,7289.62485 C60.2283111,7292.65181 62.9696641,7293.65879 63,7293.67179 C62.9777537,7293.74279 62.562152,7295.10677 61.5560117,7296.51675 C60.6853718,7297.73474 59.7823735,7298.94772 58.3596204,7298.97372 C56.9621472,7298.99872 56.5121648,7298.17973 54.9134635,7298.17973 C53.3157735,7298.17973 52.8162425,7298.94772 51.4935978,7298.99872 C50.1203933,7299.04772 49.0738052,7297.68074 48.197098,7296.46676 C46.4032359,7293.98379 45.0330649,7289.44985 46.8734421,7286.3899 C47.7875635,7284.87092 49.4206455,7283.90793 51.1942837,7283.88393 C52.5422083,7283.85893 53.8153044,7284.75292 54.6394294,7284.75292 C55.4635543,7284.75292 57.0106846,7283.67793 58.6366882,7283.83593 C59.3172232,7283.86293 61.2283842,7284.09893 62.4549652,7285.8199 C62.355868,7285.8789 60.1747177,7287.09489 60.1989864,7289.62485" transform="translate(-46 -7279)" fill="currentColor"></path></svg>`;
@@ -69,38 +69,50 @@
 
   const downloads = [
     {
-      label: 'macOS Apple Silicon',
-      file: 'Exort-0.1.0-mac-arm64.dmg',
-      href: '/downloads/Exort-0.1.0-mac-arm64.dmg',
-      icon: appleIcon
+      label: "macOS Apple Silicon",
+      file: "Exort-0.1.0-mac-arm64.dmg",
+      href: "/downloads/Exort-0.1.0-mac-arm64.dmg",
+      icon: appleIcon,
     },
     {
-      label: 'macOS Intel',
-      file: 'Exort-0.1.0-mac-x64.dmg',
-      href: '/downloads/Exort-0.1.0-mac-x64.dmg',
-      icon: appleIcon
+      label: "macOS Intel",
+      file: "Exort-0.1.0-mac-x64.dmg",
+      href: "/downloads/Exort-0.1.0-mac-x64.dmg",
+      icon: appleIcon,
     },
     {
-      label: 'Windows',
-      file: 'Exort-0.1.0-win-x64.exe',
-      href: '/downloads/Exort-0.1.0-win-x64.exe',
-      icon: windowsIcon
+      label: "Windows",
+      file: "Exort-0.1.0-win-x64.exe",
+      href: "/downloads/Exort-0.1.0-win-x64.exe",
+      icon: windowsIcon,
     },
     {
-      label: 'Linux',
-      file: 'Exort-0.1.0-linux-x86_64.AppImage',
-      href: '/downloads/Exort-0.1.0-linux-x86_64.AppImage',
-      icon: linuxIcon
-    }
+      label: "Linux",
+      file: "Exort-0.1.0-linux-x86_64.AppImage",
+      href: "/downloads/Exort-0.1.0-linux-x86_64.AppImage",
+      icon: linuxIcon,
+    },
   ];
-  const downloadVersion = '0.1.0';
+  const downloadVersion = "0.1.0";
 
   const heroPulseSegments = [
-    { top: '10%', left: '9%', width: '12rem', delay: '0.2s', duration: '7.4s' },
-    { top: '22%', left: '65%', width: '9rem', delay: '1.8s', duration: '8.6s' },
-    { top: '39%', left: '18%', width: '7rem', delay: '1.1s', duration: '6.9s' },
-    { top: '53%', left: '72%', width: '10rem', delay: '2.8s', duration: '8.1s' },
-    { top: '72%', left: '41%', width: '11rem', delay: '0.8s', duration: '7.8s' }
+    { top: "10%", left: "9%", width: "12rem", delay: "0.2s", duration: "7.4s" },
+    { top: "22%", left: "65%", width: "9rem", delay: "1.8s", duration: "8.6s" },
+    { top: "39%", left: "18%", width: "7rem", delay: "1.1s", duration: "6.9s" },
+    {
+      top: "53%",
+      left: "72%",
+      width: "10rem",
+      delay: "2.8s",
+      duration: "8.1s",
+    },
+    {
+      top: "72%",
+      left: "41%",
+      width: "11rem",
+      delay: "0.8s",
+      duration: "7.8s",
+    },
   ];
 
   let isNavScrolled = false;
@@ -111,8 +123,8 @@
   let heroPointerTargetY = 40;
   let heroPointerRenderX = 50;
   let heroPointerRenderY = 40;
-  let heroPointerX = '50%';
-  let heroPointerY = '40%';
+  let heroPointerX = "50%";
+  let heroPointerY = "40%";
   let heroSection: HTMLElement | null = null;
   let heroCopy: HTMLElement | null = null;
   let heroActions: HTMLElement | null = null;
@@ -134,8 +146,12 @@
   let featureRotationTimeout: number | null = null;
   let featureRotationResumeAt = 0;
   let downloadCardEls: HTMLElement[] = [];
-  let gsapRef: Awaited<typeof import('gsap')>['gsap'] | null = null;
-  let downloadHoverTimelines: Array<{ play: () => void; reverse: () => void; kill: () => void } | null> = [];
+  let gsapRef: Awaited<typeof import("gsap")>["gsap"] | null = null;
+  let downloadHoverTimelines: Array<{
+    play: () => void;
+    reverse: () => void;
+    kill: () => void;
+  } | null> = [];
 
   const clearFeatureRotation = () => {
     if (featureRotationTimeout) {
@@ -145,7 +161,7 @@
   };
 
   const scheduleFeatureRotation = (delay = featureRotationDelay) => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
@@ -165,7 +181,7 @@
   const setActiveFeature = (index: number, pauseAuto = false) => {
     activeFeatureIndex = index;
 
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
@@ -179,7 +195,10 @@
   };
 
   const showPreviousFeature = () => {
-    setActiveFeature((activeFeatureIndex - 1 + features.length) % features.length, true);
+    setActiveFeature(
+      (activeFeatureIndex - 1 + features.length) % features.length,
+      true,
+    );
   };
 
   const showNextFeature = () => {
@@ -187,7 +206,7 @@
   };
 
   const preloadFeatureImages = () => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
@@ -206,7 +225,7 @@
       return gsapRef;
     }
 
-    const { gsap } = await import('gsap');
+    const { gsap } = await import("gsap");
     gsapRef = gsap;
     return gsap;
   };
@@ -217,9 +236,15 @@
       return null;
     }
 
-    const overlayEl = cardEl.querySelector<HTMLElement>('.download-card__overlay');
-    const iconEl = cardEl.querySelector<HTMLElement>('.download-card__overlay-icon');
-    const contentEl = cardEl.querySelector<HTMLElement>('.download-card__overlay-content');
+    const overlayEl = cardEl.querySelector<HTMLElement>(
+      ".download-card__overlay",
+    );
+    const iconEl = cardEl.querySelector<HTMLElement>(
+      ".download-card__overlay-icon",
+    );
+    const contentEl = cardEl.querySelector<HTMLElement>(
+      ".download-card__overlay-content",
+    );
 
     if (!overlayEl || !iconEl || !contentEl) {
       return null;
@@ -266,7 +291,7 @@
   };
 
   const ensureHeroTrail = () => {
-    if (heroTrailRunning || typeof window === 'undefined') {
+    if (heroTrailRunning || typeof window === "undefined") {
       return;
     }
 
@@ -302,7 +327,7 @@
   };
 
   onMount(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
@@ -311,10 +336,12 @@
     };
 
     syncNavState();
-    window.addEventListener('scroll', syncNavState, { passive: true });
+    window.addEventListener("scroll", syncNavState, { passive: true });
 
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const pointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pointerQuery = window.matchMedia(
+      "(hover: hover) and (pointer: fine)",
+    );
     prefersReducedMotion = mediaQuery.matches;
     supportsHeroPointerEffect = pointerQuery.matches && !mediaQuery.matches;
     const syncReducedMotion = (event: MediaQueryListEvent) => {
@@ -340,8 +367,8 @@
         heroTrailRunning = false;
       }
     };
-    mediaQuery.addEventListener('change', syncReducedMotion);
-    pointerQuery.addEventListener('change', syncPointerMode);
+    mediaQuery.addEventListener("change", syncReducedMotion);
+    pointerQuery.addEventListener("change", syncPointerMode);
 
     let cleanupAnimations = () => {};
 
@@ -360,7 +387,7 @@
 
         const timeline = gsap.timeline({
           paused: true,
-          defaults: { overwrite: 'auto' }
+          defaults: { overwrite: "auto" },
         });
 
         timeline.to(
@@ -368,9 +395,9 @@
           {
             xPercent: 0,
             duration: 0.42,
-            ease: 'power3.out'
+            ease: "power3.out",
           },
-          0
+          0,
         );
 
         timeline.to(
@@ -381,9 +408,9 @@
             scale: 1,
             opacity: 1,
             duration: 0.34,
-            ease: 'power2.out'
+            ease: "power2.out",
           },
-          0.12
+          0.12,
         );
 
         timeline.to(
@@ -392,9 +419,9 @@
             x: 0,
             opacity: 1,
             duration: 0.34,
-            ease: 'power2.out'
+            ease: "power2.out",
           },
-          0.16
+          0.16,
         );
 
         return timeline;
@@ -404,7 +431,7 @@
         return;
       }
 
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
 
       gsap.registerPlugin(ScrollTrigger);
 
@@ -420,19 +447,19 @@
             featurePanelEl,
             ...workflowCardEls,
             ...workflowStepEls,
-            ctaSection
+            ctaSection,
           ].filter(Boolean),
           {
-            willChange: 'transform, opacity'
-          }
+            willChange: "transform, opacity",
+          },
         );
 
         gsap.from(headlineLineEls, {
           x: -36,
           opacity: 0,
           duration: 0.9,
-          ease: 'power3.out',
-          stagger: 0.12
+          ease: "power3.out",
+          stagger: 0.12,
         });
 
         if (heroCopy) {
@@ -441,7 +468,7 @@
             opacity: 0,
             duration: 0.8,
             delay: 0.18,
-            ease: 'power2.out'
+            ease: "power2.out",
           });
         }
 
@@ -451,7 +478,7 @@
             opacity: 0,
             duration: 0.82,
             delay: 0.3,
-            ease: 'power2.out'
+            ease: "power2.out",
           });
         }
 
@@ -461,22 +488,25 @@
             opacity: 0,
             duration: 0.72,
             delay: 0.22,
-            ease: 'power2.out'
+            ease: "power2.out",
           });
         }
 
-        if (featuresSection && (featuresIntroEl || featureSidebarEl || featurePanelEl)) {
+        if (
+          featuresSection &&
+          (featuresIntroEl || featureSidebarEl || featurePanelEl)
+        ) {
           const featuresTimeline = gsap.timeline({
             defaults: {
               duration: 0.75,
-              ease: 'power3.out'
+              ease: "power3.out",
             },
             scrollTrigger: {
               trigger: featuresSection,
-              start: 'top 70%',
+              start: "top 70%",
               once: true,
-              invalidateOnRefresh: true
-            }
+              invalidateOnRefresh: true,
+            },
           });
 
           if (featuresIntroEl) {
@@ -484,9 +514,9 @@
               featuresIntroEl,
               {
                 x: -32,
-                opacity: 0
+                opacity: 0,
               },
-              0
+              0,
             );
           }
 
@@ -495,9 +525,9 @@
               featurePanelEl,
               {
                 x: -48,
-                opacity: 0
+                opacity: 0,
               },
-              0.08
+              0.08,
             );
           }
 
@@ -506,9 +536,9 @@
               featureSidebarEl,
               {
                 x: 40,
-                opacity: 0
+                opacity: 0,
               },
-              0.2
+              0.2,
             );
           }
         }
@@ -519,12 +549,12 @@
             opacity: 0,
             duration: 0.85,
             stagger: 0.1,
-            ease: 'power2.out',
+            ease: "power2.out",
             scrollTrigger: {
               trigger: workflowSection,
-              start: 'top 72%',
-              once: true
-            }
+              start: "top 72%",
+              once: true,
+            },
           });
         }
 
@@ -533,22 +563,22 @@
             y: 22,
             opacity: 0,
             duration: 0.72,
-            ease: 'power2.out',
+            ease: "power2.out",
             scrollTrigger: {
               trigger: stepEl,
-              start: 'top 82%',
-              once: true
-            }
+              start: "top 82%",
+              once: true,
+            },
           });
 
           ScrollTrigger.create({
             trigger: stepEl,
-            start: 'top 75%',
-            end: 'bottom 45%',
-            onEnter: () => stepEl.classList.add('is-active'),
-            onLeave: () => stepEl.classList.remove('is-active'),
-            onEnterBack: () => stepEl.classList.add('is-active'),
-            onLeaveBack: () => stepEl.classList.remove('is-active')
+            start: "top 75%",
+            end: "bottom 45%",
+            onEnter: () => stepEl.classList.add("is-active"),
+            onLeave: () => stepEl.classList.remove("is-active"),
+            onEnterBack: () => stepEl.classList.add("is-active"),
+            onLeaveBack: () => stepEl.classList.remove("is-active"),
           });
         });
 
@@ -557,12 +587,12 @@
             y: 26,
             opacity: 0,
             duration: 0.88,
-            ease: 'power2.out',
+            ease: "power2.out",
             scrollTrigger: {
               trigger: ctaSection,
-              start: 'top 78%',
-              once: true
-            }
+              start: "top 78%",
+              once: true,
+            },
           });
         }
       });
@@ -578,9 +608,9 @@
     void loadAnimations();
 
     return () => {
-      window.removeEventListener('scroll', syncNavState);
-      mediaQuery.removeEventListener('change', syncReducedMotion);
-      pointerQuery.removeEventListener('change', syncPointerMode);
+      window.removeEventListener("scroll", syncNavState);
+      mediaQuery.removeEventListener("change", syncReducedMotion);
+      pointerQuery.removeEventListener("change", syncPointerMode);
       if (heroTrailFrame) {
         window.cancelAnimationFrame(heroTrailFrame);
       }
@@ -600,16 +630,26 @@
   />
 </svelte:head>
 
-<div class="site-shell min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]">
-  <nav class:nav-scrolled={isNavScrolled} class="site-nav sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl">
-    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+<div
+  class="site-shell min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]"
+>
+  <nav
+    class:nav-scrolled={isNavScrolled}
+    class="site-nav sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl"
+  >
+    <div
+      class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8"
+    >
       <a href="#top" class="flex items-center gap-3">
         <img
           src="/exort-logo.png"
           alt="Exort"
           class="h-11 w-11 object-contain"
         />
-        <span class="text-base font-medium tracking-[0.02em] text-white sm:text-lg">Exort</span>
+        <span
+          class="text-base font-medium tracking-[0.02em] text-white sm:text-lg"
+          >Exort</span
+        >
       </a>
 
       <div class="hidden items-center gap-8 md:flex">
@@ -656,12 +696,18 @@
         <span class="hero-grid__highlight"></span>
       </div>
 
-      <div class="relative z-10 lg:grid lg:grid-cols-[minmax(0,1.28fr)_minmax(16rem,0.72fr)] lg:items-start lg:gap-8 xl:gap-12">
+      <div
+        class="relative z-10 lg:grid lg:grid-cols-[minmax(0,1.28fr)_minmax(16rem,0.72fr)] lg:items-start lg:gap-8 xl:gap-12"
+      >
         <div class="w-fit">
-          <h1 class="max-w-4xl text-3xl font-semibold leading-[1.02] text-white sm:text-4xl lg:max-w-5xl lg:text-5xl">
+          <h1
+            class="max-w-4xl text-3xl font-semibold leading-[1.02] text-white sm:text-4xl lg:max-w-5xl lg:text-5xl"
+          >
             {#each headlineLines as line, index}
               <span class="block overflow-hidden">
-                <span bind:this={headlineLineEls[index]} class="block">{line}</span>
+                <span bind:this={headlineLineEls[index]} class="block"
+                  >{line}</span
+                >
               </span>
             {/each}
           </h1>
@@ -670,10 +716,14 @@
             bind:this={heroCopy}
             class="mt-4 max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base"
           >
-            Edit, compile, upload, and monitor devices from one desktop workspace.
+            Edit, compile, upload, and monitor devices from one desktop
+            workspace.
           </p>
 
-          <div bind:this={heroActions} class="mt-6 flex flex-col gap-4 sm:flex-row">
+          <div
+            bind:this={heroActions}
+            class="mt-6 flex flex-col gap-4 sm:flex-row"
+          >
             <a
               href="#try-exort"
               class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
@@ -689,7 +739,10 @@
           </div>
         </div>
 
-        <!-- <div aria-hidden="true" class="pointer-events-none mt-6 hidden justify-end lg:mt-0 lg:flex">
+        <!-- <div
+          aria-hidden="true"
+          class="pointer-events-none mt-6 hidden justify-end lg:mt-0 lg:flex"
+        >
           <div class="relative w-full max-w-[17rem] xl:max-w-[20rem]">
             <img
               src="/2d-fire.gif"
@@ -713,7 +766,7 @@
           bind:this={heroScreenshot}
           src="/exort-screenshot.png"
           alt="Exort desktop application screenshot"
-          class="hero-screenshot h-auto w-full object-cover object-top "
+          class="hero-screenshot h-auto w-full object-cover object-top"
         />
       </div>
     </section>
@@ -724,13 +777,17 @@
       class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24"
     >
       <div bind:this={featuresIntroEl} class="max-w-2xl">
-        <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
+        <span
+          class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+        >
           Core Features
         </span>
       </div>
 
       <div class="feature-showcase mt-12">
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:gap-8">
+        <div
+          class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:gap-8"
+        >
           <div bind:this={featurePanelEl} class="min-w-0">
             <div class="grid gap-6">
               <div class="relative">
@@ -742,19 +799,23 @@
                         in:fade={{ duration: prefersReducedMotion ? 0 : 180 }}
                         out:fade={{ duration: prefersReducedMotion ? 0 : 140 }}
                       >
-                      {#if features[activeFeatureIndex].image}
-                        <img
-                          src={features[activeFeatureIndex].image}
-                          alt={`${features[activeFeatureIndex].title} screenshot`}
-                          class="feature-image"
-                        />
-                      {:else}
-                        <div class="feature-image-placeholder flex h-full w-full items-center justify-center">
-                          <span class="px-6 text-center text-sm uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]">
-                            Image Coming Soon
-                          </span>
-                        </div>
-                      {/if}
+                        {#if features[activeFeatureIndex].image}
+                          <img
+                            src={features[activeFeatureIndex].image}
+                            alt={`${features[activeFeatureIndex].title} screenshot`}
+                            class="feature-image"
+                          />
+                        {:else}
+                          <div
+                            class="feature-image-placeholder flex h-full w-full items-center justify-center"
+                          >
+                            <span
+                              class="px-6 text-center text-sm uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]"
+                            >
+                              Image Coming Soon
+                            </span>
+                          </div>
+                        {/if}
                       </div>
                     {/key}
 
@@ -764,14 +825,18 @@
                         in:fade={{ duration: prefersReducedMotion ? 0 : 180 }}
                         out:fade={{ duration: prefersReducedMotion ? 0 : 140 }}
                       >
-                        <p class="feature-copy__inner text-sm leading-7 text-[color:var(--color-text-muted)]">
+                        <p
+                          class="feature-copy__inner text-sm leading-7 text-[color:var(--color-text-muted)]"
+                        >
                           {features[activeFeatureIndex].description}
                         </p>
                       </article>
                     {/key}
                   </div>
 
-                  <div class="absolute inset-y-0 left-3 z-10 flex items-center sm:hidden">
+                  <div
+                    class="absolute inset-y-0 left-3 z-10 flex items-center sm:hidden"
+                  >
                     <button
                       type="button"
                       class="feature-arrow-button"
@@ -781,7 +846,9 @@
                       &larr;
                     </button>
                   </div>
-                  <div class="absolute inset-y-0 right-3 z-10 flex items-center sm:hidden">
+                  <div
+                    class="absolute inset-y-0 right-3 z-10 flex items-center sm:hidden"
+                  >
                     <button
                       type="button"
                       class="feature-arrow-button"
@@ -801,7 +868,8 @@
               {#each features as feature, index}
                 <button
                   type="button"
-                  class:feature-nav-button--active={index === activeFeatureIndex}
+                  class:feature-nav-button--active={index ===
+                    activeFeatureIndex}
                   class="feature-nav-button w-full text-right"
                   on:click={() => setActiveFeature(index, true)}
                   aria-pressed={index === activeFeatureIndex}
@@ -859,23 +927,31 @@
     </section>
     -->
 
-    <section id="try-exort" class="mx-auto max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24">
-      <div
-        bind:this={ctaSection}
-        class="p-8 sm:p-10 lg:p-12"
-      >
-        <div class="flex min-h-[22rem] flex-col items-center justify-center text-center">
-          <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
+    <section
+      id="try-exort"
+      class="mx-auto max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24"
+    >
+      <div bind:this={ctaSection} class="p-8 sm:p-10 lg:p-12">
+        <div
+          class="flex min-h-[22rem] flex-col items-center justify-center text-center"
+        >
+          <span
+            class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+          >
             Get Exort
           </span>
           <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
             Let&apos;s get Exort running on your setup
           </h2>
-          <p class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]">
+          <p
+            class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]"
+          >
             Choose your platform to download the right version
           </p>
 
-          <div class="download-grid mt-10 grid w-full max-w-[30rem] grid-cols-1 gap-5 sm:grid-cols-2">
+          <div
+            class="download-grid mt-10 grid w-full max-w-[30rem] grid-cols-1 gap-5 sm:grid-cols-2"
+          >
             {#each downloads as item, index}
               <article
                 bind:this={downloadCardEls[index]}
@@ -885,11 +961,15 @@
                 on:focusin={() => void showDownloadOverlay(index)}
                 on:focusout={() => void hideDownloadOverlay(index)}
               >
-                <div class="download-card__base absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+                <div
+                  class="download-card__base absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
+                >
                   <span class="download-card__icon" aria-hidden="true">
                     {@html item.icon}
                   </span>
-                  <p class="mt-4 text-sm font-light text-[color:var(--color-text)] sm:text-base">
+                  <p
+                    class="mt-4 text-sm font-light text-[color:var(--color-text)] sm:text-base"
+                  >
                     {item.label}
                   </p>
                 </div>
@@ -898,12 +978,18 @@
                   <span class="download-card__overlay-icon" aria-hidden="true">
                     {@html item.icon}
                   </span>
-                  <div class="download-card__overlay-content flex h-full flex-col items-center justify-center text-center">
-                    <p class="text-base font-medium text-[color:var(--color-ink)] sm:text-lg">
+                  <div
+                    class="download-card__overlay-content flex h-full flex-col items-center justify-center text-center"
+                  >
+                    <p
+                      class="text-base font-medium text-[color:var(--color-ink)] sm:text-lg"
+                    >
                       Exort {downloadVersion}
                     </p>
                   </div>
-                  <div class="download-card__overlay-actions flex justify-center">
+                  <div
+                    class="download-card__overlay-actions flex justify-center"
+                  >
                     <a
                       href={item.href}
                       download
@@ -922,8 +1008,13 @@
   </main>
 
   <footer class="bg-[rgba(60,56,54,0.42)]">
-    <div class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-[color:var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between lg:px-8">
-      <p>Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent.</p>
+    <div
+      class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-[color:var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between lg:px-8"
+    >
+      <p>
+        Exort is a desktop app for embedded development with an OpenCode-powered
+        AI coding agent.
+      </p>
       <p>AGPL-3.0-only</p>
     </div>
   </footer>
