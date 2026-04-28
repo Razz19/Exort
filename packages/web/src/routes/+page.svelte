@@ -920,7 +920,7 @@
     </section>
   </main>
 
-  <footer>
+  <footer class="bg-[rgba(60,56,54,0.42)]">
     <div class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-[color:var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between lg:px-8">
       <p>Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent.</p>
       <p>AGPL-3.0-only</p>
