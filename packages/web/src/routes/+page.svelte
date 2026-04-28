@@ -897,7 +897,7 @@
                     {@html item.icon}
                   </span>
                   <div class="download-card__overlay-content flex h-full flex-col items-center justify-center text-center">
-                    <p class="text-xl font-medium text-[color:var(--color-ink)] sm:text-2xl">
+                    <p class="text-base font-medium text-[color:var(--color-ink)] sm:text-lg">
                       {item.file}
                     </p>
                     <a
