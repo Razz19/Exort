@@ -679,6 +679,7 @@
       </div>
     </section>
 
+    <!--
     <section
       id="workflow"
       bind:this={workflowSection}
@@ -720,6 +721,7 @@
         </div>
       </div>
     </section>
+    -->
 
     <section id="try-exort" class="mx-auto max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24">
       <div
