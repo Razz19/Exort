@@ -183,6 +183,34 @@ html {
   transform: translateX(-4px);
 }
 
+.github-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ebdbb2;
+  transition: color 180ms ease;
+}
+
+.github-nav-link:hover,
+.github-nav-link:focus-visible {
+  color: #fe8019;
+}
+
+.github-nav-link:focus-visible {
+  outline: none;
+}
+
+.github-nav-link__icon {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.github-nav-link__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 .feature-nav-button--active {
   color: var(--color-accent);
   font-weight: 600;
