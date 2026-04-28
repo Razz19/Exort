@@ -63,6 +63,37 @@
     'Use Serial Monitor or Plotter to validate behavior and iterate fast.'
   ];
 
+  const appleIcon = `<svg viewBox="-1.5 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M57.5708873,7282.19296 C58.2999598,7281.34797 58.7914012,7280.17098 58.6569121,7279 C57.6062792,7279.04 56.3352055,7279.67099 55.5818643,7280.51498 C54.905374,7281.26397 54.3148354,7282.46095 54.4735932,7283.60894 C55.6455696,7283.69593 56.8418148,7283.03894 57.5708873,7282.19296 M60.1989864,7289.62485 C60.2283111,7292.65181 62.9696641,7293.65879 63,7293.67179 C62.9777537,7293.74279 62.562152,7295.10677 61.5560117,7296.51675 C60.6853718,7297.73474 59.7823735,7298.94772 58.3596204,7298.97372 C56.9621472,7298.99872 56.5121648,7298.17973 54.9134635,7298.17973 C53.3157735,7298.17973 52.8162425,7298.94772 51.4935978,7298.99872 C50.1203933,7299.04772 49.0738052,7297.68074 48.197098,7296.46676 C46.4032359,7293.98379 45.0330649,7289.44985 46.8734421,7286.3899 C47.7875635,7284.87092 49.4206455,7283.90793 51.1942837,7283.88393 C52.5422083,7283.85893 53.8153044,7284.75292 54.6394294,7284.75292 C55.4635543,7284.75292 57.0106846,7283.67793 58.6366882,7283.83593 C59.3172232,7283.86293 61.2283842,7284.09893 62.4549652,7285.8199 C62.355868,7285.8789 60.1747177,7287.09489 60.1989864,7289.62485" transform="translate(-46 -7279)" fill="currentColor"></path></svg>`;
+  const windowsIcon = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13.1458647,7289.43426 C13.1508772,7291.43316 13.1568922,7294.82929 13.1619048,7297.46884 C16.7759398,7297.95757 20.3899749,7298.4613 23.997995,7299 C23.997995,7295.84873 24.002005,7292.71146 23.997995,7289.71311 C20.3809524,7289.71311 16.7649123,7289.43426 13.1458647,7289.43426 M4,7289.43526 L4,7296.22153 C6.72581454,7296.58933 9.45162907,7296.94113 12.1724311,7297.34291 C12.1774436,7294.71736 12.1704261,7292.0908 12.1704261,7289.46524 C9.44661654,7289.47024 6.72380952,7289.42627 4,7289.43526 M4,7281.84344 L4,7288.61071 C6.72581454,7288.61771 9.45162907,7288.57673 12.1774436,7288.57973 C12.1754386,7285.96017 12.1754386,7283.34361 12.1724311,7280.72405 C9.44461153,7281.06486 6.71679198,7281.42567 4,7281.84344 M24,7288.47179 C20.3879699,7288.48578 16.7759398,7288.54075 13.1619048,7288.55175 C13.1598997,7285.88921 13.1598997,7283.22967 13.1619048,7280.56914 C16.7689223,7280.01844 20.3839599,7279.50072 23.997995,7279 C24,7282.15826 23.997995,7285.31353 24,7288.47179" transform="translate(-4 -7279)" fill="currentColor"></path></svg>`;
+  const linuxIcon = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14.62,8.35c-.42.28-1.75,1-1.95,1.19a.82.82,0,0,1-1.14,0c-.2-.16-1.53-.92-1.95-1.19s-.45-.7.08-.92a6.16,6.16,0,0,1,4.91,0c.49.21.51.6,0,.9m7.22,7.28A19.09,19.09,0,0,0,18,10a4.31,4.31,0,0,1-1.06-1.88c-.1-.33-.17-.67-.24-1A11.32,11.32,0,0,0,16,4.47,4.06,4.06,0,0,0,12.16,2,4.2,4.2,0,0,0,8.21,4.4a5.9,5.9,0,0,0-.46,1.34c-.17.76-.32,1.55-.5,2.32a3.38,3.38,0,0,1-1,1.71,19.53,19.53,0,0,0-3.88,5.35A6.09,6.09,0,0,0,2,16c-.19.66.29,1.12,1,1,.44-.09.88-.18,1.3-.31s.57,0,.67.35a6.73,6.73,0,0,0,4.24,4.5c4.12,1.56,8.93-.66,10-4.58.07-.27.17-.37.47-.27.46.14.93.24,1.4.35a.72.72,0,0,0,.92-.64,1.44,1.44,0,0,0-.16-.73" fill="currentColor"></path></svg>`;
+
+  const downloads = [
+    {
+      label: 'macOS Apple Silicon',
+      file: 'Exort-0.1.0-mac-arm64.dmg',
+      href: '/downloads/Exort-0.1.0-mac-arm64.dmg',
+      icon: appleIcon
+    },
+    {
+      label: 'macOS Intel',
+      file: 'Exort-0.1.0-mac-x64.dmg',
+      href: '/downloads/Exort-0.1.0-mac-x64.dmg',
+      icon: appleIcon
+    },
+    {
+      label: 'Windows',
+      file: 'Exort-0.1.0-win-x64.exe',
+      href: '/downloads/Exort-0.1.0-win-x64.exe',
+      icon: windowsIcon
+    },
+    {
+      label: 'Linux',
+      file: 'Exort-0.1.0-linux-x86_64.AppImage',
+      href: '/downloads/Exort-0.1.0-linux-x86_64.AppImage',
+      icon: linuxIcon
+    }
+  ];
+
   const heroPulseSegments = [
     { top: '10%', left: '9%', width: '12rem', delay: '0.2s', duration: '7.4s' },
     { top: '22%', left: '65%', width: '9rem', delay: '1.8s', duration: '8.6s' },
@@ -101,6 +132,8 @@
   let activeFeatureIndex = 0;
   let featureRotationTimeout: number | null = null;
   let featureRotationResumeAt = 0;
+  let downloadCardEls: HTMLElement[] = [];
+  let downloadOverlayEls: HTMLElement[] = [];
 
   const clearFeatureRotation = () => {
     if (featureRotationTimeout) {
@@ -264,6 +297,7 @@
     pointerQuery.addEventListener('change', syncPointerMode);
 
     let cleanupAnimations = () => {};
+    let cleanupDownloadCards = () => {};
 
     const loadAnimations = async () => {
       if (mediaQuery.matches) {
@@ -438,6 +472,51 @@
         ctx.revert();
         ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       };
+
+      const hoverListeners: Array<() => void> = [];
+
+      downloadOverlayEls.forEach((overlayEl, index) => {
+        const cardEl = downloadCardEls[index];
+        if (!overlayEl || !cardEl) {
+          return;
+        }
+
+        gsap.set(overlayEl, { xPercent: 100, autoAlpha: 1 });
+
+        const showOverlay = () => {
+          gsap.to(overlayEl, {
+            xPercent: 0,
+            duration: 0.45,
+            ease: 'power3.out',
+            overwrite: 'auto'
+          });
+        };
+
+        const hideOverlay = () => {
+          gsap.to(overlayEl, {
+            xPercent: 100,
+            duration: 0.36,
+            ease: 'power3.inOut',
+            overwrite: 'auto'
+          });
+        };
+
+        cardEl.addEventListener('mouseenter', showOverlay);
+        cardEl.addEventListener('mouseleave', hideOverlay);
+        cardEl.addEventListener('focusin', showOverlay);
+        cardEl.addEventListener('focusout', hideOverlay);
+
+        hoverListeners.push(() => {
+          cardEl.removeEventListener('mouseenter', showOverlay);
+          cardEl.removeEventListener('mouseleave', hideOverlay);
+          cardEl.removeEventListener('focusin', showOverlay);
+          cardEl.removeEventListener('focusout', hideOverlay);
+        });
+      });
+
+      cleanupDownloadCards = () => {
+        hoverListeners.forEach((cleanup) => cleanup());
+      };
     };
 
     scheduleFeatureRotation(featureRotationDelay);
@@ -452,6 +531,7 @@
         window.cancelAnimationFrame(heroTrailFrame);
       }
       clearFeatureRotation();
+      cleanupDownloadCards();
       cleanupAnimations();
     };
   });
@@ -739,20 +819,44 @@
             Choose your platform to download the right version
           </p>
 
-          <div class="mt-8 grid w-full max-w-2xl gap-4 lg:grid-cols-2">
-          <div class="rounded-3xl bg-[color:var(--color-surface-strong)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-            <p class="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-accent-soft)]">
-              Install
-            </p>
-            <code class="mt-3 block text-sm text-slate-100">npm install</code>
+          <div class="download-grid mt-10 grid w-full max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
+            {#each downloads as item, index}
+              <article
+                bind:this={downloadCardEls[index]}
+                class="download-card group relative aspect-square overflow-hidden bg-[rgba(60,56,54,0.48)]"
+              >
+                <div class="download-card__base absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+                  <span class="download-card__icon" aria-hidden="true">
+                    {@html item.icon}
+                  </span>
+                  <p class="mt-5 text-lg font-light text-[color:var(--color-text)] sm:text-xl">
+                    {item.label}
+                  </p>
+                </div>
+
+                <div
+                  bind:this={downloadOverlayEls[index]}
+                  class="download-card__overlay absolute inset-0 flex flex-col justify-between p-6"
+                >
+                  <span class="download-card__overlay-icon" aria-hidden="true">
+                    {@html item.icon}
+                  </span>
+                  <div class="flex flex-1 flex-col items-center justify-center text-center">
+                    <p class="text-base font-medium text-[color:var(--color-text)] sm:text-lg">
+                      {item.file}
+                    </p>
+                    <a
+                      href={item.href}
+                      download
+                      class="mt-5 inline-flex items-center justify-center border border-[rgba(235,219,178,0.28)] px-5 py-2 text-sm font-medium text-[color:var(--color-text)] transition hover:bg-[rgba(235,219,178,0.1)]"
+                    >
+                      Download
+                    </a>
+                  </div>
+                </div>
+              </article>
+            {/each}
           </div>
-          <div class="rounded-3xl bg-[color:var(--color-surface-strong)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-            <p class="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-accent-soft)]">
-              Run
-            </p>
-            <code class="mt-3 block text-sm text-slate-100">npm run dev</code>
-          </div>
-        </div>
         </div>
       </div>
     </section>
