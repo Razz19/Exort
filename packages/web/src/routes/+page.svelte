@@ -728,36 +728,18 @@
         bind:this={ctaSection}
         class="rounded-[2rem] bg-[color:var(--color-surface)] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:p-10 lg:p-12"
       >
-        <div class="max-w-3xl">
+        <div class="flex min-h-[22rem] flex-col items-center justify-center text-center">
           <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
-            Try Exort Now
+            Get Exort
           </span>
           <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
-            Start with the base setup today and expand the experience later.
+            Let&apos;s get Exort running on your setup
           </h2>
           <p class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]">
-            This landing page is a clean foundation for the website. As the product evolves, the
-            theme, component system, screenshots, docs links, and download actions can be extended
-            without changing the overall structure.
+            Choose your platform to download the right version
           </p>
-        </div>
 
-        <div class="mt-8 flex flex-col gap-4 sm:flex-row">
-          <a
-            href="#workflow"
-            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
-          >
-            Start With Exort
-          </a>
-          <a
-            href="#top"
-            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-surface-strong)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.14)] transition hover:bg-[color:var(--color-surface)]"
-          >
-            Back To Top
-          </a>
-        </div>
-
-        <div class="mt-8 grid gap-4 lg:grid-cols-2">
+          <div class="mt-8 grid w-full max-w-2xl gap-4 lg:grid-cols-2">
           <div class="rounded-3xl bg-[color:var(--color-surface-strong)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
             <p class="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-accent-soft)]">
               Install
@@ -770,6 +752,7 @@
             </p>
             <code class="mt-3 block text-sm text-slate-100">npm run dev</code>
           </div>
+        </div>
         </div>
       </div>
     </section>
