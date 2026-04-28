@@ -75,24 +75,28 @@
       file: "Exort-0.1.0-mac-arm64.dmg",
       href: "/downloads/Exort-0.1.0-mac-arm64.dmg",
       icon: appleIcon,
+      color: "#98971a",
     },
     {
       label: "macOS Intel",
       file: "Exort-0.1.0-mac-x64.dmg",
       href: "/downloads/Exort-0.1.0-mac-x64.dmg",
       icon: appleIcon,
+      color: "#458588",
     },
     {
       label: "Windows",
       file: "Exort-0.1.0-win-x64.exe",
       href: "/downloads/Exort-0.1.0-win-x64.exe",
       icon: windowsIcon,
+      color: "#fe8019",
     },
     {
       label: "Linux",
       file: "Exort-0.1.0-linux-x86_64.AppImage",
       href: "/downloads/Exort-0.1.0-linux-x86_64.AppImage",
       icon: linuxIcon,
+      color: "#d79921",
     },
   ];
   const downloadVersion = "0.1.0";
@@ -958,7 +962,8 @@
             {#each downloads as item, index}
               <article
                 bind:this={downloadCardEls[index]}
-                class="download-card group relative h-56 w-56 overflow-hidden bg-[rgba(60,56,54,0.48)]"
+                class="download-card group relative h-56 w-56 overflow-hidden"
+                style={`--download-card-color:${item.color};`}
                 on:mouseenter={() => void showDownloadOverlay(index)}
                 on:mouseleave={() => void hideDownloadOverlay(index)}
                 on:focusin={() => void showDownloadOverlay(index)}
