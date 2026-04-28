@@ -999,7 +999,7 @@
           </div>
 
           <div
-            class="download-grid mt-10 grid w-full max-w-[30rem] grid-cols-1 gap-5 sm:grid-cols-2"
+            class="download-grid mt-10 grid w-fit grid-cols-1 gap-5 justify-items-center sm:grid-cols-2"
           >
             {#each downloads as item, index}
               <article
