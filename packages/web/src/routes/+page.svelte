@@ -142,6 +142,7 @@
   let featurePanelEl: HTMLElement | null = null;
   let workflowSection: HTMLElement | null = null;
   let ctaSection: HTMLElement | null = null;
+  let ctaIntroEl: HTMLElement | null = null;
 
   let headlineLineEls: HTMLSpanElement[] = [];
   let workflowCardEls: HTMLElement[] = [];
@@ -453,6 +454,7 @@
             featurePanelEl,
             ...workflowCardEls,
             ...workflowStepEls,
+            ctaIntroEl,
             ...downloadCardEls,
           ].filter(Boolean),
           {
@@ -587,6 +589,22 @@
             onLeaveBack: () => stepEl.classList.remove("is-active"),
           });
         });
+
+        if (ctaSection) {
+          if (ctaIntroEl) {
+            gsap.from(ctaIntroEl, {
+              y: -28,
+              opacity: 0,
+              duration: 0.68,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: ctaSection,
+                start: "top 78%",
+                once: true,
+              },
+            });
+          }
+        }
 
         if (ctaSection && downloadCardEls.length) {
           const downloadCardsTimeline = gsap.timeline({
@@ -964,19 +982,21 @@
         <div
           class="flex min-h-[22rem] flex-col items-center justify-center text-center"
         >
-          <span
-            class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
-          >
-            Get Exort
-          </span>
-          <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
-            Let&apos;s get Exort running on your setup
-          </h2>
-          <p
-            class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]"
-          >
-            Choose your platform to download the right version
-          </p>
+          <div bind:this={ctaIntroEl}>
+            <span
+              class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+            >
+              Get Exort
+            </span>
+            <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
+              Let&apos;s get Exort running on your setup
+            </h2>
+            <p
+              class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]"
+            >
+              Choose your platform to download the right version
+            </p>
+          </div>
 
           <div
             class="download-grid mt-10 grid w-full max-w-[30rem] grid-cols-1 gap-5 sm:grid-cols-2"
