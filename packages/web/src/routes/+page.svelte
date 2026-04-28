@@ -5,6 +5,7 @@
   import serialMonitorImage from "../../../../assets/features/serial-monitor.png";
   import serialPlotterImage from "../../../../assets/features/serial-plotter.png";
   import boardManagerImage from "../../../../assets/features/board-manager.png";
+  import providerImage from "../../../../assets/features/provider.png";
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -41,16 +42,10 @@
       image: boardManagerImage,
     },
     {
-      title: "Project Manager",
-      description:
-        "Switch between embedded workspaces, preserve local project state, and keep active files and context organized across sessions.",
-      image: null,
-    },
-    {
       title: "Provider Connection",
       description:
         "Connect your preferred AI provider setup and route workflows through the models that fit your embedded development stack.",
-      image: null,
+      image: providerImage,
     },
     {
       title: "Embedded Agent",
