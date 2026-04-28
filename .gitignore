@@ -11,6 +11,7 @@ out
 coverage
 .vite
 .svelte-kit
+**/.vercel
 docs/*
 packages/desktop/release
 packages/server/prisma/dev.db
