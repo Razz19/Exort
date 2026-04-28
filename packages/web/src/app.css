@@ -403,11 +403,16 @@ html {
   background: rgba(251, 241, 199, 0.92);
   color: #3c3836;
   box-shadow: 0 10px 24px rgba(69, 44, 18, 0.18);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .download-card__button:hover,
 .download-card__button:focus-visible {
   background: #fbf1c7;
+  transform: translateY(-2px) scale(1.02);
   box-shadow: 0 14px 28px rgba(69, 44, 18, 0.22);
 }
 
