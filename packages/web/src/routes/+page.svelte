@@ -2,6 +2,9 @@
   import { fade, fly } from "svelte/transition";
   import { onMount } from "svelte";
   import heroAppImage from "../../../../assets/app.png";
+  import serialMonitorImage from "../../../../assets/features/serial-monitor.png";
+  import serialPlotterImage from "../../../../assets/features/serial-plotter.png";
+  import boardManagerImage from "../../../../assets/features/board-manager.png";
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -23,19 +26,19 @@
       title: "Serial Monitor",
       description:
         "Watch live device output in a dedicated pane while you debug firmware behavior, inspect logs, and keep iteration focused inside Exort.",
-      image: "/features/serial-monitor.png",
+      image: serialMonitorImage,
     },
     {
       title: "Serial Plotter",
       description:
         "Turn streaming values into readable charts so sensor tuning, calibration, and runtime validation happen without leaving the workspace.",
-      image: "/features/serial-plotter.png",
+      image: serialPlotterImage,
     },
     {
       title: "Board Manager",
       description:
         "Manage board platforms from the same app and keep toolchains ready for Arduino, ESP32, RP2040, STM32, Teensy, and more.",
-      image: "/features/board-manager.png",
+      image: boardManagerImage,
     },
     {
       title: "Project Manager",
