@@ -646,7 +646,7 @@
         <img
           src="/exort-logo.png"
           alt="Exort"
-          class="h-11 w-11 object-contain"
+          class="h-12 w-12 object-contain"
         />
         <span
           class="text-base font-medium tracking-[0.02em] text-white sm:text-lg"
