@@ -234,6 +234,9 @@ html {
   justify-content: center;
   align-items: flex-end;
   height: 100%;
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
 }
 
 .feature-copy__inner {
@@ -249,6 +252,12 @@ html {
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+}
+
+.feature-image-shell:hover .feature-copy,
+.feature-image-shell:focus-within .feature-copy {
+  opacity: 0;
+  transform: translateY(1.35rem);
 }
 
 .feature-arrow-button {
