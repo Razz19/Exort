@@ -332,19 +332,52 @@
           });
         }
 
-        if (featuresIntroEl || featureSidebarEl || featurePanelEl) {
-          gsap.from([featuresIntroEl, featureSidebarEl, featurePanelEl].filter(Boolean), {
-            y: 28,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'power2.out',
+        if (featuresSection && (featuresIntroEl || featureSidebarEl || featurePanelEl)) {
+          const featuresTimeline = gsap.timeline({
+            defaults: {
+              duration: 0.75,
+              ease: 'power3.out'
+            },
             scrollTrigger: {
               trigger: featuresSection,
-              start: 'top 72%',
-              once: true
+              start: 'top 70%',
+              once: true,
+              invalidateOnRefresh: true
             }
           });
+
+          if (featuresIntroEl) {
+            featuresTimeline.from(
+              featuresIntroEl,
+              {
+                x: -32,
+                opacity: 0
+              },
+              0
+            );
+          }
+
+          if (featurePanelEl) {
+            featuresTimeline.from(
+              featurePanelEl,
+              {
+                x: -48,
+                opacity: 0
+              },
+              0.08
+            );
+          }
+
+          if (featureSidebarEl) {
+            featuresTimeline.from(
+              featureSidebarEl,
+              {
+                x: 40,
+                opacity: 0
+              },
+              0.2
+            );
+          }
         }
 
         if (workflowCardEls.length) {
