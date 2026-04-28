@@ -453,7 +453,7 @@
             featurePanelEl,
             ...workflowCardEls,
             ...workflowStepEls,
-            ctaSection,
+            ...downloadCardEls,
           ].filter(Boolean),
           {
             willChange: "transform, opacity",
@@ -588,17 +588,39 @@
           });
         });
 
-        if (ctaSection) {
-          gsap.from(ctaSection, {
-            y: 26,
-            opacity: 0,
-            duration: 0.88,
-            ease: "power2.out",
+        if (ctaSection && downloadCardEls.length) {
+          const downloadCardsTimeline = gsap.timeline({
+            delay: 0.5,
             scrollTrigger: {
               trigger: ctaSection,
               start: "top 78%",
               once: true,
             },
+          });
+
+          const cardAnimations = [
+            { index: 0, vars: { y: -64, opacity: 0 } },
+            { index: 1, vars: { x: 64, opacity: 0 } },
+            { index: 3, vars: { y: 64, opacity: 0 } },
+            { index: 2, vars: { x: -64, opacity: 0 } },
+          ];
+
+          cardAnimations.forEach((cardAnimation, orderIndex) => {
+            const cardEl = downloadCardEls[cardAnimation.index];
+            if (!cardEl) {
+              return;
+            }
+
+            downloadCardsTimeline.from(
+              cardEl,
+              {
+                ...cardAnimation.vars,
+                duration: 0.62,
+                ease: "power3.out",
+                clearProps: "transform,opacity,willChange",
+              },
+              orderIndex * 0.12,
+            );
           });
         }
       });
