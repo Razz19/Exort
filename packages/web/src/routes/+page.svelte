@@ -93,6 +93,7 @@
       icon: linuxIcon
     }
   ];
+  const downloadVersion = '0.1.0';
 
   const heroPulseSegments = [
     { top: '10%', left: '9%', width: '12rem', delay: '0.2s', duration: '7.4s' },
@@ -898,8 +899,10 @@
                   </span>
                   <div class="download-card__overlay-content flex h-full flex-col items-center justify-center text-center">
                     <p class="text-base font-medium text-[color:var(--color-ink)] sm:text-lg">
-                      {item.file}
+                      Exort {downloadVersion}
                     </p>
+                  </div>
+                  <div class="download-card__overlay-actions flex justify-center">
                     <a
                       href={item.href}
                       download
