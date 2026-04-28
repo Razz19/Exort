@@ -5,7 +5,8 @@
   import serialMonitorImage from "../../../../assets/features/serial-monitor.png";
   import serialPlotterImage from "../../../../assets/features/serial-plotter.png";
   import boardManagerImage from "../../../../assets/features/board-manager.png";
-  import providerImage from "../../../../assets/features/provider.png";
+  import providerImage from "../../../../assets/features/provider-connection.png";
+  import embeddedAgentImage from "../../../../assets/features/embedded-agent.png";
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -51,7 +52,7 @@
       title: "Embedded Agent",
       description:
         "Use the embedded-focused agent to inspect the workspace, edit code, and assist with compile or upload loops from the same environment.",
-      image: null,
+      image: embeddedAgentImage,
     },
   ];
 
