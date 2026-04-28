@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, fly } from 'svelte/transition';
   import { onMount } from 'svelte';
 
   const navItems = [
@@ -13,36 +14,45 @@
     'and hardware tools in one app.'
   ];
 
+  const featureRotationDelay = 4000;
+  const manualFeaturePause = 8000;
+
   const features = [
     {
-      title: 'AI Coding Workspace',
+      title: 'Serial Monitor',
       description:
-        'Chat with the embedded-focused agent, edit project files, and keep code changes in the same workspace without switching tools.'
+        'Watch live device output in a dedicated pane while you debug firmware behavior, inspect logs, and keep iteration focused inside Exort.',
+      image: '/features/serial-monitor.png'
     },
     {
-      title: 'Compile And Upload',
+      title: 'Serial Plotter',
       description:
-        'Run compile and upload flows directly from Exort so firmware iteration stays inside the app from first edit to device test.'
+        'Turn streaming values into readable charts so sensor tuning, calibration, and runtime validation happen without leaving the workspace.',
+      image: '/features/serial-plotter.png'
     },
     {
-      title: 'Serial Tools Built In',
+      title: 'Board Manager',
       description:
-        'Use the Serial Monitor and Serial Plotter for live device output and data inspection while you tune embedded behavior.'
+        'Manage board platforms from the same app and keep toolchains ready for Arduino, ESP32, RP2040, STM32, Teensy, and more.',
+      image: '/features/board-manager.png'
     },
     {
-      title: 'Workspace Management',
+      title: 'Project Manager',
       description:
-        'Handle multiple embedded projects with persisted local state, tabbed editing, and project switching that survives restarts.'
+        'Switch between embedded workspaces, preserve local project state, and keep active files and context organized across sessions.',
+      image: null
     },
     {
-      title: 'Model Flexibility',
+      title: 'Provider Connection',
       description:
-        'Start with free OpenCode models or connect your own provider setup for workflows powered by ChatGPT, Claude, and other models.'
+        'Connect your preferred AI provider setup and route workflows through the models that fit your embedded development stack.',
+      image: null
     },
     {
-      title: 'Board Platform Support',
+      title: 'Embedded Agent',
       description:
-        'Work with Arduino CLI platforms including Arduino, ESP32, ESP8266, RP2040, STM32, Teensy, and more from one desktop app.'
+        'Use the embedded-focused agent to inspect the workspace, edit code, and assist with compile or upload loops from the same environment.',
+      image: null
     }
   ];
 
@@ -77,15 +87,84 @@
   let heroScreenshotWrap: HTMLElement | null = null;
   let heroScreenshot: HTMLImageElement | null = null;
   let featuresSection: HTMLElement | null = null;
+  let featuresIntroEl: HTMLElement | null = null;
+  let featureSidebarEl: HTMLElement | null = null;
+  let featurePanelEl: HTMLElement | null = null;
   let workflowSection: HTMLElement | null = null;
   let ctaSection: HTMLElement | null = null;
 
   let headlineLineEls: HTMLSpanElement[] = [];
-  let featureCardEls: HTMLElement[] = [];
   let workflowCardEls: HTMLElement[] = [];
   let workflowStepEls: HTMLElement[] = [];
   let heroTrailFrame = 0;
   let heroTrailRunning = false;
+  let activeFeatureIndex = 0;
+  let featureRotationTimeout: number | null = null;
+  let featureRotationResumeAt = 0;
+
+  const clearFeatureRotation = () => {
+    if (featureRotationTimeout) {
+      window.clearTimeout(featureRotationTimeout);
+      featureRotationTimeout = null;
+    }
+  };
+
+  const scheduleFeatureRotation = (delay = featureRotationDelay) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    clearFeatureRotation();
+    featureRotationTimeout = window.setTimeout(() => {
+      const pauseRemaining = featureRotationResumeAt - Date.now();
+      if (pauseRemaining > 0) {
+        scheduleFeatureRotation(pauseRemaining);
+        return;
+      }
+
+      activeFeatureIndex = (activeFeatureIndex + 1) % features.length;
+      scheduleFeatureRotation(featureRotationDelay);
+    }, delay);
+  };
+
+  const setActiveFeature = (index: number, pauseAuto = false) => {
+    activeFeatureIndex = index;
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (pauseAuto) {
+      featureRotationResumeAt = Date.now() + manualFeaturePause;
+      scheduleFeatureRotation(manualFeaturePause);
+      return;
+    }
+
+    scheduleFeatureRotation(featureRotationDelay);
+  };
+
+  const showPreviousFeature = () => {
+    setActiveFeature((activeFeatureIndex - 1 + features.length) % features.length, true);
+  };
+
+  const showNextFeature = () => {
+    setActiveFeature((activeFeatureIndex + 1) % features.length, true);
+  };
+
+  const preloadFeatureImages = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    features.forEach((feature) => {
+      if (!feature.image) {
+        return;
+      }
+
+      const image = new Image();
+      image.src = feature.image;
+    });
+  };
 
   const syncHeroTrail = () => {
     heroPointerRenderX += (heroPointerTargetX - heroPointerRenderX) * 0.18;
@@ -203,7 +282,9 @@
             heroCopy,
             heroActions,
             heroScreenshotWrap,
-            ...featureCardEls,
+            featuresIntroEl,
+            featureSidebarEl,
+            featurePanelEl,
             ...workflowCardEls,
             ...workflowStepEls,
             ctaSection
@@ -251,8 +332,8 @@
           });
         }
 
-        if (featureCardEls.length) {
-          gsap.from(featureCardEls, {
+        if (featuresIntroEl || featureSidebarEl || featurePanelEl) {
+          gsap.from([featuresIntroEl, featureSidebarEl, featurePanelEl].filter(Boolean), {
             y: 28,
             opacity: 0,
             duration: 0.8,
@@ -326,6 +407,8 @@
       };
     };
 
+    scheduleFeatureRotation(featureRotationDelay);
+    preloadFeatureImages();
     void loadAnimations();
 
     return () => {
@@ -335,6 +418,7 @@
       if (heroTrailFrame) {
         window.cancelAnimationFrame(heroTrailFrame);
       }
+      clearFeatureRotation();
       cleanupAnimations();
     };
   });
@@ -470,32 +554,95 @@
       bind:this={featuresSection}
       class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24"
     >
-      <div class="max-w-2xl">
+      <div bind:this={featuresIntroEl} class="max-w-2xl">
         <span class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]">
-          Features
+          Core Features
         </span>
-        <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
-          The base toolkit for modern embedded workflows.
-        </h2>
-        <p class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]">
-          Exort is built around the parts of embedded development that usually end up scattered
-          across multiple tools. The result is a cleaner loop from idea to device feedback.
-        </p>
       </div>
 
-      <div class="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {#each features as feature, index}
-          <article
-            bind:this={featureCardEls[index]}
-            class="feature-card rounded-3xl bg-[color:var(--color-surface)] p-6 shadow-[0_18px_48px_rgba(0,0,0,0.14)] backdrop-blur-2xl transition hover:bg-[color:var(--color-surface-strong)]"
-          >
-            
-            <h3 class="mt-5 text-xl font-semibold text-white">{feature.title}</h3>
-            <p class="mt-3 text-sm leading-7 text-[color:var(--color-text-muted)]">
-              {feature.description}
-            </p>
-          </article>
-        {/each}
+      <div class="feature-showcase mt-12">
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:gap-8">
+          <div bind:this={featurePanelEl} class="min-w-0">
+            <div class="grid gap-6">
+              <div class="relative">
+                <div class="feature-image-shell relative overflow-hidden">
+                  <div class="feature-stage">
+                    {#key activeFeatureIndex}
+                      <div
+                        class="feature-stage__layer"
+                        in:fade={{ duration: prefersReducedMotion ? 0 : 180 }}
+                        out:fade={{ duration: prefersReducedMotion ? 0 : 140 }}
+                      >
+                      {#if features[activeFeatureIndex].image}
+                        <img
+                          src={features[activeFeatureIndex].image}
+                          alt={`${features[activeFeatureIndex].title} screenshot`}
+                          class="feature-image"
+                        />
+                      {:else}
+                        <div class="feature-image-placeholder flex h-full w-full items-center justify-center">
+                          <span class="px-6 text-center text-sm uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]">
+                            Image Coming Soon
+                          </span>
+                        </div>
+                      {/if}
+                      </div>
+                    {/key}
+
+                    {#key activeFeatureIndex}
+                      <article
+                        class="feature-copy absolute bottom-0 left-0 z-10 w-full p-0"
+                        in:fade={{ duration: prefersReducedMotion ? 0 : 180 }}
+                        out:fade={{ duration: prefersReducedMotion ? 0 : 140 }}
+                      >
+                        <p class="feature-copy__inner text-sm leading-7 text-[color:var(--color-text-muted)]">
+                          {features[activeFeatureIndex].description}
+                        </p>
+                      </article>
+                    {/key}
+                  </div>
+
+                  <div class="absolute inset-y-0 left-3 z-10 flex items-center sm:hidden">
+                    <button
+                      type="button"
+                      class="feature-arrow-button"
+                      on:click={showPreviousFeature}
+                      aria-label="Show previous feature"
+                    >
+                      &larr;
+                    </button>
+                  </div>
+                  <div class="absolute inset-y-0 right-3 z-10 flex items-center sm:hidden">
+                    <button
+                      type="button"
+                      class="feature-arrow-button"
+                      on:click={showNextFeature}
+                      aria-label="Show next feature"
+                    >
+                      &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside bind:this={featureSidebarEl} class="hidden lg:block">
+            <div class="sticky top-24 space-y-3">
+              {#each features as feature, index}
+                <button
+                  type="button"
+                  class:feature-nav-button--active={index === activeFeatureIndex}
+                  class="feature-nav-button w-full text-right"
+                  on:click={() => setActiveFeature(index, true)}
+                  aria-pressed={index === activeFeatureIndex}
+                >
+                  {feature.title}
+                </button>
+              {/each}
+            </div>
+          </aside>
+        </div>
       </div>
     </section>
 
