@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
   import { onMount } from "svelte";
+  import heroAppImage from "../../../../assets/app.png";
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -760,13 +761,13 @@
 
       <div
         bind:this={heroScreenshotWrap}
-        class="relative left-1/2 z-10 -mt-8 w-[calc(100%+1.5rem)] max-w-none -translate-x-1/2 px-2 sm:-mt-6 sm:w-[calc(100%+3rem)] sm:px-0 lg:-mt-10 lg:w-[calc(100%+6rem)]"
+        class="relative left-1/2 z-10 mt-6 w-[min(100%,72rem)] -translate-x-1/2 px-2 sm:mt-8 sm:px-0 lg:mt-10"
       >
         <img
           bind:this={heroScreenshot}
-          src="/exort-screenshot.png"
+          src={heroAppImage}
           alt="Exort desktop application screenshot"
-          class="hero-screenshot h-auto w-full object-cover object-top"
+          class="hero-screenshot h-auto w-full object-contain object-top"
         />
       </div>
     </section>
