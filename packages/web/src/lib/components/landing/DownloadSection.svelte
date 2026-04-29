@@ -53,7 +53,7 @@
     },
     {
       key: "dev-web",
-      command: "npm run dev:web",
+      command: "npm run dev",
     },
   ] as const;
   const localSetupAllCommand = localSetupCommands
@@ -435,7 +435,7 @@
               OR Run Locally
             </span>
             <h3 class="mt-2 text-xl font-semibold text-white sm:text-2xl">
-              Clone the repo and start the web app locally
+              Clone the repo and run Exort locally
             </h3>
           </div>
 
