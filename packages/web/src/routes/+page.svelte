@@ -346,7 +346,7 @@
 </script>
 
 <svelte:head>
-  <title>Exort | Embedded Development In One Workspace</title>
+  <title>Exort</title>
   <meta
     name="description"
     content="Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent for code, compile, upload, and device interaction in one place."

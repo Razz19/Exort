@@ -13,8 +13,8 @@
 
   let { features }: { features: FeatureItem[] } = $props();
 
-  let prefersReducedMotion = false;
-  let activeFeatureIndex = 0;
+  let prefersReducedMotion = $state(false);
+  let activeFeatureIndex = $state(0);
   let featureRotationTimeout: number | null = null;
   let featureRotationResumeAt = 0;
   let featuresSection: HTMLElement | null = null;
