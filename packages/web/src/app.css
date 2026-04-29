@@ -512,6 +512,12 @@ html {
   border-radius: 999px;
   background: rgba(251, 241, 199, 0.04);
   color: var(--gruvbox-fg1);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .local-setup-copy {
@@ -528,6 +534,7 @@ html {
   background: rgba(254, 128, 25, 0.12);
   border-color: rgba(254, 128, 25, 0.32);
   color: white;
+  box-shadow: 0 12px 24px rgba(69, 44, 18, 0.2);
 }
 
 .local-setup-copy:focus-visible,

@@ -63,6 +63,9 @@
   let ctaSection: HTMLElement | null = null;
   let ctaIntroEl: HTMLElement | null = null;
   let downloadCardEls: HTMLElement[] = [];
+  let localSetupPanelEl: HTMLElement | null = null;
+  let localSetupHeaderEl: HTMLElement | null = null;
+  let localSetupCommandEls: HTMLElement[] = [];
   let gsapRef: Awaited<typeof import("gsap")>["gsap"] | null = null;
   let copiedCommandKey: string | null = null;
   let copyResetTimeout: number | null = null;
@@ -225,9 +228,18 @@
       gsap.registerPlugin(ScrollTrigger);
 
       const ctx = gsap.context(() => {
-        gsap.set([ctaIntroEl, ...downloadCardEls].filter(Boolean), {
-          willChange: "transform, opacity",
-        });
+        gsap.set(
+          [
+            ctaIntroEl,
+            ...downloadCardEls,
+            localSetupPanelEl,
+            localSetupHeaderEl,
+            ...localSetupCommandEls,
+          ].filter(Boolean),
+          {
+            willChange: "transform, opacity",
+          },
+        );
 
         if (ctaSection) {
           if (ctaIntroEl) {
@@ -279,6 +291,37 @@
               orderIndex * 0.12,
             );
           });
+        }
+
+        if (localSetupPanelEl) {
+          if (localSetupHeaderEl) {
+            gsap.from(localSetupHeaderEl, {
+              y: 20,
+              opacity: 0,
+              duration: 0.62,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: localSetupPanelEl,
+                start: "top 82%",
+                once: true,
+              },
+            });
+          }
+
+          if (localSetupCommandEls.length) {
+            gsap.from(localSetupCommandEls, {
+              y: 18,
+              opacity: 0,
+              duration: 0.56,
+              stagger: 0.08,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: localSetupPanelEl,
+                start: "top 78%",
+                once: true,
+              },
+            });
+          }
         }
       }, ctaSection || undefined);
 
@@ -377,8 +420,12 @@
         {/each}
       </div>
 
-      <div class="local-setup-panel mt-12 w-full max-w-4xl text-left">
+      <div
+        bind:this={localSetupPanelEl}
+        class="local-setup-panel mt-12 w-full max-w-4xl text-left"
+      >
         <div
+          bind:this={localSetupHeaderEl}
           class="flex flex-col gap-3 border-b border-[rgba(235,219,178,0.08)] pb-4 md:flex-row md:items-end md:justify-between"
         >
           <div>
@@ -408,8 +455,11 @@
         </div>
 
         <div class="mt-4 space-y-2">
-          {#each localSetupCommands as item}
-            <div class="local-setup-command">
+          {#each localSetupCommands as item, index}
+            <div
+              bind:this={localSetupCommandEls[index]}
+              class="local-setup-command"
+            >
               <div class="local-setup-command__inner">
                 <pre class="local-setup-command__code"><code
                     >{item.command}</code
