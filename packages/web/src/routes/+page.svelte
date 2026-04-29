@@ -21,12 +21,6 @@
     },
   ];
 
-  const headlineLines = [
-    "Embedded development",
-    "with AI, code,",
-    "and hardware tools in one app.",
-  ];
-
   const features = [
     {
       title: "Serial Monitor",
@@ -370,8 +364,8 @@
           class="h-12 w-12 object-contain"
         />
         <span
-          class="text-base font-medium tracking-[0.02em] text-white sm:text-lg"
-          >Exort</span
+          class="text-base tracking-[0.02em] text-white sm:text-lg font-mono font-extrabold"
+          >Exort.dev</span
         >
       </a>
 
@@ -431,15 +425,18 @@
       >
         <div class="w-fit">
           <h1
-            class="max-w-4xl text-3xl font-semibold leading-[1.02] text-white sm:text-4xl lg:max-w-5xl lg:text-5xl"
+            class="max-w-4xl text-3xl font-semibold text-white sm:text-4xl lg:max-w-5xl lg:text-5xl lg:leading-56"
           >
-            {#each headlineLines as line, index}
-              <span class="block overflow-hidden">
-                <span bind:this={headlineLineEls[index]} class="block"
-                  >{line}</span
-                >
+            <span class="block">
+              <span bind:this={headlineLineEls[0]} class="block">
+                Open Source Coding Agent</span
+              >
+            </span>
+            <span class="block">
+              <span bind:this={headlineLineEls[1]} class="block">
+                For Embedded Development
               </span>
-            {/each}
+            </span>
           </h1>
 
           <p
@@ -462,24 +459,6 @@
             </a>
           </div>
         </div>
-
-        <!-- <div
-          aria-hidden="true"
-          class="pointer-events-none mt-6 hidden justify-end lg:mt-0 lg:flex"
-        >
-          <div class="relative w-full max-w-[17rem] xl:max-w-[20rem]">
-            <img
-              src="/2d-fire.gif"
-              alt=""
-              class="absolute inset-0 z-0 h-full w-full object-contain opacity-80"
-            />
-            <img
-              src="/exort-transparent-hair.png"
-              alt=""
-              class="relative z-10 w-full"
-            />
-          </div>
-        </div> -->
       </div>
 
       <div
