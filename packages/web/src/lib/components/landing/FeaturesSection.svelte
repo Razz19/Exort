@@ -1,47 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
-  import serialMonitorImage from "../../../../../../assets/features/serial-monitor.png";
-  import serialPlotterImage from "../../../../../../assets/features/serial-plotter.png";
-  import boardManagerImage from "../../../../../../assets/features/board-manager.png";
-  import providerImage from "../../../../../../assets/features/provider-connection.png";
-  import embeddedAgentImage from "../../../../../../assets/features/embedded-agent.png";
 
   const featureRotationDelay = 4000;
   const manualFeaturePause = 8000;
 
-  const features = [
-    {
-      title: "Serial Monitor",
-      description:
-        "Read live device output. Ideal for boot logs, debug prints, and quick checks while you iterate.",
-      image: serialMonitorImage,
-    },
-    {
-      title: "Serial Plotter",
-      description:
-        "Plot streaming values as simple charts so sensor tuning, calibration, and runtime issues are easier to spot.",
-      image: serialPlotterImage,
-    },
-    {
-      title: "Board Manager",
-      description:
-        "Install and switch board platforms in one place, with support for Arduino, ESP32, RP2040, STM32, Teensy, and more.",
-      image: boardManagerImage,
-    },
-    {
-      title: "Provider Connection",
-      description:
-        "Bring your own AI provider setup and choose the models that match your workflow and budget.",
-      image: providerImage,
-    },
-    {
-      title: "Embedded Agent",
-      description:
-        "Let the agent inspect the project, edit code, and help with compile or upload.",
-      image: embeddedAgentImage,
-    },
-  ];
+  type FeatureItem = {
+    title: string;
+    description: string;
+    image?: string;
+  };
+
+  let { features }: { features: FeatureItem[] } = $props();
 
   let prefersReducedMotion = false;
   let activeFeatureIndex = 0;

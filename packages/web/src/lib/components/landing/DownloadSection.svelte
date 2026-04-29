@@ -227,7 +227,7 @@
             );
           });
         }
-      }, ctaSection);
+      }, ctaSection || undefined);
 
       cleanupAnimations = () => {
         ctx.revert();
