@@ -9,28 +9,28 @@
     {
       label: "macOS Apple Silicon",
       file: "Exort-0.1.0-mac-arm64.dmg",
-      href: "/downloads/Exort-0.1.0-mac-arm64.dmg",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.1.0/Exort-0.1.0-mac-arm64.dmg",
       icon: appleIcon,
       color: "#98971a",
     },
     {
       label: "macOS Intel",
       file: "Exort-0.1.0-mac-x64.dmg",
-      href: "/downloads/Exort-0.1.0-mac-x64.dmg",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.1.0/Exort-0.1.0-mac-x64.dmg",
       icon: appleIcon,
       color: "#458588",
     },
     {
       label: "Windows",
       file: "Exort-0.1.0-win-x64.exe",
-      href: "/downloads/Exort-0.1.0-win-x64.exe",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.1.0/Exort-0.1.0-win-x64.exe",
       icon: windowsIcon,
       color: "#fe8019",
     },
     {
       label: "Linux",
       file: "Exort-0.1.0-linux-x86_64.AppImage",
-      href: "/downloads/Exort-0.1.0-linux-x86_64.AppImage",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.1.0/Exort-0.1.0-linux-x86_64.AppImage",
       icon: linuxIcon,
       color: "#d79921",
     },
@@ -307,9 +307,7 @@
                   Exort {downloadVersion}
                 </p>
               </div>
-              <div
-                class="download-card__overlay-actions flex justify-center"
-              >
+              <div class="download-card__overlay-actions flex justify-center">
                 <a
                   href={item.href}
                   download
