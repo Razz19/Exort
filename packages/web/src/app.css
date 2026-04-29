@@ -12,6 +12,10 @@
   --color-text-muted: rgba(213, 196, 161, 0.78);
   --color-accent: #fe8019;
   --color-accent-soft: rgba(250, 189, 47, 0.82);
+  --gruvbox-fg0: #fbf1c7;
+  --gruvbox-fg1: #ebdbb2;
+  --gruvbox-yellow: #fabd2f;
+  --gruvbox-orange: #fe8019;
   --grid-line: rgba(168, 153, 132, 0.08);
   --grid-line-strong: rgba(168, 153, 132, 0.12);
   --grid-line-highlight: rgba(254, 128, 25, 0.6);
@@ -144,6 +148,41 @@ html {
   will-change: transform;
 }
 
+.hero-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08em;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  overflow: visible;
+}
+
+.hero-title > span {
+  display: block;
+  overflow: visible;
+}
+
+.hero-title__line {
+  display: block;
+  line-height: 1.08;
+  padding-bottom: 0.08em;
+  overflow: visible;
+  color: transparent;
+  background-image: linear-gradient(
+    115deg,
+    var(--gruvbox-fg0) 0%,
+    var(--gruvbox-fg1) 24%,
+    var(--gruvbox-yellow) 56%,
+    var(--gruvbox-orange) 100%
+  );
+  background-size: 240% 100%;
+  background-position: 0% 50%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 0 14px rgba(250, 189, 47, 0.14));
+  animation: hero-title-gradient-shift 9s ease-in-out infinite alternate;
+}
+
 .feature-showcase {
   background: transparent;
 }
@@ -209,6 +248,15 @@ html {
 .github-nav-link__icon svg {
   width: 100%;
   height: 100%;
+}
+
+.brand-wordmark {
+  display: inline-block;
+  font-size: clamp(1.55rem, 1.1rem + 1vw, 2rem);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  color: var(--gruvbox-fg0);
 }
 
 .feature-nav-button--active {
@@ -457,16 +505,31 @@ html {
   }
 }
 
+@keyframes hero-title-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
   .site-nav,
+  .hero-title__line,
   .feature-nav-button,
   .feature-arrow-button,
   .workflow-step {
     transition: none;
+  }
+
+  .hero-title__line {
+    animation: none;
+    background-position: 50% 50%;
   }
 
   .hero-grid__pulse {

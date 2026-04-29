@@ -363,10 +363,7 @@
           alt="Exort"
           class="h-12 w-12 object-contain"
         />
-        <span
-          class="text-base tracking-[0.02em] text-white sm:text-lg font-mono font-extrabold"
-          >Exort.dev</span
-        >
+        <span class="brand-wordmark pt-2 font-mono">Exort</span>
       </a>
 
       <div class="hidden items-center gap-8 md:flex">
@@ -425,15 +422,21 @@
       >
         <div class="w-fit">
           <h1
-            class="max-w-4xl text-3xl font-semibold text-white sm:text-4xl lg:max-w-5xl lg:text-5xl lg:leading-56"
+            class="hero-title max-w-4xl text-3xl font-semibold sm:text-4xl lg:max-w-5xl lg:text-5xl"
           >
             <span class="block">
-              <span bind:this={headlineLineEls[0]} class="block">
+              <span
+                bind:this={headlineLineEls[0]}
+                class="hero-title__line block"
+              >
                 Open Source Coding Agent</span
               >
             </span>
             <span class="block">
-              <span bind:this={headlineLineEls[1]} class="block">
+              <span
+                bind:this={headlineLineEls[1]}
+                class="hero-title__line block"
+              >
                 For Embedded Development
               </span>
             </span>
