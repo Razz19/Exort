@@ -487,8 +487,15 @@
       class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-[color:var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between lg:px-8"
     >
       <p>
-        Exort is a desktop app for embedded development with an OpenCode-powered
-        AI coding agent.
+        made with love by
+        <a
+          href="https://github.com/Razz19"
+          target="_blank"
+          rel="noreferrer"
+          class="text-[color:var(--color-text)] transition hover:text-[color:var(--color-accent)]"
+        >
+          Razz19
+        </a>
       </p>
       <p>AGPL-3.0-only</p>
     </div>

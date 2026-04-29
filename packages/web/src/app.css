@@ -469,6 +469,72 @@ html {
   outline-offset: 2px;
 }
 
+.local-setup-panel {
+  padding: 1.25rem;
+  border: 1px solid rgba(235, 219, 178, 0.08);
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+    rgba(60, 56, 54, 0.42);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.local-setup-command {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.local-setup-command__inner {
+  position: relative;
+}
+
+.local-setup-command__code {
+  margin: 0;
+  padding: 0.72rem 3.5rem 0.72rem 0.85rem;
+  border: 1px solid rgba(235, 219, 178, 0.08);
+  border-radius: 0.85rem;
+  background: rgba(29, 32, 33, 0.72);
+  color: var(--gruvbox-fg0);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-x: auto;
+}
+
+.local-setup-copy,
+.local-setup-copy-all {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(235, 219, 178, 0.12);
+  border-radius: 999px;
+  background: rgba(251, 241, 199, 0.04);
+  color: var(--gruvbox-fg1);
+}
+
+.local-setup-copy {
+  position: absolute;
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+}
+
+.local-setup-copy:hover,
+.local-setup-copy:focus-visible,
+.local-setup-copy-all:hover,
+.local-setup-copy-all:focus-visible {
+  background: rgba(254, 128, 25, 0.12);
+  border-color: rgba(254, 128, 25, 0.32);
+  color: white;
+}
+
+.local-setup-copy:focus-visible,
+.local-setup-copy-all:focus-visible {
+  outline: none;
+}
+
 .workflow-step {
   border: 1px solid rgba(235, 219, 178, 0.04);
   transition:
