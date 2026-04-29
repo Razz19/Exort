@@ -13,7 +13,11 @@
   const navItems = [
     { label: "Features", href: "#features" },
     { label: "Download", href: "#try-exort" },
-    { label: "View on GitHub", href: "https://github.com/Razz19/Exort", external: true },
+    {
+      label: "View on GitHub",
+      href: "https://github.com/Razz19/Exort",
+      external: true,
+    },
   ];
 
   const headlineLines = [
@@ -29,31 +33,31 @@
     {
       title: "Serial Monitor",
       description:
-        "Watch live device output in a dedicated pane while you debug firmware behavior, inspect logs, and keep iteration focused inside Exort.",
+        "Read live device output. Ideal for boot logs, debug prints, and quick checks while you iterate.",
       image: serialMonitorImage,
     },
     {
       title: "Serial Plotter",
       description:
-        "Turn streaming values into readable charts so sensor tuning, calibration, and runtime validation happen without leaving the workspace.",
+        "Plot streaming values as simple charts so sensor tuning, calibration, and runtime issues are easier to spot.",
       image: serialPlotterImage,
     },
     {
       title: "Board Manager",
       description:
-        "Manage board platforms from the same app and keep toolchains ready for Arduino, ESP32, RP2040, STM32, Teensy, and more.",
+        "Install and switch board platforms in one place, with support for Arduino, ESP32, RP2040, STM32, Teensy, and more.",
       image: boardManagerImage,
     },
     {
       title: "Provider Connection",
       description:
-        "Connect your preferred AI provider setup and route workflows through the models that fit your embedded development stack.",
+        "Bring your own AI provider setup and choose the models that match your workflow and budget.",
       image: providerImage,
     },
     {
       title: "Embedded Agent",
       description:
-        "Use the embedded-focused agent to inspect the workspace, edit code, and assist with compile or upload loops from the same environment.",
+        "Let the agent inspect the project, edit code, and help with compile or upload.",
       image: embeddedAgentImage,
     },
   ];
