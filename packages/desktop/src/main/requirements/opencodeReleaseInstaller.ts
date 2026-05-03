@@ -4,13 +4,16 @@ import { chmod, copyFile, mkdtemp, mkdir, readFile, readdir, rm, writeFile } fro
 import os from 'node:os';
 import path from 'node:path';
 
-import { resolveManagedOpenCodeBinary } from '../agent/openCodeBinary.js';
+import {
+  EXORT_MANAGED_OPENCODE_RELEASE_TAG,
+  resolveManagedOpenCodeBinary
+} from '../agent/openCodeBinary.js';
 import releaseAssets from './opencodeReleaseAssets.json';
 
 type ArchiveType = 'zip' | 'tar.gz';
 
 type ReleaseAssetEntry = {
-  url: string;
+  archiveName: string;
   archiveType: ArchiveType;
   binaryName: string;
 };
@@ -38,6 +41,11 @@ export type OpenCodeReleaseInstallResult = {
 const RELEASE_ASSETS: ReleaseAssetMap = releaseAssets as ReleaseAssetMap;
 const COMMAND_TIMEOUT_MS = 60_000;
 const DOWNLOAD_TIMEOUT_MS = 8 * 60 * 1000;
+const OPENCODE_RELEASE_BASE_URL = 'https://github.com/anomalyco/opencode/releases/download';
+
+function buildReleaseUrl(asset: ReleaseAssetEntry): string {
+  return `${OPENCODE_RELEASE_BASE_URL}/${EXORT_MANAGED_OPENCODE_RELEASE_TAG}/${asset.archiveName}`;
+}
 
 function trimOutput(value: string): string {
   return value
@@ -378,12 +386,13 @@ export async function installOpenCodeFromReleaseAssets(params?: {
       };
     }
 
+    const assetUrl = buildReleaseUrl(asset);
     log?.(`runtime:binary:provision:release:target key=${targetKey}`);
     log?.(`runtime:binary:provision:start source=managed method=release-url target=${managed.binaryPath}`);
-    log?.(`runtime:binary:provision:release:download url=${asset.url}`);
+    log?.(`runtime:binary:provision:release:download url=${assetUrl}`);
 
     const archivePath = buildArchivePath(tempRoot, asset.archiveType);
-    await downloadFile(asset.url, archivePath);
+    await downloadFile(assetUrl, archivePath);
 
     const extractDir = path.join(tempRoot, 'extract');
     log?.(`runtime:binary:provision:release:extract archive=${archivePath}`);
@@ -403,7 +412,7 @@ export async function installOpenCodeFromReleaseAssets(params?: {
       return {
         ok: false,
         targetKey,
-        url: asset.url,
+        url: assetUrl,
         archiveType: asset.archiveType,
         message: `Unable to locate extracted OpenCode binary (${asset.binaryName}) in archive.`
       };
@@ -419,7 +428,7 @@ export async function installOpenCodeFromReleaseAssets(params?: {
     return {
       ok: true,
       targetKey,
-      url: asset.url,
+      url: assetUrl,
       archiveType: asset.archiveType,
       binaryPath: managed.binaryPath
     };

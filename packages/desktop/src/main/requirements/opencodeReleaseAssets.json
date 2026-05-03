@@ -1,56 +1,56 @@
 {
   "darwin-arm64": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-darwin-arm64.zip",
+    "archiveName": "opencode-darwin-arm64.zip",
     "archiveType": "zip",
     "binaryName": "opencode"
   },
   "darwin-x64": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-darwin-x64.zip",
+    "archiveName": "opencode-darwin-x64.zip",
     "archiveType": "zip",
     "binaryName": "opencode"
   },
   "darwin-x64-baseline": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-darwin-x64-baseline.zip",
+    "archiveName": "opencode-darwin-x64-baseline.zip",
     "archiveType": "zip",
     "binaryName": "opencode"
   },
   "windows-x64": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-windows-x64.zip",
+    "archiveName": "opencode-windows-x64.zip",
     "archiveType": "zip",
     "binaryName": "opencode"
   },
   "windows-x64-baseline": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-windows-x64-baseline.zip",
+    "archiveName": "opencode-windows-x64-baseline.zip",
     "archiveType": "zip",
     "binaryName": "opencode"
   },
   "linux-x64": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-linux-x64.tar.gz",
+    "archiveName": "opencode-linux-x64.tar.gz",
     "archiveType": "tar.gz",
     "binaryName": "opencode"
   },
   "linux-x64-baseline": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-linux-x64-baseline.tar.gz",
+    "archiveName": "opencode-linux-x64-baseline.tar.gz",
     "archiveType": "tar.gz",
     "binaryName": "opencode"
   },
   "linux-x64-musl": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-linux-x64-musl.tar.gz",
+    "archiveName": "opencode-linux-x64-musl.tar.gz",
     "archiveType": "tar.gz",
     "binaryName": "opencode"
   },
   "linux-x64-baseline-musl": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-linux-x64-baseline-musl.tar.gz",
+    "archiveName": "opencode-linux-x64-baseline-musl.tar.gz",
     "archiveType": "tar.gz",
     "binaryName": "opencode"
   },
   "linux-arm64": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-linux-arm64.tar.gz",
+    "archiveName": "opencode-linux-arm64.tar.gz",
     "archiveType": "tar.gz",
     "binaryName": "opencode"
   },
   "linux-arm64-musl": {
-    "url": "https://github.com/anomalyco/opencode/releases/download/v1.2.10/opencode-linux-arm64-musl.tar.gz",
+    "archiveName": "opencode-linux-arm64-musl.tar.gz",
     "archiveType": "tar.gz",
     "binaryName": "opencode"
   }
