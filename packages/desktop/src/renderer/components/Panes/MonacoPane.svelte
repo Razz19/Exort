@@ -100,12 +100,49 @@
 
   function languageFromFile(file: string | null): string {
     if (!file) return 'plaintext';
-    if (file.endsWith('.ts')) return 'typescript';
-    if (file.endsWith('.js')) return 'javascript';
-    if (file.endsWith('.json')) return 'json';
-    if (file.endsWith('.cpp') || file.endsWith('.ino') || file.endsWith('.h')) return 'cpp';
-    if (file.endsWith('.svelte')) return 'html';
-    if (file.endsWith('.md')) return 'markdown';
+
+    const normalized = file.toLowerCase();
+    const segments = normalized.split(/[\\/]/);
+    const baseName = segments[segments.length - 1] ?? normalized;
+
+    if (baseName === 'makefile') return 'makefile';
+    if (baseName === 'dockerfile') return 'dockerfile';
+    if (baseName === 'cmakelists.txt' || baseName.endsWith('.cmake')) return 'cmake';
+    if (baseName === '.gitignore' || baseName === '.dockerignore') return 'ignore';
+    if (baseName === '.editorconfig' || baseName.endsWith('.ini') || baseName.endsWith('.cfg') || baseName.endsWith('.conf')) {
+      return 'ini';
+    }
+
+    if (normalized.endsWith('.ts') || normalized.endsWith('.mts') || normalized.endsWith('.cts')) return 'typescript';
+    if (normalized.endsWith('.tsx')) return 'typescript';
+    if (normalized.endsWith('.js') || normalized.endsWith('.mjs') || normalized.endsWith('.cjs')) return 'javascript';
+    if (normalized.endsWith('.jsx')) return 'javascript';
+    if (normalized.endsWith('.json')) return 'json';
+    if (normalized.endsWith('.md') || normalized.endsWith('.mdx')) return 'markdown';
+    if (normalized.endsWith('.svelte')) return 'html';
+    if (normalized.endsWith('.html') || normalized.endsWith('.htm')) return 'html';
+    if (normalized.endsWith('.css') || normalized.endsWith('.scss') || normalized.endsWith('.less')) return 'css';
+    if (normalized.endsWith('.yml') || normalized.endsWith('.yaml')) return 'yaml';
+    if (normalized.endsWith('.toml')) return 'toml';
+    if (normalized.endsWith('.xml') || normalized.endsWith('.svg')) return 'xml';
+    if (normalized.endsWith('.sh') || normalized.endsWith('.bash') || normalized.endsWith('.zsh')) return 'shell';
+    if (normalized.endsWith('.py')) return 'python';
+    if (normalized.endsWith('.sql')) return 'sql';
+    if (
+      normalized.endsWith('.c') ||
+      normalized.endsWith('.cc') ||
+      normalized.endsWith('.cpp') ||
+      normalized.endsWith('.cxx') ||
+      normalized.endsWith('.ino') ||
+      normalized.endsWith('.h') ||
+      normalized.endsWith('.hh') ||
+      normalized.endsWith('.hpp') ||
+      normalized.endsWith('.hxx') ||
+      normalized.endsWith('.ipp')
+    ) {
+      return 'cpp';
+    }
+
     return 'plaintext';
   }
 
