@@ -18,6 +18,10 @@
   import { buildRenderMessagesFromSyncState } from "./lib/agent-sync/render";
   import { mergeAssistantContent } from "./lib/agent-sync/contentMerge";
   import {
+    resolveSelectedModel,
+    sameSelectedModel,
+  } from "./lib/modelCatalog";
+  import {
     applyInterruptStreamEventInMessages,
     upsertPendingPermissionInMessages,
     upsertPendingQuestionInMessages,
@@ -59,14 +63,12 @@
     AppState,
     ChatItem,
     OpenFile,
-    OpenAIProviderState,
     PaneTab,
     Workspace,
     WorkspaceManagerState,
     WorkspaceState,
   } from "./lib/types";
 
-  const OPENAI_PROVIDER_ID = "openai";
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
   type SettingsTab = "general" | "providers" | "boards";
 
@@ -1919,33 +1921,6 @@
     return null;
   }
 
-  function hasOpenAIModel(
-    state: OpenAIProviderState,
-    modelId: string | null,
-  ): boolean {
-    if (!modelId) return false;
-    return state.models.some((item) => item.id === modelId);
-  }
-
-  function resolveOpenAISelectedModel(
-    state: OpenAIProviderState,
-    persistedModelId: string | null,
-  ): string | null {
-    if (persistedModelId && hasOpenAIModel(state, persistedModelId)) {
-      return persistedModelId;
-    }
-
-    if (hasOpenAIModel(state, state.recommendedModelId)) {
-      return state.recommendedModelId;
-    }
-
-    if (hasOpenAIModel(state, state.defaultModelId)) {
-      return state.defaultModelId;
-    }
-
-    return state.models[0]?.id ?? null;
-  }
-
   async function sendPrompt(prompt: string): Promise<void> {
     if (agentBusy) return;
     if (!activeWorkspace) {
@@ -1965,7 +1940,7 @@
     agentBusy = true;
     let turnModelOverride:
       | {
-          providerID: "openai";
+          providerID: string;
           modelID: string;
         }
       | undefined = undefined;
@@ -1977,34 +1952,32 @@
       [],
     );
 
-    const persistedModelId = appStateSnapshot.providers.openai.selectedModelId;
+    const persistedSelectedModel = appStateSnapshot.providers.selectedModel;
     try {
-      const providerStateResponse =
-        await window.electronAPI.getOpenAIProviderState({
-          workspaceRoot: turnWorkspaceRoot,
-        });
+      const catalogResponse = await window.electronAPI.getOpenCodeModelCatalog({
+        workspaceRoot: turnWorkspaceRoot,
+      });
 
-      if (providerStateResponse.ok && providerStateResponse.state?.connected) {
-        const providerState = providerStateResponse.state;
-        const resolvedModelId = resolveOpenAISelectedModel(
-          providerState,
-          persistedModelId ?? null,
+      if (catalogResponse.ok && catalogResponse.providers) {
+        const resolvedSelectedModel = resolveSelectedModel(
+          catalogResponse.providers,
+          persistedSelectedModel,
         );
 
-        if (resolvedModelId && hasOpenAIModel(providerState, resolvedModelId)) {
-          if (resolvedModelId !== (persistedModelId ?? null)) {
-            patchAppState({
-              providers: {
-                openai: {
-                  selectedModelId: resolvedModelId,
-                },
-              },
-            });
-          }
+        if (
+          !sameSelectedModel(resolvedSelectedModel, persistedSelectedModel)
+        ) {
+          patchAppState({
+            providers: {
+              selectedModel: resolvedSelectedModel,
+            },
+          });
+        }
 
+        if (resolvedSelectedModel) {
           turnModelOverride = {
-            providerID: OPENAI_PROVIDER_ID,
-            modelID: resolvedModelId,
+            providerID: resolvedSelectedModel.providerId,
+            modelID: resolvedSelectedModel.modelId,
           };
         }
       }

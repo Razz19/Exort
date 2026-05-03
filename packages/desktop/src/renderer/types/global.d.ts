@@ -75,13 +75,26 @@ type AgentSessionSummary = {
   createdAt: string;
   updatedAt: string;
 };
-type OpenAIProviderModel = {
+type OpenCodeProviderModel = {
   id: string;
   name: string;
   releaseDate: string | null;
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+};
+type OpenAIProviderModel = OpenCodeProviderModel;
+type OpenCodeModelCatalogProvider = {
+  providerId: string;
+  providerName: string;
+  connected: boolean;
+  defaultModelId: string | null;
+  recommendedModelId: string | null;
+  models: OpenCodeProviderModel[];
+};
+type SelectedModelRef = {
+  providerId: string;
+  modelId: string;
 };
 type OpenAIProviderAuthMethod = {
   index: number;
@@ -291,9 +304,7 @@ type AppState = {
     chatFontSize: ChatFontSizePreset;
   };
   providers: {
-    openai: {
-      selectedModelId: string | null;
-    };
+    selectedModel: SelectedModelRef | null;
   };
 };
 type PaneTab = 'code' | 'monitor';
@@ -408,6 +419,11 @@ declare global {
       serialExportCsv: () => Promise<{ ok: boolean; path?: string; error?: string }>;
       openExternalUrl: (payload: { url: string }) => Promise<{ ok: boolean; error?: string }>;
       openBrowserUrl: (payload: { url: string }) => Promise<{ ok: boolean; error?: string }>;
+      getOpenCodeModelCatalog: (payload?: { workspaceRoot?: string }) => Promise<{
+        ok: boolean;
+        providers?: OpenCodeModelCatalogProvider[];
+        error?: string;
+      }>;
       getOpenAIProviderState: (payload?: { workspaceRoot?: string }) => Promise<{
         ok: boolean;
         state?: OpenAIProviderState;

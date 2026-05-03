@@ -16,6 +16,11 @@ export type MonacoThemeId =
 
 export type ChatFontSizePreset = "small" | "default" | "large";
 
+export type SelectedModelRef = {
+  providerId: string;
+  modelId: string;
+};
+
 export type AppState = {
   version: typeof APP_STATE_VERSION;
   activeWorkspaceRoot: string | null;
@@ -33,9 +38,7 @@ export type AppState = {
     chatFontSize: ChatFontSizePreset;
   };
   providers: {
-    openai: {
-      selectedModelId: string | null;
-    };
+    selectedModel: SelectedModelRef | null;
   };
 };
 

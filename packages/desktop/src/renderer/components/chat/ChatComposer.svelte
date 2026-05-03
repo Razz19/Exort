@@ -3,8 +3,16 @@
   import ArrowUp from "lucide-svelte/icons/arrow-up";
   import LoaderCircle from "lucide-svelte/icons/loader-circle";
   import Square from "lucide-svelte/icons/square";
+  import {
+    findSelectedModel,
+    resolveSelectedModel,
+    sameSelectedModel,
+  } from "../../lib/modelCatalog";
   import { appStateStore, patchAppState } from "../../lib/state/stateManager";
-  import type { OpenAIProviderState } from "../../lib/types";
+  import type {
+    OpenCodeModelCatalogProvider,
+    SelectedModelRef,
+  } from "../../lib/types";
   import { OPEN_CODE_MODEL } from "../../../shared/openCodeModel.js";
 
   let { activeWorkspaceRoot, busy, stopping, onSend, onStop } = $props<{
@@ -22,20 +30,16 @@
   let modelOpen = $state(false);
   let modelButtonEl = $state<HTMLButtonElement | null>(null);
   let modelPopoverEl = $state<HTMLDivElement | null>(null);
-  let providerState = $state<OpenAIProviderState | null>(null);
+  let catalogProviders = $state<OpenCodeModelCatalogProvider[]>([]);
   let providerLoading = $state(false);
   let providerError = $state<string | null>(null);
-  let selectedModelId = $state<string | null>(null);
+  let selectedModel = $state<SelectedModelRef | null>(null);
   let providerRequestId = 0;
 
   let canSend = $derived(!busy && prompt.trim().length > 0);
-  let modelOptions = $derived(providerState?.models ?? []);
   let selectedModelLabel = $derived.by(() => {
-    if (!providerState?.connected || !selectedModelId) return OPEN_CODE_MODEL;
-    return (
-      modelOptions.find((item) => item.id === selectedModelId)?.name ??
-      OPEN_CODE_MODEL
-    );
+    const selectedEntry = findSelectedModel(catalogProviders, selectedModel);
+    return selectedEntry?.model.name ?? selectedModel?.modelId ?? OPEN_CODE_MODEL;
   });
 
   function resizeInput(): void {
@@ -64,76 +68,41 @@
     return activeWorkspaceRoot ?? undefined;
   }
 
-  function hasOpenAIModel(
-    state: OpenAIProviderState,
-    modelId: string | null,
-  ): boolean {
-    if (!modelId) return false;
-    return state.models.some((item) => item.id === modelId);
-  }
-
-  function resolveOpenAISelectedModel(
-    state: OpenAIProviderState,
-    persistedModelId: string | null,
-  ): string | null {
-    if (!persistedModelId) {
-      return null;
-    }
-
-    if (hasOpenAIModel(state, persistedModelId)) {
-      return persistedModelId;
-    }
-
-    if (hasOpenAIModel(state, state.recommendedModelId)) {
-      return state.recommendedModelId;
-    }
-
-    if (hasOpenAIModel(state, state.defaultModelId)) {
-      return state.defaultModelId;
-    }
-
-    return state.models[0]?.id ?? null;
-  }
-
-  async function refreshOpenAIProviderState(): Promise<void> {
+  async function refreshOpenCodeModelCatalog(): Promise<void> {
     const currentRequestId = ++providerRequestId;
     providerLoading = true;
     providerError = null;
 
     try {
-      const response = await window.electronAPI.getOpenAIProviderState({
+      const response = await window.electronAPI.getOpenCodeModelCatalog({
         workspaceRoot: getWorkspaceRoot(),
       });
 
       if (currentRequestId !== providerRequestId) return;
-      if (!response.ok || !response.state) {
-        providerState = null;
+      if (!response.ok || !response.providers) {
+        catalogProviders = [];
         providerError =
-          response.error?.trim() || "Failed to load OpenAI models.";
+          response.error?.trim() || "Failed to load available models.";
         return;
       }
 
-      providerState = response.state;
-      const resolvedModelId = resolveOpenAISelectedModel(
-        response.state,
-        selectedModelId,
+      catalogProviders = response.providers;
+      const resolvedModel = resolveSelectedModel(
+        response.providers,
+        selectedModel,
       );
-      if (resolvedModelId !== selectedModelId) {
+      if (!sameSelectedModel(resolvedModel, selectedModel)) {
         patchAppState({
           providers: {
-            openai: {
-              selectedModelId: resolvedModelId,
-            },
+            selectedModel: resolvedModel,
           },
         });
       }
     } catch (error) {
       if (currentRequestId !== providerRequestId) return;
-      providerState = null;
+      catalogProviders = [];
       providerError =
-        error instanceof Error
-          ? error.message
-          : "Failed to load OpenAI models.";
+        error instanceof Error ? error.message : "Failed to load available models.";
     } finally {
       if (currentRequestId === providerRequestId) {
         providerLoading = false;
@@ -144,33 +113,37 @@
   function toggleModelPopover(): void {
     modelOpen = !modelOpen;
     if (modelOpen) {
-      void refreshOpenAIProviderState();
+      void refreshOpenCodeModelCatalog();
     }
   }
 
-  function selectOpenAIModel(modelId: string): void {
-    const value = modelId.trim();
-    if (!value) return;
+  function selectModel(providerId: string, modelId: string): void {
+    const nextProviderId = providerId.trim();
+    const nextModelId = modelId.trim();
+    if (!nextProviderId || !nextModelId) return;
+
     patchAppState({
       providers: {
-        openai: {
-          selectedModelId: value.length > 0 ? value : null,
+        selectedModel: {
+          providerId: nextProviderId,
+          modelId: nextModelId,
         },
       },
     });
     modelOpen = false;
   }
 
-  function isSelectedOpenAIModel(modelId: string): boolean {
-    return selectedModelId === modelId;
+  function isSelectedModel(providerId: string, modelId: string): boolean {
+    return (
+      selectedModel?.providerId === providerId &&
+      selectedModel?.modelId === modelId
+    );
   }
 
   function useExortDefault(): void {
     patchAppState({
       providers: {
-        openai: {
-          selectedModelId: null,
-        },
+        selectedModel: null,
       },
     });
     modelOpen = false;
@@ -205,7 +178,7 @@
 
   onMount(() => {
     const unsubscribe = appStateStore.subscribe((state) => {
-      selectedModelId = state.providers.openai.selectedModelId;
+      selectedModel = state.providers.selectedModel;
     });
 
     return () => {
@@ -215,7 +188,7 @@
 
   $effect(() => {
     activeWorkspaceRoot;
-    void refreshOpenAIProviderState();
+    void refreshOpenCodeModelCatalog();
   });
 </script>
 
@@ -273,68 +246,61 @@
                   <p class="text-xs text-dark-fg3">Loading models...</p>
                 {:else if providerError}
                   <p class="text-xs text-dark-red">{providerError}</p>
-                {:else if providerState}
+                {:else}
                   <div class="space-y-2">
-                    <!-- <div class="text-[11px] text-dark-fg4">
-                      {providerState.connected
-                        ? "Connection: Connected"
-                        : "Connection: Not connected"}
-                    </div> -->
                     <button
                       class={`w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
-                        selectedModelId == null
+                        selectedModel == null
                           ? "border-primary-500 bg-dark-bg1 text-dark-fg1"
                           : "border-dark-border bg-dark-bg text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
                       }`}
                       onclick={useExortDefault}
                     >
-                      <span class="block truncate">{OPEN_CODE_MODEL}</span>
+                      <span class="block truncate">Exort default</span>
                     </button>
-                    {#if providerState.connected}
-                      <div class="text-[11px] text-dark-fg4">
-                        Choose an OpenAI model.
-                      </div>
-                      {#if modelOptions.length === 0}
-                        <p class="text-xs text-dark-fg3">
-                          No OpenAI models available.
-                        </p>
-                      {:else}
-                        <div class="max-h-44 space-y-1 overflow-y-auto pr-1">
-                          {#each modelOptions as model (model.id)}
-                            <button
-                              class={`w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
-                                isSelectedOpenAIModel(model.id)
-                                  ? "border-primary-500 bg-dark-bg1 text-dark-fg1"
-                                  : "border-dark-border bg-dark-bg text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
-                              }`}
-                              onclick={() => selectOpenAIModel(model.id)}
-                              title={model.id}
-                            >
-                              <div
-                                class="flex items-center justify-between gap-2"
-                              >
-                                <span class="truncate">{model.name}</span>
-                                {#if model.id === providerState.defaultModelId}
-                                  <span
-                                    class="shrink-0 text-[10px] text-dark-fg4"
-                                    >default</span
-                                  >
-                                {/if}
-                              </div>
-                            </button>
-                          {/each}
-                        </div>
-                      {/if}
-                    {:else}
+                    {#if catalogProviders.length === 0}
                       <p class="text-xs text-dark-fg3">
-                        No Provider connected.
+                        No connected models available.
                       </p>
+                    {:else}
+                      <div class="text-[11px] text-dark-fg4">
+                        Choose a connected OpenCode model.
+                      </div>
+                      <div class="max-h-52 space-y-2 overflow-y-auto pr-1">
+                        {#each catalogProviders as provider (provider.providerId)}
+                          <div class="space-y-1">
+                            <div class="px-1 text-[11px] text-dark-fg4">
+                              {provider.providerName}
+                            </div>
+                            {#each provider.models as model (model.id)}
+                              <button
+                                class={`w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
+                                  isSelectedModel(provider.providerId, model.id)
+                                    ? "border-primary-500 bg-dark-bg1 text-dark-fg1"
+                                    : "border-dark-border bg-dark-bg text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
+                                }`}
+                                onclick={() =>
+                                  selectModel(provider.providerId, model.id)}
+                                title={`${provider.providerId}/${model.id}`}
+                              >
+                                <div
+                                  class="flex items-center justify-between gap-2"
+                                >
+                                  <span class="truncate">{model.name}</span>
+                                  {#if model.id === provider.defaultModelId}
+                                    <span
+                                      class="shrink-0 text-[10px] text-dark-fg4"
+                                      >default</span
+                                    >
+                                  {/if}
+                                </div>
+                              </button>
+                            {/each}
+                          </div>
+                        {/each}
+                      </div>
                     {/if}
                   </div>
-                {:else}
-                  <p class="text-xs text-dark-fg3">
-                    Provider state unavailable.
-                  </p>
                 {/if}
               </div>
             </div>

@@ -4,9 +4,11 @@ import {
   completeOpenCodeProviderOAuth,
   getOpenCodeProviderAuthMethods,
   getOpenCodeProviderCatalog,
+  listOpenCodeModelCatalog,
   removeOpenCodeProviderAuth,
   setOpenCodeProviderApiKey,
   startOpenCodeProviderOAuth,
+  type OpenCodeModelCatalogProvider,
   type OpenCodeProviderCatalog,
   type OpenCodeProviderAuthMethods,
   type OpenCodeProviderOAuthCompleteResult,
@@ -99,6 +101,16 @@ async function loadOpenAIProviderState(
   return toOpenAIProviderState(catalog, authMethods);
 }
 
+async function loadOpenCodeModelCatalog(
+  workspaceRoot: string | undefined,
+  onOpenCodeLog: (line: string) => void
+): Promise<OpenCodeModelCatalogProvider[]> {
+  return listOpenCodeModelCatalog({
+    workspaceRoot,
+    onLog: onOpenCodeLog
+  });
+}
+
 export function registerProvidersBridge(params: RegisterProvidersBridgeParams): void {
   const logOpenCodeLine = params.onOpenCodeLog;
 
@@ -123,6 +135,25 @@ export function registerProvidersBridge(params: RegisterProvidersBridgeParams): 
           ok: false,
           error: error instanceof Error ? error.message : 'Failed to open URL.'
         };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    'providers:model-catalog:get',
+    async (
+      _event,
+      payload?: {
+        workspaceRoot?: string;
+      }
+    ): Promise<{ ok: boolean; providers?: OpenCodeModelCatalogProvider[]; error?: string }> => {
+      try {
+        const workspaceRoot = asNonBlankString(payload?.workspaceRoot) ?? undefined;
+        const providers = await loadOpenCodeModelCatalog(workspaceRoot, logOpenCodeLine);
+        return { ok: true, providers };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to load available models';
+        return { ok: false, error: message };
       }
     }
   );

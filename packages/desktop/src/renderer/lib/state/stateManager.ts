@@ -27,9 +27,7 @@ type AppStatePatch = {
     chatFontSize?: AppState['appearance']['chatFontSize'];
   };
   providers?: {
-    openai?: {
-      selectedModelId?: string | null;
-    };
+    selectedModel?: AppState['providers']['selectedModel'];
   };
 };
 
@@ -117,11 +115,7 @@ export function patchAppState(
       },
       providers: {
         ...current.providers,
-        ...(patch.providers ?? {}),
-        openai: {
-          ...current.providers.openai,
-          ...(patch.providers?.openai ?? {})
-        }
+        ...(patch.providers ?? {})
       }
     };
 

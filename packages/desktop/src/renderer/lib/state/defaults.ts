@@ -1,5 +1,6 @@
 import {
   APP_STATE_VERSION,
+  type SelectedModelRef,
   WORKSPACE_STATE_VERSION,
   type AppState,
   type ChatFontSizePreset,
@@ -29,6 +30,20 @@ function asNonBlankString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function sanitizeSelectedModelRef(value: unknown): SelectedModelRef | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const candidate = value as Partial<SelectedModelRef>;
+  const providerId = asNonBlankString(candidate.providerId);
+  const modelId = asNonBlankString(candidate.modelId);
+  if (!providerId || !modelId) return null;
+
+  return {
+    providerId,
+    modelId
+  };
 }
 
 function asStringArray(value: unknown): string[] {
@@ -110,10 +125,8 @@ export function createDefaultAppState(): AppState {
       chatFontSize: 'default'
     },
     providers: {
-      openai: {
-        selectedModelId: null
-      }
-    },
+      selectedModel: null
+    }
   };
 }
 
@@ -171,16 +184,18 @@ export function sanitizeAppState(input: unknown): AppState {
       : defaults.layout.fileManagerCollapsed;
   const providersCandidate =
     candidate.providers && typeof candidate.providers === 'object'
-      ? (candidate.providers as Partial<AppState['providers']>)
+      ? (candidate.providers as Partial<AppState['providers']> & {
+          openai?: { selectedModelId?: unknown };
+        })
       : undefined;
   const appearanceCandidate =
     candidate.appearance && typeof candidate.appearance === 'object'
       ? (candidate.appearance as Partial<AppState['appearance']>)
       : undefined;
+  const selectedModelCandidate = sanitizeSelectedModelRef(providersCandidate?.selectedModel);
   const openAICandidate =
-    providersCandidate?.openai && typeof providersCandidate.openai === 'object'
-      ? (providersCandidate.openai as Partial<AppState['providers']['openai']>)
-      : undefined;
+    providersCandidate?.openai && typeof providersCandidate.openai === 'object' ? providersCandidate.openai : undefined;
+  const legacyOpenAIModelId = asNonBlankString(openAICandidate?.selectedModelId);
 
   return {
     version: APP_STATE_VERSION,
@@ -201,9 +216,14 @@ export function sanitizeAppState(input: unknown): AppState {
       )
     },
     providers: {
-      openai: {
-        selectedModelId: asNonBlankString(openAICandidate?.selectedModelId) ?? null
-      }
+      selectedModel:
+        selectedModelCandidate ??
+        (legacyOpenAIModelId
+          ? {
+              providerId: 'openai',
+              modelId: legacyOpenAIModelId
+            }
+          : null)
     }
   };
 }

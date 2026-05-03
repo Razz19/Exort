@@ -63,6 +63,10 @@ type PersistedTreeItem = {
 
 type MonacoThemeId = 'vs-dark' | 'arduino-dark' | 'vs' | 'hc-black' | 'hc-light' | 'gruvbox-dark';
 type ChatFontSizePreset = 'small' | 'default' | 'large';
+type SelectedModelRef = {
+  providerId: string;
+  modelId: string;
+};
 
 type AppState = {
   version: 1;
@@ -81,9 +85,7 @@ type AppState = {
     chatFontSize: ChatFontSizePreset;
   };
   providers: {
-    openai: {
-      selectedModelId: string | null;
-    };
+    selectedModel: SelectedModelRef | null;
   };
 };
 
@@ -222,6 +224,20 @@ function asNonBlankString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function sanitizeSelectedModelRef(value: unknown): SelectedModelRef | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const candidate = value as Partial<SelectedModelRef>;
+  const providerId = asNonBlankString(candidate.providerId);
+  const modelId = asNonBlankString(candidate.modelId);
+  if (!providerId || !modelId) return null;
+
+  return {
+    providerId,
+    modelId
+  };
+}
+
 function isValidCoreId(value: string): boolean {
   return /^[^:@\s]+:[^:@\s]+$/.test(value);
 }
@@ -290,9 +306,7 @@ function createDefaultAppState(): AppState {
       chatFontSize: 'default'
     },
     providers: {
-      openai: {
-        selectedModelId: null
-      }
+      selectedModel: null
     }
   };
 }
@@ -351,16 +365,18 @@ function sanitizeAppState(input: unknown): AppState {
       : defaults.layout.fileManagerCollapsed;
   const providersCandidate =
     candidate.providers && typeof candidate.providers === 'object'
-      ? (candidate.providers as Partial<AppState['providers']>)
+      ? (candidate.providers as Partial<AppState['providers']> & {
+          openai?: { selectedModelId?: unknown };
+        })
       : undefined;
   const appearanceCandidate =
     candidate.appearance && typeof candidate.appearance === 'object'
       ? (candidate.appearance as Partial<AppState['appearance']>)
       : undefined;
+  const selectedModelCandidate = sanitizeSelectedModelRef(providersCandidate?.selectedModel);
   const openAICandidate =
-    providersCandidate?.openai && typeof providersCandidate.openai === 'object'
-      ? (providersCandidate.openai as Partial<AppState['providers']['openai']>)
-      : undefined;
+    providersCandidate?.openai && typeof providersCandidate.openai === 'object' ? providersCandidate.openai : undefined;
+  const legacyOpenAIModelId = asNonBlankString(openAICandidate?.selectedModelId);
 
   return {
     version: 1,
@@ -381,9 +397,14 @@ function sanitizeAppState(input: unknown): AppState {
       )
     },
     providers: {
-      openai: {
-        selectedModelId: asNonBlankString(openAICandidate?.selectedModelId) ?? null
-      }
+      selectedModel:
+        selectedModelCandidate ??
+        (legacyOpenAIModelId
+          ? {
+              providerId: 'openai',
+              modelId: legacyOpenAIModelId
+            }
+          : null)
     }
   };
 }

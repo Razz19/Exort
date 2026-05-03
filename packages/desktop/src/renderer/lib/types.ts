@@ -92,13 +92,29 @@ export type AgentSessionSummary = {
   updatedAt: string;
 };
 
-export type OpenAIProviderModel = {
+export type OpenCodeProviderModel = {
   id: string;
   name: string;
   releaseDate: string | null;
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+};
+
+export type OpenAIProviderModel = OpenCodeProviderModel;
+
+export type OpenCodeModelCatalogProvider = {
+  providerId: string;
+  providerName: string;
+  connected: boolean;
+  defaultModelId: string | null;
+  recommendedModelId: string | null;
+  models: OpenCodeProviderModel[];
+};
+
+export type SelectedModelRef = {
+  providerId: string;
+  modelId: string;
 };
 
 export type OpenAIProviderAuthMethod = {

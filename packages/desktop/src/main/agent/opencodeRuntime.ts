@@ -106,6 +106,10 @@ export type OpenCodeProviderCatalog = {
   models: OpenCodeProviderModel[];
 };
 
+export type OpenCodeModelCatalogProvider = OpenCodeProviderCatalog & {
+  providerName: string;
+};
+
 export type OpenCodeProviderAuthMethod = {
   index: number;
   type: 'oauth' | 'api' | 'unknown';
@@ -528,6 +532,41 @@ function pickRecommendedOpenAIModelId(models: OpenCodeProviderModel[], defaultMo
   return models[0]?.id ?? null;
 }
 
+function getDefaultOpenCodeProviderId(): string | null {
+  const [providerId] = OPEN_CODE_MODEL.split('/');
+  return getFirstNonBlankString(providerId) ?? null;
+}
+
+function buildProviderCatalogEntry(
+  providerRecord: Record<string, unknown>,
+  connected: Set<string>,
+  defaults: Record<string, unknown>
+): OpenCodeModelCatalogProvider | null {
+  const providerId = getFirstNonBlankString(providerRecord.id);
+  if (!providerId) return null;
+
+  const defaultModelId = getFirstNonBlankString(defaults[providerId]) ?? null;
+  const parsedModels = parseProviderModels(providerRecord.models);
+  const inputCostById = parseProviderModelInputCostById(providerRecord.models);
+  const isLikelyChatGPTOAuth = isLikelyOpenAIChatGPTOAuthCatalog(parsedModels, inputCostById);
+  const models = filterOpenAIModelsForDesktopCatalog(providerId, parsedModels, isLikelyChatGPTOAuth);
+  const normalizedDefaultModelId =
+    defaultModelId && models.some((model) => model.id === defaultModelId) ? defaultModelId : null;
+
+  return {
+    providerId,
+    providerName: getFirstNonBlankString(providerRecord.name, providerRecord.label) ?? providerId,
+    available: true,
+    connected: connected.has(providerId),
+    defaultModelId: normalizedDefaultModelId,
+    recommendedModelId:
+      providerId === 'openai'
+        ? pickRecommendedOpenAIModelId(models, normalizedDefaultModelId)
+        : normalizedDefaultModelId ?? models[0]?.id ?? null,
+    models
+  };
+}
+
 function parseProviderAuthMethodsByProvider(response: unknown, providerId: string): OpenCodeProviderAuthMethod[] {
   const payload = asRecord(extractResponseData(response));
   const rawMethods = Array.isArray(payload[providerId]) ? payload[providerId] : [];
@@ -879,21 +918,77 @@ export async function getOpenCodeProviderCatalog(params: {
     };
   }
 
-  const parsedModels = parseProviderModels(providerRecord.models);
-  const inputCostById = parseProviderModelInputCostById(providerRecord.models);
-  const isLikelyChatGPTOAuth = isLikelyOpenAIChatGPTOAuthCatalog(parsedModels, inputCostById);
-  const models = filterOpenAIModelsForDesktopCatalog(params.providerId, parsedModels, isLikelyChatGPTOAuth);
-  const normalizedDefaultModelId =
-    defaultModelId && models.some((model) => model.id === defaultModelId) ? defaultModelId : null;
+  const entry = buildProviderCatalogEntry(providerRecord, connected, defaults);
+  if (!entry) {
+    return {
+      providerId: params.providerId,
+      available: false,
+      connected: connected.has(params.providerId),
+      defaultModelId,
+      recommendedModelId: null,
+      models: []
+    };
+  }
 
-  return {
-    providerId: params.providerId,
-    available: true,
-    connected: connected.has(params.providerId),
-    defaultModelId: normalizedDefaultModelId,
-    recommendedModelId: pickRecommendedOpenAIModelId(models, normalizedDefaultModelId),
-    models
+  const { providerName: _providerName, ...catalog } = entry;
+  return catalog;
+}
+
+export async function listOpenCodeModelCatalog(params: {
+  workspaceRoot?: string;
+  onLog?: (line: string) => void;
+}): Promise<OpenCodeModelCatalogProvider[]> {
+  const log = (line: string) => {
+    params.onLog?.(line);
   };
+
+  const runtime = await getOpenCodeRuntime(log);
+  const listProviders = runtime.client.provider?.list;
+  if (typeof listProviders !== 'function') {
+    throw new Error('OpenCode provider list API is not available in this SDK runtime');
+  }
+
+  const directory = resolveDirectoryFromWorkspaceRoot(params.workspaceRoot);
+  const response = await listProviders({
+    directory
+  });
+  const responseError = getResponseErrorMessage(response);
+  if (responseError) {
+    throw new Error(responseError);
+  }
+
+  const payload = asRecord(extractResponseData(response));
+  const providers = Array.isArray(payload.all) ? payload.all : [];
+  const connected = new Set(
+    (Array.isArray(payload.connected) ? payload.connected : []).filter(
+      (item): item is string => typeof item === 'string' && item.trim().length > 0
+    )
+  );
+  const defaults = asRecord(payload.default);
+  const defaultProviderId = getDefaultOpenCodeProviderId();
+
+  return providers
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((providerRecord) => buildProviderCatalogEntry(providerRecord, connected, defaults))
+    .filter((entry): entry is OpenCodeModelCatalogProvider => entry !== null)
+    .map((entry) =>
+      entry.providerId === defaultProviderId
+        ? {
+            ...entry,
+            connected: true
+          }
+        : entry
+    )
+    .filter((entry) => entry.connected && entry.models.length > 0)
+    .sort((left, right) => {
+      const leftScore = left.providerId === defaultProviderId ? 0 : 1;
+      const rightScore = right.providerId === defaultProviderId ? 0 : 1;
+      if (leftScore !== rightScore) {
+        return leftScore - rightScore;
+      }
+
+      return left.providerName.localeCompare(right.providerName);
+    });
 }
 
 export async function getOpenCodeProviderAuthMethods(params: {
