@@ -140,15 +140,6 @@
     );
   }
 
-  function useExortDefault(): void {
-    patchAppState({
-      providers: {
-        selectedModel: null,
-      },
-    });
-    modelOpen = false;
-  }
-
   $effect(() => {
     if (!modelOpen) return;
 
@@ -238,8 +229,7 @@
             >
               <div class="space-y-2.5">
                 <div class="flex items-center justify-between text-[11px]">
-                  <span class="font-medium text-dark-fg1">Model</span>
-                  <span class="text-dark-fg4">{OPEN_CODE_MODEL}</span>
+                  <span class="font-medium text-dark-fg1">Select Model</span>
                 </div>
 
                 {#if providerLoading}
@@ -248,28 +238,17 @@
                   <p class="text-xs text-dark-red">{providerError}</p>
                 {:else}
                   <div class="space-y-2">
-                    <button
-                      class={`w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
-                        selectedModel == null
-                          ? "border-primary-500 bg-dark-bg1 text-dark-fg1"
-                          : "border-dark-border bg-dark-bg text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
-                      }`}
-                      onclick={useExortDefault}
-                    >
-                      <span class="block truncate">Exort default</span>
-                    </button>
                     {#if catalogProviders.length === 0}
                       <p class="text-xs text-dark-fg3">
                         No connected models available.
                       </p>
                     {:else}
-                      <div class="text-[11px] text-dark-fg4">
-                        Choose a connected OpenCode model.
-                      </div>
-                      <div class="max-h-52 space-y-2 overflow-y-auto pr-1">
+                      <div
+                        class="chat-timeline-scroll max-h-52 space-y-2 overflow-y-auto pr-2"
+                      >
                         {#each catalogProviders as provider (provider.providerId)}
                           <div class="space-y-1">
-                            <div class="px-1 text-[11px] text-dark-fg4">
+                            <div class="px-1 text-[11px] font-semibold text-dark-fg2">
                               {provider.providerName}
                             </div>
                             {#each provider.models as model (model.id)}
