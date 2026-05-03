@@ -425,14 +425,17 @@ async function recycleOpenCodeRuntimeAfterProviderAuthMutation(log?: (line: stri
 }
 
 const OPENAI_MODEL_RECOMMENDATION_ORDER = ['gpt-5.3-codex', 'gpt-5.2-codex'];
-const OPENAI_CHATGPT_UNSUPPORTED_MODEL_IDS = new Set(['codex-mini-latest']);
-const OPENAI_CHATGPT_MODEL_ALLOWLIST = new Set([
+const OPENAI_CHATGPT_UNSUPPORTED_MODEL_IDS = new Set([
+  'codex-mini-latest',
+  'gpt-5.1-codex',
   'gpt-5.1-codex-max',
   'gpt-5.1-codex-mini',
+  'gpt-5.1'
+]);
+const OPENAI_CHATGPT_MODEL_ALLOWLIST = new Set([
   'gpt-5.2',
   'gpt-5.2-codex',
-  'gpt-5.3-codex',
-  'gpt-5.1-codex'
+  'gpt-5.3-codex'
 ]);
 
 function parseProviderModelStatus(value: unknown): OpenCodeProviderModel['status'] {
@@ -440,6 +443,49 @@ function parseProviderModelStatus(value: unknown): OpenCodeProviderModel['status
     return value;
   }
   return null;
+}
+
+function extractSessionErrorMessage(properties: Record<string, unknown>): string {
+  const errorRecord = asRecord(properties.error);
+  const errorData = asRecord(errorRecord.data);
+  const directMessage = getFirstNonBlankString(
+    errorRecord.message,
+    errorData.message,
+    properties.message
+  );
+  if (directMessage) {
+    const detailPrefix = 'Bad Request: ';
+    if (directMessage.startsWith(detailPrefix)) {
+      try {
+        const parsed = JSON.parse(directMessage.slice(detailPrefix.length));
+        const parsedRecord = asRecord(parsed);
+        const parsedDetail = getFirstNonBlankString(parsedRecord.detail);
+        if (parsedDetail) {
+          return parsedDetail;
+        }
+      } catch {
+        // Keep the original message if the nested JSON payload cannot be parsed.
+      }
+    }
+
+    return directMessage;
+  }
+
+  const responseBody = getFirstNonBlankString(errorData.responseBody);
+  if (responseBody) {
+    try {
+      const parsed = JSON.parse(responseBody);
+      const parsedRecord = asRecord(parsed);
+      const parsedDetail = getFirstNonBlankString(parsedRecord.detail, parsedRecord.message);
+      if (parsedDetail) {
+        return parsedDetail;
+      }
+    } catch {
+      return responseBody;
+    }
+  }
+
+  return 'OpenCode session error';
 }
 
 function parseProviderModels(modelsValue: unknown): OpenCodeProviderModel[] {
@@ -1679,10 +1725,7 @@ function parseEvent(rawEvent: unknown, expectedSessionId: string): AgentStreamEv
   }
 
   if (type === 'session.error') {
-    const errorRecord = asRecord(properties.error);
-    const message = getFirstString(errorRecord.message, properties.message) ?? 'OpenCode session error';
-
-    return { type: 'error', error: message };
+    return { type: 'error', error: extractSessionErrorMessage(properties) };
   }
 
   if (type === 'session.status') {
@@ -1939,9 +1982,7 @@ function buildTaskMessageFromRawEvent(rawEvent: unknown, expectedSessionId: stri
   }
 
   if (type === 'session.error') {
-    const errorRecord = asRecord(properties.error);
-    const message = getFirstNonBlankString(errorRecord.message, properties.message) ?? 'session error';
-    return `error ${compactLogValue(message)}`;
+    return null;
   }
 
   if (type === 'file.watcher.updated') {
