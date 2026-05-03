@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import SelectDropdown from "../SelectDropdown.svelte";
   import { appStateStore, patchAppState } from "../../lib/state/stateManager";
   import type {
     ChatFontSizePreset,
@@ -94,11 +95,7 @@
     );
   }
 
-  function onMonacoThemeChange(event: Event): void {
-    const target = event.currentTarget as HTMLSelectElement | null;
-    if (!target) return;
-
-    const nextTheme = target.value;
+  function onMonacoThemeChange(nextTheme: string): void {
     if (!isMonacoThemeId(nextTheme)) return;
     monacoTheme = nextTheme;
 
@@ -113,18 +110,15 @@
     return value === "small" || value === "default" || value === "large";
   }
 
-  function onChatFontSizeChange(event: Event): void {
-    const target = event.currentTarget as HTMLSelectElement | null;
-    if (!target) return;
-
-    const nextValue = isChatFontSizePreset(target.value)
-      ? target.value
+  function onChatFontSizeChange(nextValue: string): void {
+    const resolvedValue = isChatFontSizePreset(nextValue)
+      ? nextValue
       : "default";
-    chatFontSize = nextValue;
+    chatFontSize = resolvedValue;
 
     patchAppState({
       appearance: {
-        chatFontSize: nextValue,
+        chatFontSize: resolvedValue,
       },
     });
   }
@@ -341,37 +335,31 @@
     </p>
 
     <div class="mt-3 flex flex-wrap items-center gap-3">
-      <label class="text-xs text-dark-fg3" for="monaco-theme-select">
+      <label class="text-xs text-dark-fg3">
         Editor theme
       </label>
-      <select
-        id="monaco-theme-select"
-        class="input-field h-8 rounded-md py-1 text-sm"
-        value={monacoTheme}
-        onchange={onMonacoThemeChange}
-        aria-label="Editor theme"
-      >
-        {#each monacoThemeOptions as option (option.value)}
-          <option value={option.value}>{option.label}</option>
-        {/each}
-      </select>
+      <div class="w-56 min-w-0">
+        <SelectDropdown
+          options={monacoThemeOptions}
+          value={monacoTheme}
+          onChange={onMonacoThemeChange}
+          ariaLabel="Editor theme"
+        />
+      </div>
     </div>
 
     <div class="mt-3 flex flex-wrap items-center gap-3">
-      <label class="text-xs text-dark-fg3" for="chat-font-size-select">
+      <label class="text-xs text-dark-fg3">
         Chat font size
       </label>
-      <select
-        id="chat-font-size-select"
-        class="input-field h-8 rounded-md py-1 text-sm"
-        value={chatFontSize}
-        onchange={onChatFontSizeChange}
-        aria-label="Chat font size"
-      >
-        {#each chatFontSizeOptions as option (option.value)}
-          <option value={option.value}>{option.label}</option>
-        {/each}
-      </select>
+      <div class="w-44 min-w-0">
+        <SelectDropdown
+          options={chatFontSizeOptions}
+          value={chatFontSize}
+          onChange={onChatFontSizeChange}
+          ariaLabel="Chat font size"
+        />
+      </div>
       <span class="text-[11px] text-dark-fg4">
         Applies to the whole chat panel.
       </span>

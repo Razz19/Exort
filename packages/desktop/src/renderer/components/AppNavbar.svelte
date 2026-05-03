@@ -1048,7 +1048,7 @@
         <span class="w-14 shrink-0 text-right text-xs text-dark-fg3">
           Config
         </span>
-        <div class="relative w-44 shrink-0">
+        <div class="relative w-56 shrink-0">
           <button
             class={dropdownTriggerClass}
             onclick={toggleBoardSettingsDropdown}
@@ -1067,7 +1067,7 @@
 
           {#if boardSettingsDropdownOpen}
             <div
-              class={`${dropdownPanelClass} max-h-[28rem] w-[22rem] overflow-y-auto p-2`}
+              class={`${dropdownPanelClass} max-h-[28rem] w-[18rem] overflow-y-auto p-2`}
             >
               <div class="mb-2 border-b border-dark-border pb-2">
                 <div class="flex items-center gap-2 text-sm text-dark-fg1">
