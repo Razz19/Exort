@@ -3,6 +3,7 @@
   import {
     Code,
     Monitor,
+    PanelRightClose,
     PanelLeftClose,
     X,
   } from "lucide-svelte";
@@ -107,34 +108,58 @@
 </script>
 
 <div class="flex h-full min-w-0 flex-col bg-dark-bg">
-  <div class="flex items-end border-b border-dark-border bg-dark-surface px-2">
-    <button
-      class={`inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-        activePaneTab === "code"
-          ? "border-primary-500 text-dark-fg0"
-          : "border-transparent text-dark-fg3 hover:text-dark-fg1"
-      }`}
-      onclick={() => onPaneTabChange("code")}
-      aria-pressed={activePaneTab === "code"}
-      title="Code pane"
-    >
-      <Code class="h-4 w-4" />
-      <span>Code</span>
-    </button>
+  <div
+    class="flex items-end justify-between border-b border-dark-border bg-dark-surface px-2"
+  >
+    <div class="flex items-end">
+      <button
+        class={`inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+          activePaneTab === "code"
+            ? "border-primary-500 text-dark-fg0"
+            : "border-transparent text-dark-fg3 hover:text-dark-fg1"
+        }`}
+        onclick={() => onPaneTabChange("code")}
+        aria-pressed={activePaneTab === "code"}
+        title="Code pane"
+      >
+        <Code class="h-4 w-4" />
+        <span>Code</span>
+      </button>
 
-    <button
-      class={`inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-        activePaneTab === "monitor"
-          ? "border-primary-500 text-dark-fg0"
-          : "border-transparent text-dark-fg3 hover:text-dark-fg1"
-      }`}
-      onclick={() => onPaneTabChange("monitor")}
-      aria-pressed={activePaneTab === "monitor"}
-      title="Monitor pane"
-    >
-      <Monitor class="h-4 w-4" />
-      <span>Monitor</span>
-    </button>
+      <button
+        class={`inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+          activePaneTab === "monitor"
+            ? "border-primary-500 text-dark-fg0"
+            : "border-transparent text-dark-fg3 hover:text-dark-fg1"
+        }`}
+        onclick={() => onPaneTabChange("monitor")}
+        aria-pressed={activePaneTab === "monitor"}
+        title="Monitor pane"
+      >
+        <Monitor class="h-4 w-4" />
+        <span>Monitor</span>
+      </button>
+    </div>
+
+    {#if activePaneTab === "code"}
+      <button
+        type="button"
+        class="mb-1 inline-flex h-7 w-7 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        onclick={() => onFileManagerCollapsedChange(!fileManagerCollapsed)}
+        aria-label={fileManagerCollapsed
+          ? "Expand file manager"
+          : "Collapse file manager"}
+        title={fileManagerCollapsed
+          ? "Expand file manager"
+          : "Collapse file manager"}
+      >
+        {#if fileManagerCollapsed}
+          <PanelLeftClose class="h-4 w-4" />
+        {:else}
+          <PanelRightClose class="h-4 w-4" />
+        {/if}
+      </button>
+    {/if}
   </div>
 
   {#if activePaneTab === "code"}
@@ -242,22 +267,7 @@
           </div>
         </div>
 
-        {#if fileManagerCollapsed}
-          <div
-            class="flex w-6 shrink-0 items-start justify-center border-l border-dark-border bg-dark-surface pt-2"
-          >
-            <button
-              type="button"
-              class="inline-flex h-7 w-7 mt-1 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60
-               hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-              onclick={() => onFileManagerCollapsedChange(false)}
-              aria-label="Expand file manager"
-              title="Expand file manager"
-            >
-              <PanelLeftClose class="h-4 w-4" />
-            </button>
-          </div>
-        {:else}
+        {#if !fileManagerCollapsed}
           <div
             class="w-0.5 cursor-col-resize bg-dark-border hover:bg-dark-fg3/50"
             role="separator"

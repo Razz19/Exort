@@ -6,7 +6,6 @@
     FolderOpen,
     FolderPlus,
     FolderSearch,
-    PanelRightClose,
   } from "lucide-svelte";
 
   type TreeRow = {
@@ -61,7 +60,6 @@
     onCreateEntry = async () => ({ ok: false, error: "Not implemented" }),
     onRenameEntry = async () => ({ ok: false, error: "Not implemented" }),
     onOpenInFinder = () => {},
-    onCollapseFileManager = () => {},
   } = $props<{
     rootPath: string;
     items: Array<{ path: string; isDirectory: boolean }>;
@@ -79,7 +77,6 @@
       nextName: string;
     }) => Promise<{ ok: boolean; path?: string; error?: string }>;
     onOpenInFinder?: () => void | Promise<void>;
-    onCollapseFileManager?: () => void | Promise<void>;
   }>();
 
   let selectedRowPath = $state<string | null>(null);
@@ -688,15 +685,6 @@
         aria-label="Open in Finder"
       >
         <FolderSearch class="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        class="inline-flex h-7 w-7 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-        onclick={() => void onCollapseFileManager()}
-        title="Collapse file manager"
-        aria-label="Collapse file manager"
-      >
-        <PanelRightClose class="h-4 w-4" />
       </button>
     </div>
   </div>
