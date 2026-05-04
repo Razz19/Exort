@@ -183,7 +183,12 @@
   });
 </script>
 
-<div class="p-3">
+<div
+  class="chat-composer-root p-3"
+  onselectstart={(event) => {
+    event.preventDefault();
+  }}
+>
   <div class="rounded-xl border border-dark-border bg-dark-bgS/80 px-3 py-2.5">
     <textarea
       class="w-full resize-none border-0 bg-transparent p-0 text-sm text-dark-fg focus:outline-none focus:ring-0"

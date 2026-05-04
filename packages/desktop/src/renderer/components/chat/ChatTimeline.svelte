@@ -81,6 +81,7 @@
 <div class="relative min-h-0 flex-1">
   <div
     class="chat-timeline-scroll h-full space-y-3 overflow-y-auto p-4"
+    data-allow-text-selection="true"
     bind:this={scrollEl}
     onscroll={updatePinnedState}
   >

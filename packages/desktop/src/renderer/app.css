@@ -16,6 +16,24 @@ body,
   @apply m-0 h-full bg-dark-bg text-gray-100;
 }
 
+#app,
+#app * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#app :where(
+  .monaco-editor,
+  .monaco-editor *,
+  .allow-text-selection,
+  .allow-text-selection *,
+  [data-allow-text-selection='true'],
+  [data-allow-text-selection='true'] *
+) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .btn-primary {
   @apply rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50;
 }
@@ -66,6 +84,14 @@ body,
 .chat-panel-root textarea {
   font-size: var(--chat-font-body-size);
   line-height: var(--chat-font-body-line);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.chat-panel-root .chat-composer-root,
+.chat-panel-root .chat-composer-root * {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chat-panel-root .text-\[11px\] {
