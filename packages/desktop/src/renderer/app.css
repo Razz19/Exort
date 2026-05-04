@@ -297,11 +297,15 @@ body,
   border: none;
 }
 
+.chat-timeline-scroll:hover,
+.chat-timeline-scroll:focus-within,
 .chat-panel-root:hover .chat-timeline-scroll,
 .chat-panel-root:focus-within .chat-timeline-scroll {
   scrollbar-color: theme("colors.dark.bg4") theme("colors.dark.bg");
 }
 
+.chat-timeline-scroll:hover::-webkit-scrollbar-thumb,
+.chat-timeline-scroll:focus-within::-webkit-scrollbar-thumb,
 .chat-panel-root:hover .chat-timeline-scroll::-webkit-scrollbar-thumb,
 .chat-panel-root:focus-within .chat-timeline-scroll::-webkit-scrollbar-thumb {
   @apply rounded-full bg-dark-fg4;

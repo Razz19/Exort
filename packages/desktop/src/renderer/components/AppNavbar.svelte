@@ -180,7 +180,7 @@
   const dropdownTriggerClass =
     "input-field inline-flex h-8 w-full items-center justify-between gap-2 rounded-md py-2 text-left text-dark-fg focus:ring-0 [-webkit-app-region:no-drag]";
   const dropdownPanelClass =
-    "absolute right-0 top-full z-30 mt-1 max-h-72 w-full overflow-x-hidden overflow-y-auto rounded-md border border-dark-border bg-dark-surface p-1 shadow-lg shadow-dark-bg/40 [-webkit-app-region:no-drag]";
+    "absolute right-0 top-full z-30 mt-1 max-h-72 overflow-x-hidden overflow-y-auto rounded-md border border-dark-border bg-dark-surface p-1 shadow-lg shadow-dark-bg/40 [-webkit-app-region:no-drag]";
   const dropdownItemClass =
     "w-full rounded-md px-2 py-1.5 text-left text-sm text-dark-fg2 transition-colors duration-150 hover:bg-dark-bgH hover:text-dark-fg0  ";
   const isMac =
@@ -863,7 +863,7 @@
           </button>
 
           {#if portsDropdownOpen}
-            <div class={dropdownPanelClass}>
+            <div class={`${dropdownPanelClass} w-full`}>
               <button
                 class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2 border border-dark-border`}
                 onclick={() => void refreshPorts()}
@@ -922,7 +922,7 @@
 
           {#if boardsDropdownOpen}
             <div
-              class={`${dropdownPanelClass} flex max-h-[28rem] flex-col overflow-hidden p-0`}
+              class={`${dropdownPanelClass} flex w-full max-h-[28rem] flex-col overflow-hidden p-0`}
             >
               <div class="p-1">
                 <div
@@ -937,7 +937,9 @@
                 </div>
               </div>
 
-              <div class="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
+              <div
+                class="chat-timeline-scroll min-h-0 flex-1 overflow-y-auto px-1 pb-1"
+              >
                 <!-- <button
                 class={`${dropdownItemClass} ${!selectedBoardFqbn ? "bg-dark-bgH text-primary-300" : ""}`}
                 onclick={() => handleBoardSelection("")}
@@ -1067,7 +1069,7 @@
 
           {#if boardSettingsDropdownOpen}
             <div
-              class={`${dropdownPanelClass} max-h-[28rem] w-[18rem] overflow-y-auto p-2`}
+              class={`${dropdownPanelClass} chat-timeline-scroll max-h-[28rem] w-[18rem] overflow-y-auto p-2`}
             >
               <div class="mb-2 border-b border-dark-border pb-2">
                 <div class="flex items-center gap-2 text-sm text-dark-fg1">
