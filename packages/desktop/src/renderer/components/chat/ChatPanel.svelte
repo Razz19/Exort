@@ -16,7 +16,6 @@
     onSend,
     onStop,
     onNewSession,
-    onCollapse = () => {},
     newSessionDisabled,
     onPermissionReply,
     onQuestionReply,
@@ -33,7 +32,6 @@
       onSend: (prompt: string) => void;
       onStop: () => Promise<void> | void;
       onNewSession: () => void;
-      onCollapse?: () => Promise<void> | void;
       newSessionDisabled: boolean;
       onPermissionReply: (requestId: string, reply: AgentPermissionReply) => Promise<void> | void;
       onQuestionReply: (requestId: string, answers: string[][]) => Promise<void> | void;
@@ -49,7 +47,6 @@
     {workspaceTitle}
     {onNewSession}
     {newSessionDisabled}
-    {onCollapse}
   />
   <ChatTimeline
     {messages}

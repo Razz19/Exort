@@ -1,15 +1,13 @@
 <script lang="ts">
-  import { PanelLeftClose, SquarePen } from "lucide-svelte";
+  import { SquarePen } from "lucide-svelte";
 
   let {
     workspaceTitle,
     onNewSession,
-    onCollapse = () => {},
     newSessionDisabled,
   } = $props<{
     workspaceTitle: string;
     onNewSession: () => void;
-    onCollapse?: () => Promise<void> | void;
     newSessionDisabled: boolean;
   }>();
 </script>
@@ -32,15 +30,6 @@
         aria-label="Start a new session"
       >
         <SquarePen class="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        class="inline-flex h-7 w-7 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-        onclick={() => void onCollapse()}
-        title="Collapse chat"
-        aria-label="Collapse chat"
-      >
-        <PanelLeftClose class="h-4 w-4" />
       </button>
     </div>
   </div>

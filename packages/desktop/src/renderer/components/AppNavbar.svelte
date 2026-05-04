@@ -6,6 +6,8 @@
     CircleCheckBig,
     Hammer,
     Loader,
+    PanelLeftClose,
+    PanelRightClose,
     RefreshCw,
     Search,
     Settings2,
@@ -51,6 +53,8 @@
     onArduinoOutputEvent = () => {},
     onOverlayOpenChange = () => {},
     arduinoEnvironmentRefreshKey = 0,
+    chatCollapsed = false,
+    onToggleChatCollapsed = () => {},
   } = $props<{
     userEmail: string | null;
     statusText: string;
@@ -71,6 +75,8 @@
     onArduinoOutputEvent: (event: ArduinoOutputEvent) => void;
     onOverlayOpenChange: (open: boolean) => void;
     arduinoEnvironmentRefreshKey?: number;
+    chatCollapsed?: boolean;
+    onToggleChatCollapsed?: () => Promise<void> | void;
   }>();
 
   const safeSetPort = (port: string) => {
@@ -838,9 +844,22 @@
   </div> -->
 
   <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-    <div class="min-h-[1rem] flex-1 pt-0.5 text-xs">
+    <div class="flex min-h-[1rem] flex-1 items-start gap-2 pt-0.5 text-xs">
+      <button
+        type="button"
+        class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 [-webkit-app-region:no-drag]"
+        onclick={() => void onToggleChatCollapsed()}
+        aria-label={chatCollapsed ? "Expand chat" : "Collapse chat"}
+        title={chatCollapsed ? "Expand chat" : "Collapse chat"}
+      >
+        {#if chatCollapsed}
+          <PanelRightClose class="h-4 w-4" />
+        {:else}
+          <PanelLeftClose class="h-4 w-4" />
+        {/if}
+      </button>
       {#if navbarErrorMessage}
-        <span class="text-dark-red">{navbarErrorMessage}</span>
+        <span class="pt-1 text-dark-red">{navbarErrorMessage}</span>
       {/if}
     </div>
 

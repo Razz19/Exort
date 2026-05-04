@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { PanelRightClose } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
 
   import ChatPanel from "./components/ChatPanel.svelte";
@@ -2376,74 +2375,60 @@
     onArduinoOutputEvent={handleArduinoOutputEvent}
     onOverlayOpenChange={handleNavbarOverlayOpenChange}
     {arduinoEnvironmentRefreshKey}
+    {chatCollapsed}
+    onToggleChatCollapsed={() => handleChatCollapsedChange(!chatCollapsed)}
   />
 
   <div
     class={`flex flex-1 overflow-hidden ${draggingSplitter ? "select-none" : ""}`}
     bind:this={outerSplitContainerEl}
   >
-    {#if chatCollapsed}
-      <div
-        class="flex w-6 shrink-0 items-start justify-center border-r border-dark-border bg-dark-surface pt-2"
-      >
-        <button
-          type="button"
-          class="inline-flex mt-1 h-7 w-7 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60
-           hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-          onclick={() => handleChatCollapsedChange(false)}
-          aria-label="Expand chat"
-          title="Expand chat"
-        >
-          <PanelRightClose class="h-4 w-4" />
-        </button>
-      </div>
-    {:else}
-      <div
-        class="min-w-0 border-r border-dark-border"
-        style={`width: ${chatWidthPct}%`}
-      >
-        <div class="flex h-full min-w-0">
-          <div
-            class="w-14 shrink-0 border-r border-dark-border bg-dark-surface"
-          >
+    <div
+      class={`flex border-r border-dark-border ${
+        chatCollapsed ? "shrink-0" : "min-w-0"
+      }`}
+      style={chatCollapsed ? undefined : `width: ${chatWidthPct}%`}
+    >
+      <div class="w-14 shrink-0 border-r border-dark-border bg-dark-surface">
             <WorkspaceBar
               {workspaces}
               {activeWorkspaceId}
               {sessionPreviewsByWorkspaceId}
               {activeSessionIdByWorkspaceId}
-              onSelect={selectWorkspace}
-              onCloseWorkspace={removeWorkspace}
-              onOpenFolder={openFolder}
+          onSelect={selectWorkspace}
+          onCloseWorkspace={removeWorkspace}
+          onOpenFolder={openFolder}
               onOpenSettings={openSettingsModal}
               onPreviewWorkspace={ensureWorkspaceSessions}
               onSelectWorkspaceSession={handleSelectWorkspaceSession}
             />
           </div>
 
-          <div class="min-w-0 flex-1">
-            <ChatPanel
-              messages={renderedMessages}
-              workspaceTitle={activeWorkspace?.name?.trim() || "Agent Chat"}
-              activeWorkspaceRoot={activeWorkspace?.rootPath ?? null}
-              {chatFontSize}
-              busy={agentBusy}
-              stopping={stoppingAgentTurn}
-              sessionStatus={activeChatSessionStatus}
-              onSend={sendPrompt}
-              onStop={stopAgentTurn}
-              onNewSession={createNewSession}
-              onCollapse={() => handleChatCollapsedChange(true)}
-              newSessionDisabled={sessionBusy ||
-                agentBusy ||
-                !activeWorkspace}
-              onPermissionReply={handlePermissionReply}
-              onQuestionReply={handleQuestionReply}
-              onQuestionReject={handleQuestionReject}
-            />
-          </div>
+      {#if !chatCollapsed}
+        <div class="min-w-0 flex-1">
+          <ChatPanel
+            messages={renderedMessages}
+            workspaceTitle={activeWorkspace?.name?.trim() || "Agent Chat"}
+            activeWorkspaceRoot={activeWorkspace?.rootPath ?? null}
+            {chatFontSize}
+            busy={agentBusy}
+            stopping={stoppingAgentTurn}
+            sessionStatus={activeChatSessionStatus}
+            onSend={sendPrompt}
+            onStop={stopAgentTurn}
+            onNewSession={createNewSession}
+            newSessionDisabled={sessionBusy ||
+              agentBusy ||
+              !activeWorkspace}
+            onPermissionReply={handlePermissionReply}
+            onQuestionReply={handleQuestionReply}
+            onQuestionReject={handleQuestionReject}
+          />
         </div>
-      </div>
+      {/if}
+    </div>
 
+    {#if !chatCollapsed}
       <div
         class="w-0.5 cursor-col-resize bg-dark-border hover:bg-dark-fg3/50"
         role="separator"

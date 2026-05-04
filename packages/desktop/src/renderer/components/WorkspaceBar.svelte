@@ -235,17 +235,19 @@
 <div
   class="flex h-full min-h-0 flex-col items-center border-r border-dark-border bg-dark-surface py-3"
 >
-  <button
-    class="my-3 flex h-10 w-10 items-center justify-center
-    rounded-md border border-dark-yellow bg-dark-surface text-lg leading-none
-     text-dark-yellow transition-colors hover:bg-dark-yellow/20 focus:outline-none
-     focus:ring-2 focus:ring-primary-500"
-    onclick={onOpenFolder}
-    aria-label="Open workspace folder"
-    title="Open folder"
-  >
-    <Plus class=" h-5 w-5" />
-  </button>
+  <div class="my-3 flex w-full flex-col items-center gap-2 px-2">
+    <button
+      class="flex h-10 w-10 items-center justify-center
+      rounded-md border border-dark-yellow bg-dark-surface text-lg leading-none
+       text-dark-yellow transition-colors hover:bg-dark-yellow/20 focus:outline-none
+       focus:ring-2 focus:ring-primary-500"
+      onclick={onOpenFolder}
+      aria-label="Open workspace folder"
+      title="Open folder"
+    >
+      <Plus class=" h-5 w-5" />
+    </button>
+  </div>
   <div
     class="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto px-2"
   >
