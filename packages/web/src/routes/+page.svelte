@@ -251,9 +251,43 @@
               class="block overflow-visible pb-[0.08em] leading-[1.08] text-gruvbox-fg0"
             >
               <span
-                class="inline-block bg-[linear-gradient(115deg,#fbf1c7_0%,#ebdbb2_24%,#fabd2f_56%,#fe8019_100%)] bg-[length:240%_100%] bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(250,189,47,0.14)] animate-hero-title-gradient-shift motion-reduce:animate-none"
+                class="relative inline-block overflow-hidden whitespace-nowrap align-top drop-shadow-[0_0_14px_rgba(250,189,47,0.14)]"
               >
-                Open Source
+                <span class="block text-gruvbox-fg0">
+                  Open Source
+                </span>
+                <span
+                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
+                  aria-hidden="true"
+                >
+                  <span class="block whitespace-nowrap animate-hero-text-sweep-right text-gruvbox-orange">
+                    Open Source
+                  </span>
+                </span>
+                <span
+                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
+                  aria-hidden="true"
+                >
+                  <span class="block whitespace-nowrap animate-hero-text-sweep-left text-gruvbox-green [animation-delay:3s]">
+                    Open Source
+                  </span>
+                </span>
+                <span
+                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
+                  aria-hidden="true"
+                >
+                  <span class="block whitespace-nowrap animate-hero-text-sweep-right text-gruvbox-blue [animation-delay:6s]">
+                    Open Source
+                  </span>
+                </span>
+                <span
+                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
+                  aria-hidden="true"
+                >
+                  <span class="block whitespace-nowrap animate-hero-text-sweep-left text-gruvbox-yellow [animation-delay:9s]">
+                    Open Source
+                  </span>
+                </span>
               </span>
               <span class="inline-block text-gruvbox-fg0">Coding Agent</span
               ></span
