@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import FeaturesSection from "$lib/components/landing/FeaturesSection.svelte";
-  import DownloadSection from "$lib/components/landing/DownloadSection.svelte";
   import heroAppImage from "../../../../assets/app.png";
   import serialMonitorImage from "$lib/assets/features/serial-monitor.webp";
   import serialPlotterImage from "$lib/assets/features/serial-plotter.webp";
@@ -13,7 +12,7 @@
 
   const navItems = [
     { label: "Features", href: "#features" },
-    { label: "Download", href: "#try-exort" },
+    { label: "Download", href: "/download" },
     {
       label: "View on GitHub",
       href: "https://github.com/Razz19/Exort",
@@ -336,7 +335,7 @@
           class="mt-6 flex w-full justify-center"
         >
           <a
-            href="#try-exort"
+            href="/download"
             class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
           >
             Download Exort
@@ -368,8 +367,6 @@
     </section>
 
     <FeaturesSection {features} />
-
-    <DownloadSection />
   </main>
 
   <footer class="bg-[rgba(60,56,54,0.42)]">
