@@ -15,6 +15,7 @@ module.exports = {
           'accent-soft': 'rgba(250, 189, 47, 0.82)',
           fg0: '#fbf1c7',
           fg1: '#ebdbb2',
+          blue: '#458588',
           yellow: '#fabd2f',
           orange: '#fe8019',
           purple: '#d3869b',

@@ -282,15 +282,31 @@
         >
           <a
             href="/download"
-            class="inline-flex items-center justify-center rounded-full bg-gruvbox-accent px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110 motion-reduce:transition-none"
+            class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full border border-[rgba(235,219,178,0.12)] bg-gruvbox-ink px-6 py-3 text-sm font-medium backdrop-blur transition motion-reduce:transition-none"
           >
-            Download Exort
+            <span
+              class="absolute inset-0 translate-x-full bg-gruvbox-orange transition-transform duration-300 ease-out group-hover:translate-x-0"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="relative z-10 transition-colors duration-300 group-hover:text-[#333231]"
+            >
+              Download Exort
+            </span>
           </a>
           <a
             href="https://discord.com/invite/xmcmcWkr4V"
-            class="inline-flex items-center justify-center rounded-full bg-gruvbox-accent px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110 motion-reduce:transition-none"
+            class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full border border-[rgba(235,219,178,0.12)] bg-gruvbox-ink px-6 py-3 text-sm font-medium backdrop-blur transition motion-reduce:transition-none"
           >
-            Join Our Discord
+            <span
+              class="absolute inset-0 translate-x-full bg-gruvbox-blue transition-transform duration-300 ease-out group-hover:translate-x-0"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="relative z-10 transition-colors duration-300 group-hover:text-[#333231]"
+            >
+              Join Our Discord
+            </span>
           </a>
         </div>
 
