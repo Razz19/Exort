@@ -11,8 +11,11 @@ Owns the feature showcase markup, carousel state, navigation controls, and secti
 - `packages/web/src/lib/components/landing/DownloadSection.svelte`
 Owns the download cards, local setup panel, copy buttons, and section-local motion.
 
+- `packages/web/tailwind.config.cjs`
+Owns shared gruvbox theme tokens such as colors, fonts, shadows, and reusable animation definitions.
+
 - `packages/web/src/app.css`
-Still contains global primitives plus legacy section styling for hero, features, download, and local setup. Treat section selectors here as migration debt.
+Contains global primitives only: Tailwind directives, `@font-face`, base/reset behavior, body background, selection styling, and reduced-motion global rules.
 
 ## Ownership rules
 
@@ -25,7 +28,10 @@ Edit `FeaturesSection.svelte`.
 - Download cards, setup commands, and copy interactions:
 Edit `DownloadSection.svelte`.
 
-- Global-only concerns such as `@font-face`, root tokens, document-level resets, and shared selection styling:
+- Shared gruvbox colors, fonts, shadows, and animation tokens:
+Edit `tailwind.config.cjs`.
+
+- Global-only concerns such as `@font-face`, document-level resets, body background, and shared selection styling:
 Keep in `app.css` if still needed.
 
 ## Use the narrower skills when possible

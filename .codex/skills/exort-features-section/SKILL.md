@@ -1,18 +1,19 @@
 ---
 name: exort-features-section
-description: Update the Exort landing-page feature showcase in `packages/web/src/lib/components/landing/FeaturesSection.svelte`. Use when Codex needs to change the feature carousel layout, feature image stage, copy panel, navigation buttons, arrow controls, responsive arrangement, or to migrate touched `.feature-*` styling from `packages/web/src/app.css` into Tailwind utilities.
+description: Update the Exort landing-page feature showcase in `packages/web/src/lib/components/landing/FeaturesSection.svelte`. Use when Codex needs to change the feature carousel layout, feature image stage, copy panel, navigation buttons, arrow controls, responsive arrangement, or keep the feature section aligned with the Tailwind-first gruvbox theme.
 ---
 
 # Exort Features Section
 
 ## Overview
 
-Use this skill for focused work on the Exort feature showcase. Keep behavior intact while migrating touched feature styling out of `app.css` and into Tailwind classes in `FeaturesSection.svelte`.
+Use this skill for focused work on the Exort feature showcase. Keep behavior intact while editing the Tailwind classes in `FeaturesSection.svelte`; the feature visuals no longer depend on `app.css`.
 
 ## Quick Start
 
 Open these files first:
 - `packages/web/src/lib/components/landing/FeaturesSection.svelte`
+- `packages/web/tailwind.config.cjs`
 - `packages/web/src/app.css`
 - `references/file-map.md`
 - `references/migration-checklist.md`
@@ -30,8 +31,8 @@ Review the active feature state, rotation timers, GSAP setup, reduced-motion han
 3. Style in Tailwind, not new CSS.
 Apply layout, spacing, colors, borders, shadows, overlay placement, and responsive behavior in `FeaturesSection.svelte` with Tailwind utilities.
 
-4. Migrate touched selectors.
-If the request touches any `.feature-*` selector listed in `references/migration-checklist.md`, move that styling into the markup during the same change and remove or reduce the old selector.
+4. Keep feature visuals in markup.
+Preserve only behavior-related state and DOM structure for timers, fades, and GSAP. Do not reintroduce presentation-only feature classes or section CSS.
 
 5. Preserve behavior by default.
 Keep feature rotation timing, manual pause behavior, image preloading, fade transitions, GSAP entrance sequencing, and reduced-motion compatibility unless the user explicitly requests motion changes.

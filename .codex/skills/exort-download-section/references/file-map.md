@@ -5,8 +5,11 @@
 - `packages/web/src/lib/components/landing/DownloadSection.svelte`
 Owns the download-card markup, platform metadata, overlay timelines, copy-to-clipboard behavior, local setup commands, reduced-motion handling, and GSAP setup.
 
+- `packages/web/tailwind.config.cjs`
+Owns shared gruvbox theme tokens used by the download section, including solid card colors such as `gruvbox.ink`.
+
 - `packages/web/src/app.css`
-Still contains download and local setup presentation selectors such as `.download-card*`, `.local-setup-panel`, `.local-setup-command*`, `.local-setup-copy`, and `.local-setup-copy-all`.
+Contains global base concerns only. Do not use it for download or installation-guide presentation.
 
 ## Ownership rules
 
@@ -16,5 +19,5 @@ Prefer editing `DownloadSection.svelte` with Tailwind utilities.
 - Behavior:
 Keep the existing overlay timeline logic, copy-to-clipboard state, and motion semantics unless the user explicitly requests a behavior change.
 
-- CSS:
-Treat touched `.download-*` and `.local-setup-*` selectors in `app.css` as migration debt and move them into the markup.
+- Stable DOM hooks:
+Keep `download-card__overlay`, `download-card__overlay-icon`, `download-card__overlay-content`, and similar queried classes only when the script uses them for GSAP targeting.

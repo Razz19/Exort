@@ -1,17 +1,11 @@
 # Feature Styling Migration Checklist
 
-When a request touches any of these areas, migrate the touched styling from `app.css` into `FeaturesSection.svelte` instead of extending the CSS:
+When a request touches any of these areas, keep the styling in `FeaturesSection.svelte` utilities instead of moving it back into `app.css`:
 
-- `.feature-showcase`
-- `.feature-nav-button`
-- `.feature-nav-button--active`
-- `.feature-image-shell`
-- `.feature-stage`
-- `.feature-stage__layer`
-- `.feature-image`
-- `.feature-image-placeholder`
-- `.feature-copy`
-- `.feature-copy__inner`
-- `.feature-arrow-button`
+- feature navigation buttons
+- feature image shell sizing
+- feature fade layers
+- copy overlay panel
+- mobile arrow controls
 
-Keep behavior-only logic in the component script. Only move presentation into Tailwind utilities.
+Keep behavior-only logic in the component script. Keep all presentation in Tailwind utilities.

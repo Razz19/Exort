@@ -5,8 +5,11 @@
 - `packages/web/src/lib/components/landing/FeaturesSection.svelte`
 Owns the feature showcase markup, active feature state, timers, image preload behavior, fade transitions, reduced-motion handling, and GSAP setup.
 
+- `packages/web/tailwind.config.cjs`
+Contains shared gruvbox theme tokens and the hero/title animation definitions that may also influence shared landing-page visuals.
+
 - `packages/web/src/app.css`
-Still contains feature presentation selectors such as `.feature-showcase`, `.feature-nav-button`, `.feature-image-shell`, `.feature-stage`, `.feature-copy`, and `.feature-arrow-button`.
+Contains global base concerns only. Do not use it for feature presentation.
 
 ## Ownership rules
 
@@ -17,4 +20,4 @@ Prefer editing `FeaturesSection.svelte` with Tailwind utilities.
 Keep the existing rotation, manual pause, image preload, transitions, and GSAP semantics unless the user explicitly requests a motion or interaction change.
 
 - CSS:
-Treat touched `.feature-*` selectors in `app.css` as migration debt and move them into the markup.
+Keep feature presentation in markup utilities. Keep non-utility classes only when transitions or scripts need stable structure.
