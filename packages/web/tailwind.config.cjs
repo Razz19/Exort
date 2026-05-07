@@ -51,15 +51,23 @@ module.exports = {
             clipPath: 'inset(0 100% 0 0)',
             opacity: '0'
           },
-          '4%': {
-            clipPath: 'inset(0 84% 0 0)',
+          '2%': {
+            clipPath: 'inset(0 100% 0 0)',
+            opacity: '0'
+          },
+          '6%': {
+            clipPath: 'inset(0 70% 0 0)',
             opacity: '1'
           },
-          '12%, 16%': {
+          '14%': {
             clipPath: 'inset(0 0 0 0)',
             opacity: '1'
           },
-          '24%': {
+          '22%': {
+            clipPath: 'inset(0 0 0 70%)',
+            opacity: '1'
+          },
+          '26%': {
             clipPath: 'inset(0 0 0 100%)',
             opacity: '0'
           }
@@ -69,15 +77,23 @@ module.exports = {
             clipPath: 'inset(0 0 0 100%)',
             opacity: '0'
           },
-          '4%': {
-            clipPath: 'inset(0 0 0 84%)',
+          '2%': {
+            clipPath: 'inset(0 0 0 100%)',
+            opacity: '0'
+          },
+          '6%': {
+            clipPath: 'inset(0 0 0 70%)',
             opacity: '1'
           },
-          '12%, 16%': {
+          '14%': {
             clipPath: 'inset(0 0 0 0)',
             opacity: '1'
           },
-          '24%': {
+          '22%': {
+            clipPath: 'inset(0 70% 0 0)',
+            opacity: '1'
+          },
+          '26%': {
             clipPath: 'inset(0 100% 0 0)',
             opacity: '0'
           }
@@ -85,9 +101,9 @@ module.exports = {
       },
       animation: {
         'hero-text-sweep-right':
-          'hero-text-sweep-right 12s cubic-bezier(0.22, 1, 0.36, 1) infinite',
+          'hero-text-sweep-right 12s linear infinite',
         'hero-text-sweep-left':
-          'hero-text-sweep-left 12s cubic-bezier(0.22, 1, 0.36, 1) infinite'
+          'hero-text-sweep-left 12s linear infinite'
       }
     }
   },
