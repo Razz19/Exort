@@ -76,6 +76,16 @@
       command: "npm run dev",
     },
   ] as const;
+  const localSetupCopyAccentClasses = {
+    "copy-all":
+      "text-gruvbox-fg1 hover:text-gruvbox-orange focus-visible:text-gruvbox-orange",
+    clone:
+      "hover:text-gruvbox-orange focus-visible:text-gruvbox-orange",
+    cd: "hover:text-gruvbox-green focus-visible:text-gruvbox-green",
+    install: "hover:text-gruvbox-blue focus-visible:text-gruvbox-blue",
+    "dev-web":
+      "hover:text-gruvbox-yellow focus-visible:text-gruvbox-yellow",
+  } as const;
   const localSetupAllCommand = localSetupCommands
     .map((item) => item.command)
     .join("\n");
@@ -831,7 +841,11 @@
 
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center self-start bg-transparent p-2 text-gruvbox-fg1 transition-colors duration-200 hover:text-white focus-visible:outline-none motion-reduce:transition-none"
+            class={`inline-flex h-9 w-9 items-center justify-center self-start bg-transparent p-2 transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${
+              copiedCommandKey === "copy-all"
+                ? "text-gruvbox-orange"
+                : localSetupCopyAccentClasses["copy-all"]
+            }`}
             onclick={() => void copyCommand("copy-all", localSetupAllCommand)}
             aria-label="Copy all local setup commands"
             title="Copy all commands"
@@ -858,7 +872,17 @@
                   ></pre>
                 <button
                   type="button"
-                  class="absolute right-[0.6rem] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center bg-transparent p-2 text-gruvbox-fg1 transition-colors duration-200 hover:text-white focus-visible:outline-none motion-reduce:transition-none"
+                  class={`absolute right-[0.6rem] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center bg-transparent p-2 transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${
+                    copiedCommandKey === item.key
+                      ? item.key === "clone"
+                        ? "text-gruvbox-orange"
+                        : item.key === "cd"
+                          ? "text-gruvbox-green"
+                          : item.key === "install"
+                            ? "text-gruvbox-blue"
+                            : "text-gruvbox-yellow"
+                      : `text-gruvbox-fg1 ${localSetupCopyAccentClasses[item.key]}`
+                  }`}
                   onclick={() => void copyCommand(item.key, item.command)}
                   aria-label="Copy command"
                   title="Copy command"
