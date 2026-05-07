@@ -16,6 +16,13 @@ body,
   @apply m-0 h-full bg-dark-bg text-gray-100;
 }
 
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+  border: none !important;
+}
+
 #app,
 #app * {
   -webkit-user-select: none;
