@@ -124,6 +124,7 @@
   --gruvbox-fg1: #ebdbb2;
   --gruvbox-yellow: #fabd2f;
   --gruvbox-orange: #fe8019;
+  --gruvbox-purple: #d3869b;
   --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.24);
   --shadow-strong: 0 26px 90px rgba(0, 0, 0, 0.3);
   --font-sans:
@@ -332,7 +333,7 @@ html {
   transform: translateX(-4px);
 }
 
-.github-nav-link {
+.social-nav-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -340,24 +341,34 @@ html {
   transition: color 180ms ease;
 }
 
-.github-nav-link:hover,
-.github-nav-link:focus-visible {
+.social-nav-link:hover,
+.social-nav-link:focus-visible {
   color: #fe8019;
 }
 
-.github-nav-link:focus-visible {
+.social-nav-link--discord:hover,
+.social-nav-link--discord:focus-visible {
+  color: var(--gruvbox-purple);
+}
+
+.social-nav-link:focus-visible {
   outline: none;
 }
 
-.github-nav-link__icon {
+.social-nav-link__icon {
   display: inline-flex;
   width: 1.75rem;
   height: 1.75rem;
 }
 
-.github-nav-link__icon svg {
+.social-nav-link__icon svg {
   width: 100%;
   height: 100%;
+}
+
+.social-nav-link__icon--discord svg {
+  transform: scale(1.15);
+  transform-origin: center;
 }
 
 .brand-wordmark {
