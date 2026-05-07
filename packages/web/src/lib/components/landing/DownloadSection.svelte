@@ -581,7 +581,7 @@
                   aria-selected={activeInstallationGuidePlatform === platform.name}
                   class={`group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium backdrop-blur transition ${
                     activeInstallationGuidePlatform === platform.name
-                      ? "text-[color:var(--color-ink)]"
+                      ? "text-[#333231]"
                       : "border border-[rgba(235,219,178,0.12)] bg-[#333231] hover:border-[rgba(235,219,178,0.2)]"
                   }`}
                   on:click={() => {
@@ -601,7 +601,7 @@
                   <span
                     class={`relative z-10 transition-colors duration-300 ${
                       activeInstallationGuidePlatform === platform.name
-                        ? "text-[color:var(--color-ink)]"
+                        ? "text-[#333231]"
                         : "text-[color:var(--color-text-muted)] group-hover:text-[color:var(--color-ink)]"
                     }`}
                   >
