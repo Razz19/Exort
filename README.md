@@ -1,5 +1,9 @@
 # Exort
 
+[![GitHub stars](https://img.shields.io/github/stars/Razz19/Exort?style=for-the-badge&logo=github&logoColor=white&label=Stars&color=8aa11e)](https://github.com/Razz19/Exort/stargazers)
+[![Discord](https://img.shields.io/badge/Discord-Join-8c7ae6?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/xmcmcWkr4V)
+[![Support](https://img.shields.io/badge/Support-Project-f0a35b?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Razz19)
+
 Exort is a desktop app for embedded development with an OpenCode-powered AI coding agent. Write code, compile, upload, and interact with your hardware all in one place.
 
 This repo also contains a separate SSR web landing app in `packages/web`, built with SvelteKit and Tailwind CSS. No backend or hosted platform is introduced as part of that package.
