@@ -579,18 +579,34 @@
                   type="button"
                   role="tab"
                   aria-selected={activeInstallationGuidePlatform === platform.name}
-                  class={`inline-flex min-w-[9rem] items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition ${
+                  class={`group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium backdrop-blur transition ${
                     activeInstallationGuidePlatform === platform.name
-                      ? platform.name === "macOS"
-                        ? "bg-[#b8bb26] text-[color:var(--color-ink)]"
-                        : "bg-[color:var(--gruvbox-orange)] text-[color:var(--color-ink)]"
-                      : "border border-[rgba(235,219,178,0.12)] bg-[#333231] text-[color:var(--color-text-muted)] backdrop-blur hover:border-[rgba(235,219,178,0.2)] hover:bg-[rgba(251,241,199,0.06)] hover:text-white"
+                      ? "text-[color:var(--color-ink)]"
+                      : "border border-[rgba(235,219,178,0.12)] bg-[#333231] hover:border-[rgba(235,219,178,0.2)]"
                   }`}
                   on:click={() => {
                     activeInstallationGuidePlatform = platform.name;
                   }}
                 >
-                  {platform.name}
+                  <span
+                    class={`absolute inset-0 transition-transform duration-300 ease-out ${
+                      platform.name === "macOS" ? "bg-[#b8bb26]" : "bg-[color:var(--gruvbox-orange)]"
+                    } ${
+                      activeInstallationGuidePlatform === platform.name
+                        ? "translate-x-0"
+                        : "translate-x-full group-hover:translate-x-0"
+                    }`}
+                    aria-hidden="true"
+                  ></span>
+                  <span
+                    class={`relative z-10 transition-colors duration-300 ${
+                      activeInstallationGuidePlatform === platform.name
+                        ? "text-[color:var(--color-ink)]"
+                        : "text-[color:var(--color-text-muted)] group-hover:text-[color:var(--color-ink)]"
+                    }`}
+                  >
+                    {platform.name}
+                  </span>
                 </button>
               {/each}
             </div>
