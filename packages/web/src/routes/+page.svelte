@@ -295,7 +295,10 @@
             >
           </span>
           <span class="block">
-            <span bind:this={headlineLineEls[1]} class="hero-title__line block">
+            <span
+              bind:this={headlineLineEls[1]}
+              class="hero-title__line block md:whitespace-nowrap"
+            >
               For Embedded Development
             </span>
           </span>
