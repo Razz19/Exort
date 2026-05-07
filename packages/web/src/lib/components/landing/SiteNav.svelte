@@ -11,6 +11,11 @@
       href: "https://github.com/Razz19/Exort",
       external: true,
     },
+    {
+      label: "Join our Discord",
+      href: "https://discord.gg/xmcmcWkr4V",
+      external: true,
+    },
   ];
 
   let isNavScrolled = false;
@@ -41,15 +46,13 @@
     class="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8"
   >
     <a href="/" class="flex items-center gap-3">
-      <img
-        src="/exort-logo.png"
-        alt="Exort"
-        class="h-12 w-12 object-contain"
-      />
+      <img src="/exort-logo.png" alt="Exort" class="h-12 w-12 object-contain" />
       <span class="brand-wordmark pt-2 font-mono">Exort</span>
     </a>
 
-    <div class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
+    <div
+      class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex"
+    >
       {#each navItems as item}
         <a
           href={item.href}

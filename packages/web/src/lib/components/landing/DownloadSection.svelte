@@ -645,53 +645,65 @@
                             {step.title}
                           </h5>
                           <div
-                            class="mt-3 space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                            class={`mt-3 ${
+                              step.imagePlaceholderLabel
+                                ? "grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
+                                : ""
+                            }`}
                           >
-                            {#each step.body as paragraph}
-                              <p>{paragraph}</p>
-                            {/each}
-                          </div>
-
-                          {#if step.warningTitle}
-                            <div
-                              class="mt-4 rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] p-4"
-                            >
-                              <p
-                                class="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]"
+                            <div class="min-w-0">
+                              <div
+                                class="space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
                               >
-                                {step.warningTitle}
-                              </p>
-                              {#if step.warningBody}
+                                {#each step.body as paragraph}
+                                  <p>{paragraph}</p>
+                                {/each}
+                              </div>
+
+                              {#if step.warningTitle}
                                 <div
-                                  class="mt-2 space-y-2 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                  class="mt-4 rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] p-4"
                                 >
-                                  {#each step.warningBody as paragraph}
-                                    <p>{paragraph}</p>
-                                  {/each}
+                                  <p
+                                    class="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]"
+                                  >
+                                    {step.warningTitle}
+                                  </p>
+                                  {#if step.warningBody}
+                                    <div
+                                      class="mt-2 space-y-2 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                    >
+                                      {#each step.warningBody as paragraph}
+                                        <p>{paragraph}</p>
+                                      {/each}
+                                    </div>
+                                  {/if}
+                                </div>
+                              {/if}
+
+                              {#if step.command}
+                                <div class="local-setup-command mt-4">
+                                  <div class="local-setup-command__inner">
+                                    <pre class="local-setup-command__code"><code
+                                        >{step.command}</code
+                                      ></pre>
+                                  </div>
                                 </div>
                               {/if}
                             </div>
-                          {/if}
 
-                          {#if step.command}
-                            <div
-                              class="local-setup-command mt-4"
-                            >
-                              <div class="local-setup-command__inner">
-                                <pre class="local-setup-command__code"><code
-                                    >{step.command}</code
-                                  ></pre>
+                            {#if step.imagePlaceholderLabel}
+                              <div
+                                class="flex min-h-[12rem] items-start xl:pt-1"
+                              >
+                                <div
+                                  class="flex min-h-[12rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                                >
+                                  {step.imagePlaceholderLabel}
+                                </div>
                               </div>
-                            </div>
-                          {/if}
-
-                          {#if step.imagePlaceholderLabel}
-                            <div
-                              class="mt-4 flex min-h-[12rem] items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
-                            >
-                              {step.imagePlaceholderLabel}
-                            </div>
-                          {/if}
+                            {/if}
+                          </div>
 
                           {#if step.substeps}
                             <div class="mt-5 space-y-4">
@@ -710,32 +722,46 @@
                                         {substep.title}
                                       </h6>
                                       <div
-                                        class="mt-3 space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                        class={`mt-3 ${
+                                          substep.imagePlaceholderLabel
+                                            ? "grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)] xl:items-start"
+                                            : ""
+                                        }`}
                                       >
-                                        {#each substep.body as paragraph}
-                                          <p>{paragraph}</p>
-                                        {/each}
-                                      </div>
-
-                                      {#if substep.command}
-                                        <div
-                                          class="local-setup-command mt-4"
-                                        >
-                                          <div class="local-setup-command__inner">
-                                            <pre class="local-setup-command__code"><code
-                                                >{substep.command}</code
-                                              ></pre>
+                                        <div class="min-w-0">
+                                          <div
+                                            class="space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                          >
+                                            {#each substep.body as paragraph}
+                                              <p>{paragraph}</p>
+                                            {/each}
                                           </div>
-                                        </div>
-                                      {/if}
 
-                                      {#if substep.imagePlaceholderLabel}
-                                        <div
-                                          class="mt-4 flex min-h-[11rem] items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
-                                        >
-                                          {substep.imagePlaceholderLabel}
+                                          {#if substep.command}
+                                            <div
+                                              class="local-setup-command mt-4"
+                                            >
+                                              <div class="local-setup-command__inner">
+                                                <pre class="local-setup-command__code"><code
+                                                    >{substep.command}</code
+                                                  ></pre>
+                                              </div>
+                                            </div>
+                                          {/if}
                                         </div>
-                                      {/if}
+
+                                        {#if substep.imagePlaceholderLabel}
+                                          <div
+                                            class="flex min-h-[11rem] items-start xl:pt-1"
+                                          >
+                                            <div
+                                              class="flex min-h-[11rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                                            >
+                                              {substep.imagePlaceholderLabel}
+                                            </div>
+                                          </div>
+                                        {/if}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
