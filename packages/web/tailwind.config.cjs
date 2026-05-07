@@ -47,53 +47,45 @@ module.exports = {
       },
       keyframes: {
         'hero-text-sweep-right': {
-          '0%, 100%': {
+          '0%': {
             clipPath: 'inset(0 100% 0 0)',
             opacity: '0'
           },
-          '2%': {
-            clipPath: 'inset(0 100% 0 0)',
-            opacity: '0'
-          },
-          '6%': {
-            clipPath: 'inset(0 70% 0 0)',
+          '4%': {
+            clipPath: 'inset(0 78% 0 0)',
             opacity: '1'
           },
           '14%': {
             clipPath: 'inset(0 0 0 0)',
             opacity: '1'
           },
-          '22%': {
-            clipPath: 'inset(0 0 0 70%)',
+          '20%': {
+            clipPath: 'inset(0 0 0 100%)',
             opacity: '1'
           },
-          '26%': {
+          '25%, 100%': {
             clipPath: 'inset(0 0 0 100%)',
             opacity: '0'
           }
         },
         'hero-text-sweep-left': {
-          '0%, 100%': {
+          '0%': {
             clipPath: 'inset(0 0 0 100%)',
             opacity: '0'
           },
-          '2%': {
-            clipPath: 'inset(0 0 0 100%)',
-            opacity: '0'
-          },
-          '6%': {
-            clipPath: 'inset(0 0 0 70%)',
+          '4%': {
+            clipPath: 'inset(0 0 0 78%)',
             opacity: '1'
           },
           '14%': {
             clipPath: 'inset(0 0 0 0)',
             opacity: '1'
           },
-          '22%': {
-            clipPath: 'inset(0 70% 0 0)',
+          '20%': {
+            clipPath: 'inset(0 100% 0 0)',
             opacity: '1'
           },
-          '26%': {
+          '25%, 100%': {
             clipPath: 'inset(0 100% 0 0)',
             opacity: '0'
           }
@@ -101,9 +93,9 @@ module.exports = {
       },
       animation: {
         'hero-text-sweep-right':
-          'hero-text-sweep-right 12s linear infinite',
+          'hero-text-sweep-right 6s linear infinite',
         'hero-text-sweep-left':
-          'hero-text-sweep-left 12s linear infinite'
+          'hero-text-sweep-left 6s linear infinite'
       }
     }
   },
