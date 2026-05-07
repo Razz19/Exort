@@ -26,7 +26,7 @@ Use `$exort-landing-page` instead if the request also touches hero, features, na
 Stay inside `DownloadSection.svelte` unless the request clearly expands beyond this section.
 
 2. Inspect markup and behavior together.
-Review download overlay timelines, copy-to-clipboard state, GSAP entrance setup, and reduced-motion handling before making visual changes.
+Review download overlay timelines, copy-to-clipboard state, GSAP entrance setup, reduced-motion handling, and whether the caller is using `showInstallationGuide`.
 
 3. Style in Tailwind, not new CSS.
 Apply layout, spacing, color, borders, shadows, and responsive behavior in the Svelte markup with Tailwind utilities. Add theme tokens to `tailwind.config.cjs` when a design value is reused.
@@ -44,6 +44,9 @@ Run `npm run build --workspace=packages/web` after substantial changes.
 
 - Keep download links, platform labels, and copy button labels intact unless the user asks to change content.
 - Keep interactive controls keyboard-accessible.
+- Preserve the current route split unless the user explicitly asks to change it:
+  - landing page uses `<DownloadSection showInstallationGuide={false} />`
+  - `/download` uses the default full section with the installation guide visible
 - Keep the current surface hierarchy unless the user asks otherwise:
   - download card bases use solid `#333231`
   - installation-guide and local-run outer panels use solid `#333231`

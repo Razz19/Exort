@@ -3,13 +3,13 @@
 ## Primary files
 
 - `packages/web/src/routes/+page.svelte`
-Owns the navbar, hero, footer, top-level page shell, and section composition.
+Owns the navbar, hero, footer, top-level page shell, and section composition. The landing page currently renders `DownloadSection` with `showInstallationGuide={false}`.
 
 - `packages/web/src/lib/components/landing/FeaturesSection.svelte`
 Owns the feature showcase markup, carousel state, navigation controls, and section-local motion.
 
 - `packages/web/src/lib/components/landing/DownloadSection.svelte`
-Owns the download cards, local setup panel, copy buttons, and section-local motion.
+Owns the download cards, optional installation guide, local setup panel, copy buttons, and section-local motion.
 
 - `packages/web/tailwind.config.cjs`
 Owns shared gruvbox theme tokens such as colors, fonts, shadows, and reusable animation definitions.

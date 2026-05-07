@@ -47,6 +47,9 @@ Run `npm run build --workspace=packages/web` after substantial landing-page chan
 - Keep `app.css` for global concerns only: font-face declarations, document-level resets, body-level background treatment, selection styling, and reduced-motion globals.
 - Keep shared colors, fonts, shadows, and animation tokens in `tailwind.config.cjs`.
 - Keep section ownership clear. Avoid mixing hero work into download or feature components unless the request requires a cross-section redesign.
+- Preserve the current landing-page download composition unless the user asks otherwise:
+  - the landing page shows the `Get Exort` cards and local-run block
+  - the installation guide lives on `/download`, not on the main page
 - Preserve accessibility basics: heading order, link labels, button labels, image alt text, and keyboard focus states.
 - Keep the few remaining hook classes only when script logic queries them directly.
 
