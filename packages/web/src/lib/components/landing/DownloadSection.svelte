@@ -167,8 +167,7 @@
             "Publisher Verification Dialog: Click Run to proceed with installation.",
             "Windows SmartScreen: Click Run anyway to bypass the protection warning.",
           ],
-          imagePlaceholderLabel:
-            "Add Windows SmartScreen warning screenshot",
+          imagePlaceholderLabel: "Add Windows SmartScreen warning screenshot",
         },
         {
           number: "3",
@@ -188,7 +187,8 @@
       ],
     },
   ];
-  let activeInstallationGuidePlatform = installationGuidePlatforms[0]?.name ?? "";
+  let activeInstallationGuidePlatform =
+    installationGuidePlatforms[0]?.name ?? "";
 
   let ctaSection: HTMLElement | null = null;
   let ctaIntroEl: HTMLElement | null = null;
@@ -578,7 +578,8 @@
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={activeInstallationGuidePlatform === platform.name}
+                  aria-selected={activeInstallationGuidePlatform ===
+                    platform.name}
                   class={`group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium backdrop-blur transition ${
                     activeInstallationGuidePlatform === platform.name
                       ? "text-[#333231]"
@@ -590,7 +591,9 @@
                 >
                   <span
                     class={`absolute inset-0 transition-transform duration-300 ease-out ${
-                      platform.name === "macOS" ? "bg-[#b8bb26]" : "bg-[color:var(--gruvbox-orange)]"
+                      platform.name === "macOS"
+                        ? "bg-[#b8bb26]"
+                        : "bg-[color:var(--gruvbox-orange)]"
                     } ${
                       activeInstallationGuidePlatform === platform.name
                         ? "translate-x-0"
@@ -618,7 +621,9 @@
                 class="local-setup-panel mx-auto mt-6 w-full max-w-4xl text-left"
                 role="tabpanel"
               >
-                <div class="border-b border-[rgba(235,219,178,0.1)] pb-5">
+                <div
+                  class="border-b items-center flex flex-col border-[rgba(235,219,178,0.1)] pb-5"
+                >
                   <span
                     class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
                   >
@@ -718,7 +723,9 @@
                                       {substep.number}
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                      <h6 class="text-base font-medium text-white">
+                                      <h6
+                                        class="text-base font-medium text-white"
+                                      >
                                         {substep.title}
                                       </h6>
                                       <div
@@ -741,8 +748,11 @@
                                             <div
                                               class="local-setup-command mt-4"
                                             >
-                                              <div class="local-setup-command__inner">
-                                                <pre class="local-setup-command__code"><code
+                                              <div
+                                                class="local-setup-command__inner"
+                                              >
+                                                <pre
+                                                  class="local-setup-command__code"><code
                                                     >{substep.command}</code
                                                   ></pre>
                                               </div>
