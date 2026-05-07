@@ -2,6 +2,23 @@
   import { onMount } from "svelte";
   import { Copy, CopyCheck } from "lucide-svelte";
 
+  type InstallationGuideStep = {
+    number: string;
+    title: string;
+    body: string[];
+    warningTitle?: string;
+    warningBody?: string[];
+    command?: string;
+    imagePlaceholderLabel?: string;
+    substeps?: InstallationGuideStep[];
+  };
+
+  type InstallationGuidePlatform = {
+    name: string;
+    eyebrow: string;
+    steps: InstallationGuideStep[];
+  };
+
   const appleIcon = `<svg viewBox="-1.5 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M57.5708873,7282.19296 C58.2999598,7281.34797 58.7914012,7280.17098 58.6569121,7279 C57.6062792,7279.04 56.3352055,7279.67099 55.5818643,7280.51498 C54.905374,7281.26397 54.3148354,7282.46095 54.4735932,7283.60894 C55.6455696,7283.69593 56.8418148,7283.03894 57.5708873,7282.19296 M60.1989864,7289.62485 C60.2283111,7292.65181 62.9696641,7293.65879 63,7293.67179 C62.9777537,7293.74279 62.562152,7295.10677 61.5560117,7296.51675 C60.6853718,7297.73474 59.7823735,7298.94772 58.3596204,7298.97372 C56.9621472,7298.99872 56.5121648,7298.17973 54.9134635,7298.17973 C53.3157735,7298.17973 52.8162425,7298.94772 51.4935978,7298.99872 C50.1203933,7299.04772 49.0738052,7297.68074 48.197098,7296.46676 C46.4032359,7293.98379 45.0330649,7289.44985 46.8734421,7286.3899 C47.7875635,7284.87092 49.4206455,7283.90793 51.1942837,7283.88393 C52.5422083,7283.85893 53.8153044,7284.75292 54.6394294,7284.75292 C55.4635543,7284.75292 57.0106846,7283.67793 58.6366882,7283.83593 C59.3172232,7283.86293 61.2283842,7284.09893 62.4549652,7285.8199 C62.355868,7285.8789 60.1747177,7287.09489 60.1989864,7289.62485" transform="translate(-46 -7279)" fill="currentColor"></path></svg>`;
   const windowsIcon = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13.1458647,7289.43426 C13.1508772,7291.43316 13.1568922,7294.82929 13.1619048,7297.46884 C16.7759398,7297.95757 20.3899749,7298.4613 23.997995,7299 C23.997995,7295.84873 24.002005,7292.71146 23.997995,7289.71311 C20.3809524,7289.71311 16.7649123,7289.43426 13.1458647,7289.43426 M4,7289.43526 L4,7296.22153 C6.72581454,7296.58933 9.45162907,7296.94113 12.1724311,7297.34291 C12.1774436,7294.71736 12.1704261,7292.0908 12.1704261,7289.46524 C9.44661654,7289.47024 6.72380952,7289.42627 4,7289.43526 M4,7281.84344 L4,7288.61071 C6.72581454,7288.61771 9.45162907,7288.57673 12.1774436,7288.57973 C12.1754386,7285.96017 12.1754386,7283.34361 12.1724311,7280.72405 C9.44461153,7281.06486 6.71679198,7281.42567 4,7281.84344 M24,7288.47179 C20.3879699,7288.48578 16.7759398,7288.54075 13.1619048,7288.55175 C13.1598997,7285.88921 13.1598997,7283.22967 13.1619048,7280.56914 C16.7689223,7280.01844 20.3839599,7279.50072 23.997995,7279 C24,7282.15826 23.997995,7285.31353 24,7288.47179" transform="translate(-4 -7279)" fill="currentColor"></path></svg>`;
   const linuxIcon = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14.62,8.35c-.42.28-1.75,1-1.95,1.19a.82.82,0,0,1-1.14,0c-.2-.16-1.53-.92-1.95-1.19s-.45-.7.08-.92a6.16,6.16,0,0,1,4.91,0c.49.21.51.6,0,.9m7.22,7.28A19.09,19.09,0,0,0,18,10a4.31,4.31,0,0,1-1.06-1.88c-.1-.33-.17-.67-.24-1A11.32,11.32,0,0,0,16,4.47,4.06,4.06,0,0,0,12.16,2,4.2,4.2,0,0,0,8.21,4.4a5.9,5.9,0,0,0-.46,1.34c-.17.76-.32,1.55-.5,2.32a3.38,3.38,0,0,1-1,1.71,19.53,19.53,0,0,0-3.88,5.35A6.09,6.09,0,0,0,2,16c-.19.66.29,1.12,1,1,.44-.09.88-.18,1.3-.31s.57,0,.67.35a6.73,6.73,0,0,0,4.24,4.5c4.12,1.56,8.93-.66,10-4.58.07-.27.17-.37.47-.27.46.14.93.24,1.4.35a.72.72,0,0,0,.92-.64,1.44,1.44,0,0,0-.16-.73" fill="currentColor"></path></svg>`;
@@ -59,6 +76,119 @@
   const localSetupAllCommand = localSetupCommands
     .map((item) => item.command)
     .join("\n");
+  const installationGuidePlatforms: InstallationGuidePlatform[] = [
+    {
+      name: "macOS",
+      eyebrow: "For Mac devices",
+      steps: [
+        {
+          number: "1",
+          title: "Open the downloaded DMG file",
+          body: [
+            "Locate the downloaded Exort-0.2.2-arm64.dmg file in your Downloads folder and double-click to open it.",
+            "You’ll see a window with the Exort app and Applications folder. Drag Exort to Applications to install.",
+          ],
+          imagePlaceholderLabel: "Add macOS installer window screenshot",
+        },
+        {
+          number: "2",
+          title: "Handle security warnings",
+          body: [],
+          warningTitle: "Security Notice",
+          warningBody: [
+            "macOS will show security warnings since Exort is not signed with an Apple Developer certificate. Follow the appropriate solution below.",
+          ],
+          substeps: [
+            {
+              number: "2.1",
+              title: 'If you see "Exort is damaged" error',
+              body: [
+                "This error occurs due to macOS Gatekeeper. Fix it using Terminal.",
+                "Open Terminal (Applications → Utilities → Terminal).",
+                "Navigate to Applications with the command below.",
+                "Try opening Exort again after running it.",
+              ],
+              command: "cd /Applications\nxattr -c Exort.app",
+              imagePlaceholderLabel:
+                'Add "Exort is damaged" warning screenshot',
+            },
+            {
+              number: "2.2",
+              title: 'If you see "Developer cannot be verified" error',
+              body: [
+                "Click Cancel on the error dialog.",
+                "Go to System Preferences → Security & Privacy → General.",
+                "Click Open Anyway next to the blocked app message.",
+                "Confirm by clicking Open in the next dialog.",
+              ],
+              imagePlaceholderLabel:
+                'Add "Developer cannot be verified" screenshot',
+            },
+          ],
+        },
+        {
+          number: "3",
+          title: "Launch Exort",
+          body: [
+            "Once you’ve resolved any security warnings, you can launch Exort from your Applications folder or using Spotlight search.",
+            "The app will now run normally without further security prompts.",
+          ],
+        },
+        {
+          number: "4",
+          title: "You’re all set!",
+          body: [
+            "Once installed, launch Exort and start building amazing Arduino projects with AI assistance.",
+          ],
+        },
+      ],
+    },
+    {
+      name: "Windows",
+      eyebrow: "For Windows devices",
+      steps: [
+        {
+          number: "1",
+          title: "Run the installer",
+          body: [
+            "Locate the downloaded Exort.Setup.0.2.2-x64.exe file and double-click to run it.",
+          ],
+          warningTitle: "Security Notice",
+          warningBody: [
+            "Windows will show security warnings since Exort is not signed with a trusted certificate.",
+          ],
+          imagePlaceholderLabel: "Add Windows installer warning screenshot",
+        },
+        {
+          number: "2",
+          title: "Bypass Windows security warnings",
+          body: [
+            "You may encounter two types of security warnings.",
+            "Publisher Verification Dialog: Click Run to proceed with installation.",
+            "Windows SmartScreen: Click Run anyway to bypass the protection warning.",
+          ],
+          imagePlaceholderLabel:
+            "Add Windows SmartScreen warning screenshot",
+        },
+        {
+          number: "3",
+          title: "Complete installation",
+          body: [
+            "Follow the installation wizard prompts. Exort will be installed to your Programs folder and a desktop shortcut will be created.",
+            "After installation, you can launch Exort from the Start menu, desktop shortcut, or by searching for Exort.",
+          ],
+        },
+        {
+          number: "4",
+          title: "You’re all set!",
+          body: [
+            "Once installed, launch Exort and start building amazing Arduino projects with AI assistance.",
+          ],
+        },
+      ],
+    },
+  ];
+  let activeInstallationGuidePlatform = installationGuidePlatforms[0]?.name ?? "";
 
   let ctaSection: HTMLElement | null = null;
   let ctaIntroEl: HTMLElement | null = null;
@@ -418,6 +548,187 @@
             </div>
           </article>
         {/each}
+      </div>
+
+      <div class="mt-16 w-full max-w-6xl text-left">
+        <div class="mx-auto max-w-3xl text-center">
+          <span
+            class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+          >
+            Installation Guide
+          </span>
+          <h3 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
+            Follow these steps to install Exort on your computer
+          </h3>
+          <p
+            class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]"
+          >
+            Choose your platform below.
+          </p>
+        </div>
+
+        <div class="mt-10">
+          <div class="flex justify-center">
+            <div
+              class="inline-flex w-fit flex-wrap justify-center gap-3"
+              role="tablist"
+              aria-label="Installation guide platforms"
+            >
+              {#each installationGuidePlatforms as platform}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeInstallationGuidePlatform === platform.name}
+                  class={`inline-flex min-w-[9rem] items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition ${
+                    activeInstallationGuidePlatform === platform.name
+                      ? "bg-[color:var(--color-accent)] text-[color:var(--color-ink)] shadow-[0_10px_28px_rgba(254,128,25,0.28)]"
+                      : "border border-[rgba(235,219,178,0.12)] bg-[rgba(22,20,18,0.58)] text-[color:var(--color-text-muted)] backdrop-blur hover:border-[rgba(235,219,178,0.2)] hover:bg-[rgba(251,241,199,0.06)] hover:text-white"
+                  }`}
+                  on:click={() => {
+                    activeInstallationGuidePlatform = platform.name;
+                  }}
+                >
+                  {platform.name}
+                </button>
+              {/each}
+            </div>
+          </div>
+
+          {#each installationGuidePlatforms as platform}
+            {#if activeInstallationGuidePlatform === platform.name}
+              <div
+                class="mt-6 rounded-[2rem] border border-[rgba(235,219,178,0.12)] bg-[rgba(22,20,18,0.82)] p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur sm:p-8"
+                role="tabpanel"
+              >
+                <div class="border-b border-[rgba(235,219,178,0.1)] pb-5">
+                  <span
+                    class="text-xs uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+                  >
+                    {platform.eyebrow}
+                  </span>
+                  <h4 class="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                    {platform.name}
+                  </h4>
+                </div>
+
+                <div class="mt-6 space-y-5">
+                  {#each platform.steps as step}
+                    <section
+                      class="rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(251,241,199,0.03)] p-5"
+                    >
+                      <div class="flex items-start gap-4">
+                        <div
+                          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(254,128,25,0.3)] bg-[rgba(254,128,25,0.12)] text-sm font-semibold text-[color:var(--color-accent)]"
+                        >
+                          {step.number}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <h5 class="text-lg font-medium text-white">
+                            {step.title}
+                          </h5>
+                          <div
+                            class="mt-3 space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                          >
+                            {#each step.body as paragraph}
+                              <p>{paragraph}</p>
+                            {/each}
+                          </div>
+
+                          {#if step.warningTitle}
+                            <div
+                              class="mt-4 rounded-2xl border border-[rgba(254,128,25,0.18)] bg-[rgba(254,128,25,0.08)] p-4"
+                            >
+                              <p
+                                class="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]"
+                              >
+                                {step.warningTitle}
+                              </p>
+                              {#if step.warningBody}
+                                <div
+                                  class="mt-2 space-y-2 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                >
+                                  {#each step.warningBody as paragraph}
+                                    <p>{paragraph}</p>
+                                  {/each}
+                                </div>
+                              {/if}
+                            </div>
+                          {/if}
+
+                          {#if step.command}
+                            <div
+                              class="mt-4 overflow-x-auto rounded-2xl border border-[rgba(235,219,178,0.12)] bg-[rgba(16,15,14,0.9)]"
+                            >
+                              <pre
+                                class="px-4 py-3 text-sm leading-7 text-[color:var(--color-text)]"
+                              ><code>{step.command}</code></pre>
+                            </div>
+                          {/if}
+
+                          {#if step.imagePlaceholderLabel}
+                            <div
+                              class="mt-4 flex min-h-[12rem] items-center justify-center rounded-[1.5rem] border border-dashed border-[rgba(235,219,178,0.22)] bg-[rgba(251,241,199,0.02)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                            >
+                              {step.imagePlaceholderLabel}
+                            </div>
+                          {/if}
+
+                          {#if step.substeps}
+                            <div class="mt-5 space-y-4">
+                              {#each step.substeps as substep}
+                                <div
+                                  class="rounded-[1.25rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(12,11,10,0.32)] p-4"
+                                >
+                                  <div class="flex items-start gap-3">
+                                    <div
+                                      class="flex h-9 min-w-[3rem] shrink-0 items-center justify-center rounded-full border border-[rgba(251,191,36,0.18)] bg-[rgba(251,191,36,0.08)] px-3 text-xs font-semibold text-[color:var(--color-accent-soft)]"
+                                    >
+                                      {substep.number}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                      <h6 class="text-base font-medium text-white">
+                                        {substep.title}
+                                      </h6>
+                                      <div
+                                        class="mt-3 space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                      >
+                                        {#each substep.body as paragraph}
+                                          <p>{paragraph}</p>
+                                        {/each}
+                                      </div>
+
+                                      {#if substep.command}
+                                        <div
+                                          class="mt-4 overflow-x-auto rounded-2xl border border-[rgba(235,219,178,0.12)] bg-[rgba(16,15,14,0.9)]"
+                                        >
+                                          <pre
+                                            class="px-4 py-3 text-sm leading-7 text-[color:var(--color-text)]"
+                                          ><code>{substep.command}</code></pre>
+                                        </div>
+                                      {/if}
+
+                                      {#if substep.imagePlaceholderLabel}
+                                        <div
+                                          class="mt-4 flex min-h-[11rem] items-center justify-center rounded-[1.25rem] border border-dashed border-[rgba(235,219,178,0.22)] bg-[rgba(251,241,199,0.02)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                                        >
+                                          {substep.imagePlaceholderLabel}
+                                        </div>
+                                      {/if}
+                                    </div>
+                                  </div>
+                                </div>
+                              {/each}
+                            </div>
+                          {/if}
+                        </div>
+                      </div>
+                    </section>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+          {/each}
+        </div>
       </div>
 
       <div
