@@ -61,37 +61,8 @@
     "Use Serial Monitor or Plotter to validate behavior and iterate fast.",
   ];
 
-  const heroPulseSegments = [
-    { top: "10%", left: "9%", width: "12rem", delay: "0.2s", duration: "7.4s" },
-    { top: "22%", left: "65%", width: "9rem", delay: "1.8s", duration: "8.6s" },
-    { top: "39%", left: "18%", width: "7rem", delay: "1.1s", duration: "6.9s" },
-    {
-      top: "53%",
-      left: "72%",
-      width: "10rem",
-      delay: "2.8s",
-      duration: "8.1s",
-    },
-    {
-      top: "72%",
-      left: "41%",
-      width: "11rem",
-      delay: "0.8s",
-      duration: "7.8s",
-    },
-  ];
-
   let isNavScrolled = false;
   let prefersReducedMotion = false;
-  let supportsHeroPointerEffect = false;
-  let isHeroPointerActive = false;
-  let heroPointerTargetX = 50;
-  let heroPointerTargetY = 40;
-  let heroPointerRenderX = 50;
-  let heroPointerRenderY = 40;
-  let heroPointerX = "50%";
-  let heroPointerY = "40%";
-  let heroSection: HTMLElement | null = null;
   let heroCopy: HTMLElement | null = null;
   let heroActions: HTMLElement | null = null;
   let heroScreenshotWrap: HTMLElement | null = null;
@@ -101,8 +72,6 @@
   let headlineLineEls: HTMLSpanElement[] = [];
   let workflowCardEls: HTMLElement[] = [];
   let workflowStepEls: HTMLElement[] = [];
-  let heroTrailFrame = 0;
-  let heroTrailRunning = false;
   let gsapRef: Awaited<typeof import("gsap")>["gsap"] | null = null;
 
   const ensureGsap = async () => {
@@ -113,61 +82,6 @@
     const { gsap } = await import("gsap");
     gsapRef = gsap;
     return gsap;
-  };
-
-  const syncHeroTrail = () => {
-    heroPointerRenderX += (heroPointerTargetX - heroPointerRenderX) * 0.18;
-    heroPointerRenderY += (heroPointerTargetY - heroPointerRenderY) * 0.18;
-
-    heroPointerX = `${heroPointerRenderX.toFixed(2)}%`;
-    heroPointerY = `${heroPointerRenderY.toFixed(2)}%`;
-
-    const deltaX = Math.abs(heroPointerTargetX - heroPointerRenderX);
-    const deltaY = Math.abs(heroPointerTargetY - heroPointerRenderY);
-
-    if (isHeroPointerActive || deltaX > 0.05 || deltaY > 0.05) {
-      heroTrailFrame = window.requestAnimationFrame(syncHeroTrail);
-      return;
-    }
-
-    heroTrailRunning = false;
-    heroTrailFrame = 0;
-  };
-
-  const ensureHeroTrail = () => {
-    if (heroTrailRunning || typeof window === "undefined") {
-      return;
-    }
-
-    heroTrailRunning = true;
-    heroTrailFrame = window.requestAnimationFrame(syncHeroTrail);
-  };
-
-  const handleHeroPointerMove = (event: MouseEvent) => {
-    if (!heroSection || prefersReducedMotion || !supportsHeroPointerEffect) {
-      return;
-    }
-
-    const rect = heroSection.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-    heroPointerTargetX = x;
-    heroPointerTargetY = y;
-    isHeroPointerActive = true;
-    ensureHeroTrail();
-  };
-
-  const handleHeroPointerEnter = (event: MouseEvent) => {
-    if (!supportsHeroPointerEffect) {
-      return;
-    }
-
-    handleHeroPointerMove(event);
-  };
-
-  const handleHeroPointerLeave = () => {
-    isHeroPointerActive = false;
   };
 
   onMount(() => {
@@ -183,36 +97,11 @@
     window.addEventListener("scroll", syncNavState, { passive: true });
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const pointerQuery = window.matchMedia(
-      "(hover: hover) and (pointer: fine)",
-    );
     prefersReducedMotion = mediaQuery.matches;
-    supportsHeroPointerEffect = pointerQuery.matches && !mediaQuery.matches;
     const syncReducedMotion = (event: MediaQueryListEvent) => {
       prefersReducedMotion = event.matches;
-      supportsHeroPointerEffect = pointerQuery.matches && !event.matches;
-      if (event.matches || !pointerQuery.matches) {
-        isHeroPointerActive = false;
-        if (heroTrailFrame) {
-          window.cancelAnimationFrame(heroTrailFrame);
-          heroTrailFrame = 0;
-        }
-        heroTrailRunning = false;
-      }
-    };
-    const syncPointerMode = (event: MediaQueryListEvent) => {
-      supportsHeroPointerEffect = event.matches && !mediaQuery.matches;
-      if (!event.matches) {
-        isHeroPointerActive = false;
-        if (heroTrailFrame) {
-          window.cancelAnimationFrame(heroTrailFrame);
-          heroTrailFrame = 0;
-        }
-        heroTrailRunning = false;
-      }
     };
     mediaQuery.addEventListener("change", syncReducedMotion);
-    pointerQuery.addEventListener("change", syncPointerMode);
 
     let cleanupAnimations = () => {};
 
@@ -330,10 +219,6 @@
     return () => {
       window.removeEventListener("scroll", syncNavState);
       mediaQuery.removeEventListener("change", syncReducedMotion);
-      pointerQuery.removeEventListener("change", syncPointerMode);
-      if (heroTrailFrame) {
-        window.cancelAnimationFrame(heroTrailFrame);
-      }
       cleanupAnimations();
     };
   });
@@ -394,73 +279,44 @@
   </nav>
 
   <main id="top">
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <section
-      bind:this={heroSection}
-      on:mouseenter={handleHeroPointerEnter}
-      on:mousemove={handleHeroPointerMove}
-      on:mouseleave={handleHeroPointerLeave}
       class="hero-section relative mx-auto max-w-7xl overflow-hidden px-6 pb-8 pt-12 lg:px-8 lg:pt-16"
     >
       <div
-        class:hero-grid--active={isHeroPointerActive}
-        class="hero-grid"
-        style={`--wand-x:${heroPointerX};--wand-y:${heroPointerY};`}
-        aria-hidden="true"
+        class="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center"
       >
-        {#each heroPulseSegments as segment}
-          <span
-            class="hero-grid__pulse"
-            style={`top:${segment.top};left:${segment.left};width:${segment.width};animation-delay:${segment.delay};animation-duration:${segment.duration};`}
-          ></span>
-        {/each}
-        <span class="hero-grid__highlight"></span>
-      </div>
-
-      <div
-        class="relative z-10 lg:grid lg:grid-cols-[minmax(0,1.28fr)_minmax(16rem,0.72fr)] lg:items-start lg:gap-8 xl:gap-12"
-      >
-        <div class="w-fit">
-          <h1
-            class="hero-title max-w-4xl text-3xl font-semibold sm:text-4xl lg:max-w-5xl lg:text-5xl"
-          >
-            <span class="block">
-              <span
-                bind:this={headlineLineEls[0]}
-                class="hero-title__line block"
-              >
-                Open Source Coding Agent</span
-              >
-            </span>
-            <span class="block">
-              <span
-                bind:this={headlineLineEls[1]}
-                class="hero-title__line block"
-              >
-                For Embedded Development
-              </span>
-            </span>
-          </h1>
-
-          <p
-            bind:this={heroCopy}
-            class="mt-4 max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base"
-          >
-            Edit, compile, upload, and monitor devices from one desktop
-            workspace.
-          </p>
-
-          <div
-            bind:this={heroActions}
-            class="mt-6 flex flex-col gap-4 sm:flex-row"
-          >
-            <a
-              href="#try-exort"
-              class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
+        <h1
+          class="hero-title max-w-4xl text-3xl font-semibold sm:text-4xl lg:max-w-5xl lg:text-5xl"
+        >
+          <span class="block">
+            <span bind:this={headlineLineEls[0]} class="hero-title__line block">
+              Open Source Coding Agent</span
             >
-              Download Exort
-            </a>
-          </div>
+          </span>
+          <span class="block">
+            <span bind:this={headlineLineEls[1]} class="hero-title__line block">
+              For Embedded Development
+            </span>
+          </span>
+        </h1>
+
+        <p
+          bind:this={heroCopy}
+          class="mt-4 max-w-2xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base"
+        >
+          Edit, compile, upload, and monitor devices from one desktop workspace.
+        </p>
+
+        <div
+          bind:this={heroActions}
+          class="mt-6 flex w-full justify-center"
+        >
+          <a
+            href="#try-exort"
+            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
+          >
+            Download Exort
+          </a>
         </div>
       </div>
 

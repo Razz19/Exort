@@ -16,11 +16,6 @@
   --gruvbox-fg1: #ebdbb2;
   --gruvbox-yellow: #fabd2f;
   --gruvbox-orange: #fe8019;
-  --grid-line: rgba(168, 153, 132, 0.08);
-  --grid-line-strong: rgba(168, 153, 132, 0.12);
-  --grid-line-highlight: rgba(254, 128, 25, 0.6);
-  --grid-line-highlight-soft: rgba(254, 128, 25, 0.24);
-  --grid-pulse: rgba(254, 128, 25, 0.36);
   --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.24);
   --shadow-strong: 0 26px 90px rgba(0, 0, 0, 0.3);
 }
@@ -84,61 +79,6 @@ html {
   background-color: rgba(40, 40, 40, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(30px);
-}
-
-.hero-grid {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  margin-bottom: -100vh;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  background-image:
-    linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
-  background-size: clamp(118px, 12vw, 164px) clamp(118px, 12vw, 164px);
-  opacity: 0.56;
-  mask-image: radial-gradient(circle at center, black 44%, transparent 100%);
-}
-
-.hero-grid--active {
-  cursor: none;
-}
-
-.hero-grid__highlight {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 160ms ease;
-  background-image:
-    linear-gradient(to right, var(--grid-line-highlight) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line-highlight) 1px, transparent 1px);
-  background-size: clamp(118px, 12vw, 164px) clamp(118px, 12vw, 164px);
-  mask-image:
-    radial-gradient(circle at var(--wand-x, 50%) var(--wand-y, 50%), black 0, black 2.8rem, transparent 8.5rem);
-}
-
-.hero-grid--active .hero-grid__highlight {
-  opacity: 1;
-}
-
-.hero-grid__highlight::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at var(--wand-x, 50%) var(--wand-y, 50%), var(--grid-line-highlight-soft) 0, transparent 7rem);
-  filter: blur(8px);
-}
-
-.hero-grid__pulse {
-  position: absolute;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--grid-pulse), transparent);
-  opacity: 0;
-  filter: blur(0.2px);
-  animation: hero-grid-pulse 7.8s ease-in-out infinite;
 }
 
 .hero-screenshot {
@@ -560,24 +500,6 @@ html {
     inset 0 0 0 1px rgba(254, 128, 25, 0.08);
 }
 
-@keyframes hero-grid-pulse {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scaleX(0.72);
-  }
-  25% {
-    opacity: 0.18;
-  }
-  50% {
-    opacity: 0.72;
-    transform: scaleX(1);
-  }
-  75% {
-    opacity: 0.14;
-  }
-}
-
 @keyframes hero-title-gradient-shift {
   0% {
     background-position: 0% 50%;
@@ -605,10 +527,6 @@ html {
     background-position: 50% 50%;
   }
 
-  .hero-grid__pulse {
-    animation: none;
-    opacity: 0.12;
-  }
 }
 
 @media (min-width: 640px) {
