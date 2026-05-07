@@ -10,6 +10,7 @@ dist
 out
 coverage
 .vite
+.codex/*
 .svelte-kit
 **/.vercel
 docs/*
