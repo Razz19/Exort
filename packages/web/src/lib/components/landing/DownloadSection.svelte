@@ -581,8 +581,10 @@
                   aria-selected={activeInstallationGuidePlatform === platform.name}
                   class={`inline-flex min-w-[9rem] items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition ${
                     activeInstallationGuidePlatform === platform.name
-                      ? "bg-[color:var(--color-accent)] text-[color:var(--color-ink)] shadow-[0_10px_28px_rgba(254,128,25,0.28)]"
-                      : "border border-[rgba(235,219,178,0.12)] bg-[rgba(22,20,18,0.58)] text-[color:var(--color-text-muted)] backdrop-blur hover:border-[rgba(235,219,178,0.2)] hover:bg-[rgba(251,241,199,0.06)] hover:text-white"
+                      ? platform.name === "macOS"
+                        ? "bg-[#b8bb26] text-[color:var(--color-ink)]"
+                        : "bg-[color:var(--gruvbox-orange)] text-[color:var(--color-ink)]"
+                      : "border border-[rgba(235,219,178,0.12)] bg-[#333231] text-[color:var(--color-text-muted)] backdrop-blur hover:border-[rgba(235,219,178,0.2)] hover:bg-[rgba(251,241,199,0.06)] hover:text-white"
                   }`}
                   on:click={() => {
                     activeInstallationGuidePlatform = platform.name;
