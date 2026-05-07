@@ -37,7 +37,7 @@
     },
   ];
 
-  const downloadVersion = "0.1.0";
+  const downloadVersion = "0.1.2";
   const localSetupCommands = [
     {
       key: "clone",
