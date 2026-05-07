@@ -255,7 +255,8 @@
               >
                 Open Source
               </span>
-              <span class="inline-block text-gruvbox-fg0">Coding Agent</span></span
+              <span class="inline-block text-gruvbox-fg0">Coding Agent</span
+              ></span
             >
           </span>
           <span class="block">
@@ -277,13 +278,19 @@
 
         <div
           bind:this={heroActions}
-          class="mt-6 flex w-full justify-center"
+          class="mt-6 flex w-full justify-center space-x-4"
         >
           <a
             href="/download"
-            class="inline-flex items-center justify-center rounded-full bg-gruvbox-accent px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110 motion-reduce:transition-none"
+            class="inline-flex items-center justify-center rounded-full bg-gruvbox-accent px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110 motion-reduce:transition-none"
           >
             Download Exort
+          </a>
+          <a
+            href="https://discord.com/invite/xmcmcWkr4V"
+            class="inline-flex items-center justify-center rounded-full bg-gruvbox-accent px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110 motion-reduce:transition-none"
+          >
+            Join Our Discord
           </a>
         </div>
 
