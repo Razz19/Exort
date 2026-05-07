@@ -552,9 +552,17 @@
                 <a
                   href={item.href}
                   download
-                  class="mt-5 inline-flex min-w-[8.25rem] items-center justify-center rounded-full border border-[rgba(69,44,18,0.18)] bg-[rgba(251,241,199,0.92)] px-5 py-2 text-sm font-medium text-[#3c3836] shadow-[0_10px_24px_rgba(69,44,18,0.18)] transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gruvbox-fg0 hover:shadow-[0_14px_28px_rgba(69,44,18,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(60,56,54,0.35)] motion-reduce:transition-none"
+                  class="group/download-btn relative mt-5 inline-flex min-w-[8.25rem] items-center justify-center overflow-hidden rounded-full border border-[rgba(69,44,18,0.18)] bg-[rgba(251,241,199,0.92)] px-5 py-2 text-sm font-medium text-[#3c3836] shadow-[0_10px_24px_rgba(69,44,18,0.18)] transition-[box-shadow] duration-300 ease-out hover:shadow-[0_14px_28px_rgba(69,44,18,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(60,56,54,0.35)] motion-reduce:transition-none"
                 >
-                  Download
+                  <span
+                    class="absolute inset-0 bg-[#3c3836] translate-x-full transition-transform duration-300 ease-out group-hover/download-btn:translate-x-0 group-focus-visible/download-btn:translate-x-0 motion-reduce:translate-x-full"
+                    aria-hidden="true"
+                  ></span>
+                  <span
+                    class="relative z-10 transition-colors duration-300 group-hover/download-btn:text-[rgba(251,241,199,0.92)] group-focus-visible/download-btn:text-[rgba(251,241,199,0.92)]"
+                  >
+                    Download
+                  </span>
                 </a>
               </div>
             </div>
