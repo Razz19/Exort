@@ -240,7 +240,7 @@
     class="site-nav sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl"
   >
     <div
-      class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8"
+      class="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8"
     >
       <a href="#top" class="flex items-center gap-3">
         <img
@@ -251,7 +251,7 @@
         <span class="brand-wordmark pt-2 font-mono">Exort</span>
       </a>
 
-      <div class="hidden items-center gap-8 md:flex">
+      <div class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
         {#each navItems as item}
           <a
             href={item.href}
