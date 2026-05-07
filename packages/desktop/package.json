@@ -2,7 +2,7 @@
   "name": "@exort/desktop",
   "productName": "Exort",
   "description": "Exort desktop app for embedded development with an OpenCode-powered AI coding agent.",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "license": "AGPL-3.0-only",
   "private": true,
   "author": {
