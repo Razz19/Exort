@@ -251,53 +251,50 @@
               class="block overflow-visible pb-[0.08em] leading-[1.08] text-gruvbox-fg0"
             >
               <span
-                class="relative inline-block overflow-hidden whitespace-nowrap align-top drop-shadow-[0_0_14px_rgba(250,189,47,0.14)]"
+                class="relative inline-block overflow-visible whitespace-nowrap align-top pb-[0.08em] leading-[1.08] drop-shadow-[0_0_14px_rgba(250,189,47,0.14)]"
               >
                 <span class="block text-gruvbox-fg0">
                   Open Source
                 </span>
-                <span
-                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-                  aria-hidden="true"
-                >
-                  <span
-                    class="block whitespace-nowrap text-gruvbox-orange [clip-path:inset(0_100%_0_0)] opacity-0 animate-hero-text-sweep-right"
-                  >
-                    Open Source
-                  </span>
-                </span>
-                <span
-                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-                  aria-hidden="true"
-                >
-                  <span
-                    class="block whitespace-nowrap text-gruvbox-green [clip-path:inset(0_0_0_100%)] opacity-0 animate-hero-text-sweep-left [animation-delay:1.5s]"
-                  >
-                    Open Source
-                  </span>
-                </span>
-                <span
-                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-                  aria-hidden="true"
-                >
-                  <span
-                    class="block whitespace-nowrap text-gruvbox-blue [clip-path:inset(0_100%_0_0)] opacity-0 animate-hero-text-sweep-right [animation-delay:3s]"
-                  >
-                    Open Source
-                  </span>
-                </span>
-                <span
-                  class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-                  aria-hidden="true"
-                >
-                  <span
-                    class="block whitespace-nowrap text-gruvbox-yellow [clip-path:inset(0_0_0_100%)] opacity-0 animate-hero-text-sweep-left [animation-delay:4.5s]"
-                  >
-                    Open Source
-                  </span>
-                </span>
               </span>
-              <span class="inline-block text-gruvbox-fg0">Coding Agent</span
+              <span
+                class="relative inline-block overflow-visible whitespace-nowrap align-top pb-[0.08em] leading-[1.08] drop-shadow-[0_0_14px_rgba(250,189,47,0.14)]"
+              >
+                <span class="inline-grid overflow-visible whitespace-nowrap pb-[0.1em] leading-[1.08]">
+                  <span class="col-start-1 row-start-1 whitespace-nowrap text-transparent">
+                    Coding Agent
+                  </span>
+                  <span
+                    class="pointer-events-none col-start-1 row-start-1 whitespace-nowrap text-gruvbox-fg0"
+                  >
+                    Coding Agent
+                  </span>
+                  <span
+                    class="pointer-events-none col-start-1 row-start-1 whitespace-nowrap pb-[0.12em] -mb-[0.12em] text-gruvbox-orange [clip-path:inset(0_100%_0_0)] opacity-0 motion-reduce:hidden animate-hero-text-sweep-right"
+                    aria-hidden="true"
+                  >
+                    Coding Agent
+                  </span>
+                  <span
+                    class="pointer-events-none col-start-1 row-start-1 whitespace-nowrap pb-[0.12em] -mb-[0.12em] text-gruvbox-green [clip-path:inset(0_0_0_100%)] opacity-0 motion-reduce:hidden animate-hero-text-sweep-left [animation-delay:1.5s]"
+                    aria-hidden="true"
+                  >
+                    Coding Agent
+                  </span>
+                  <span
+                    class="pointer-events-none col-start-1 row-start-1 whitespace-nowrap pb-[0.12em] -mb-[0.12em] text-gruvbox-blue [clip-path:inset(0_100%_0_0)] opacity-0 motion-reduce:hidden animate-hero-text-sweep-right [animation-delay:3s]"
+                    aria-hidden="true"
+                  >
+                    Coding Agent
+                  </span>
+                  <span
+                    class="pointer-events-none col-start-1 row-start-1 whitespace-nowrap pb-[0.12em] -mb-[0.12em] text-gruvbox-yellow [clip-path:inset(0_0_0_100%)] opacity-0 motion-reduce:hidden animate-hero-text-sweep-left [animation-delay:4.5s]"
+                    aria-hidden="true"
+                  >
+                    Coding Agent
+                  </span>
+                </span>
+              </span
               ></span
             >
           </span>
