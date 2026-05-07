@@ -260,7 +260,9 @@
                   class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
                   aria-hidden="true"
                 >
-                  <span class="block whitespace-nowrap animate-hero-text-sweep-right text-gruvbox-orange">
+                  <span
+                    class="block whitespace-nowrap text-gruvbox-orange [clip-path:inset(0_100%_0_0)] opacity-0 animate-hero-text-sweep-right"
+                  >
                     Open Source
                   </span>
                 </span>
@@ -268,7 +270,9 @@
                   class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
                   aria-hidden="true"
                 >
-                  <span class="block whitespace-nowrap animate-hero-text-sweep-left text-gruvbox-green [animation-delay:3s]">
+                  <span
+                    class="block whitespace-nowrap text-gruvbox-green [clip-path:inset(0_0_0_100%)] opacity-0 animate-hero-text-sweep-left [animation-delay:3s]"
+                  >
                     Open Source
                   </span>
                 </span>
@@ -276,7 +280,9 @@
                   class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
                   aria-hidden="true"
                 >
-                  <span class="block whitespace-nowrap animate-hero-text-sweep-right text-gruvbox-blue [animation-delay:6s]">
+                  <span
+                    class="block whitespace-nowrap text-gruvbox-blue [clip-path:inset(0_100%_0_0)] opacity-0 animate-hero-text-sweep-right [animation-delay:6s]"
+                  >
                     Open Source
                   </span>
                 </span>
@@ -284,7 +290,9 @@
                   class="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
                   aria-hidden="true"
                 >
-                  <span class="block whitespace-nowrap animate-hero-text-sweep-left text-gruvbox-yellow [animation-delay:9s]">
+                  <span
+                    class="block whitespace-nowrap text-gruvbox-yellow [clip-path:inset(0_0_0_100%)] opacity-0 animate-hero-text-sweep-left [animation-delay:9s]"
+                  >
                     Open Source
                   </span>
                 </span>
