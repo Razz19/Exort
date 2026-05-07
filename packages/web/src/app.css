@@ -133,7 +133,6 @@ html {
 }
 
 .hero-title__plain {
-  margin-left: 0.34em;
   color: var(--gruvbox-fg0);
 }
 
