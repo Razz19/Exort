@@ -257,6 +257,34 @@ html {
   color: var(--gruvbox-fg0);
 }
 
+.hero-highlights {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  color: color-mix(in srgb, var(--color-text-muted) 72%, var(--color-bg) 28%);
+  font-size: clamp(0.62rem, 1vw, 0.82rem);
+  letter-spacing: clamp(0.04em, 0.12vw, 0.08em);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hero-highlights__item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.hero-highlights__item + .hero-highlights__item::before {
+  content: "•";
+  margin: 0 0.7rem;
+  color: currentColor;
+}
+
 .feature-showcase {
   background: transparent;
 }

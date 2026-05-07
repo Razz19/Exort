@@ -61,10 +61,19 @@
     "Use Serial Monitor or Plotter to validate behavior and iterate fast.",
   ];
 
+  const heroHighlights = [
+    "Bring your own model",
+    "Compile, upload, debug",
+    "1,000+ boards",
+    "4 free models",
+    "Built for Arduino",
+  ];
+
   let isNavScrolled = false;
   let prefersReducedMotion = false;
   let heroCopy: HTMLElement | null = null;
   let heroActions: HTMLElement | null = null;
+  let heroHighlightsWrap: HTMLElement | null = null;
   let heroScreenshotWrap: HTMLElement | null = null;
   let heroScreenshot: HTMLImageElement | null = null;
   let workflowSection: HTMLElement | null = null;
@@ -121,6 +130,7 @@
             ...headlineLineEls,
             heroCopy,
             heroActions,
+            heroHighlightsWrap,
             heroScreenshotWrap,
             ...workflowCardEls,
             ...workflowStepEls,
@@ -158,12 +168,22 @@
           });
         }
 
+        if (heroHighlightsWrap) {
+          gsap.from(heroHighlightsWrap, {
+            y: 18,
+            opacity: 0,
+            duration: 0.76,
+            delay: 0.38,
+            ease: "power2.out",
+          });
+        }
+
         if (heroScreenshotWrap) {
           gsap.from(heroScreenshotWrap, {
             y: 24,
             opacity: 0,
             duration: 0.72,
-            delay: 0.22,
+            delay: 0.48,
             ease: "power2.out",
           });
         }
@@ -322,11 +342,21 @@
             Download Exort
           </a>
         </div>
+
+        <div
+          bind:this={heroHighlightsWrap}
+          class="hero-highlights mt-8"
+          aria-label="Key hero highlights"
+        >
+          {#each heroHighlights as highlight}
+            <span class="hero-highlights__item">{highlight}</span>
+          {/each}
+        </div>
       </div>
 
       <div
         bind:this={heroScreenshotWrap}
-        class="relative left-1/2 z-10 mt-6 w-[min(100%,72rem)] -translate-x-1/2 px-2 sm:mt-8 sm:px-0 lg:mt-10"
+        class="relative left-1/2 z-10 mt-0 w-[min(100%,72rem)] -translate-x-1/2 px-2 sm:mt-1 sm:px-0 lg:mt-2"
       >
         <img
           bind:this={heroScreenshot}
