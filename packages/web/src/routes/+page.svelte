@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import FeaturesSection from "$lib/components/landing/FeaturesSection.svelte";
+  import DownloadSection from "$lib/components/landing/DownloadSection.svelte";
   import SiteNav from "$lib/components/landing/SiteNav.svelte";
   import heroAppImage from "../../../../assets/app.png";
   import serialMonitorImage from "$lib/assets/features/serial-monitor.webp";
@@ -306,6 +307,8 @@
     </section>
 
     <FeaturesSection {features} />
+
+    <DownloadSection />
   </main>
 
   <footer class="bg-[rgba(60,56,54,0.42)]">
