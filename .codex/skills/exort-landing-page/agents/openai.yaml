@@ -1,0 +1,4 @@
+interface:
+  display_name: "Exort Landing Page"
+  short_description: "Whole-page Exort landing site edits"
+  default_prompt: "Use $exort-landing-page to update the Exort landing page and migrate touched styling to Tailwind."

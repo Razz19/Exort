@@ -1,0 +1,4 @@
+interface:
+  display_name: "Exort Download Section"
+  short_description: "Exort download and setup section edits"
+  default_prompt: "Use $exort-download-section to update the Exort download section and migrate touched styling to Tailwind."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Exort Features Section"
+  short_description: "Exort feature showcase section edits"
+  default_prompt: "Use $exort-features-section to update the Exort features carousel and migrate touched styling to Tailwind."
