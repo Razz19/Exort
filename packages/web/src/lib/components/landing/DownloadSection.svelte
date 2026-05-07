@@ -87,6 +87,7 @@
       "hover:text-gruvbox-yellow focus-visible:text-gruvbox-yellow",
   } as const;
   const localSetupCopiedTextClasses = {
+    "copy-all": "text-gruvbox-orange",
     clone: "text-gruvbox-orange",
     cd: "text-gruvbox-green",
     install: "text-gruvbox-blue",
@@ -873,8 +874,10 @@
               <div class="relative">
                 <pre
                   class={`m-0 overflow-x-auto rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
-                    copiedCommandKey === item.key
-                      ? localSetupCopiedTextClasses[item.key]
+                    copiedCommandKey === "copy-all"
+                      ? localSetupCopiedTextClasses["copy-all"]
+                      : copiedCommandKey === item.key
+                        ? localSetupCopiedTextClasses[item.key]
                       : "text-gruvbox-fg0"
                   }`}
                 ><code
