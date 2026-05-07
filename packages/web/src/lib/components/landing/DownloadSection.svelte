@@ -597,12 +597,12 @@
           {#each installationGuidePlatforms as platform}
             {#if activeInstallationGuidePlatform === platform.name}
               <div
-                class="mt-6 rounded-[2rem] border border-[rgba(235,219,178,0.12)] bg-[rgba(22,20,18,0.82)] p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur sm:p-8"
+                class="local-setup-panel mx-auto mt-6 w-full max-w-4xl text-left"
                 role="tabpanel"
               >
                 <div class="border-b border-[rgba(235,219,178,0.1)] pb-5">
                   <span
-                    class="text-xs uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+                    class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
                   >
                     {platform.eyebrow}
                   </span>
@@ -614,11 +614,11 @@
                 <div class="mt-6 space-y-5">
                   {#each platform.steps as step}
                     <section
-                      class="rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(251,241,199,0.03)] p-5"
+                      class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
                     >
                       <div class="flex items-start gap-4">
                         <div
-                          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(254,128,25,0.3)] bg-[rgba(254,128,25,0.12)] text-sm font-semibold text-[color:var(--color-accent)]"
+                          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-[color:var(--color-accent)]"
                         >
                           {step.number}
                         </div>
@@ -636,7 +636,7 @@
 
                           {#if step.warningTitle}
                             <div
-                              class="mt-4 rounded-2xl border border-[rgba(254,128,25,0.18)] bg-[rgba(254,128,25,0.08)] p-4"
+                              class="mt-4 rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] p-4"
                             >
                               <p
                                 class="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]"
@@ -657,17 +657,19 @@
 
                           {#if step.command}
                             <div
-                              class="mt-4 overflow-x-auto rounded-2xl border border-[rgba(235,219,178,0.12)] bg-[rgba(16,15,14,0.9)]"
+                              class="local-setup-command mt-4"
                             >
-                              <pre
-                                class="px-4 py-3 text-sm leading-7 text-[color:var(--color-text)]"
-                              ><code>{step.command}</code></pre>
+                              <div class="local-setup-command__inner">
+                                <pre class="local-setup-command__code"><code
+                                    >{step.command}</code
+                                  ></pre>
+                              </div>
                             </div>
                           {/if}
 
                           {#if step.imagePlaceholderLabel}
                             <div
-                              class="mt-4 flex min-h-[12rem] items-center justify-center rounded-[1.5rem] border border-dashed border-[rgba(235,219,178,0.22)] bg-[rgba(251,241,199,0.02)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                              class="mt-4 flex min-h-[12rem] items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
                             >
                               {step.imagePlaceholderLabel}
                             </div>
@@ -677,11 +679,11 @@
                             <div class="mt-5 space-y-4">
                               {#each step.substeps as substep}
                                 <div
-                                  class="rounded-[1.25rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(12,11,10,0.32)] p-4"
+                                  class="rounded-[0.95rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.24)] p-4"
                                 >
                                   <div class="flex items-start gap-3">
                                     <div
-                                      class="flex h-9 min-w-[3rem] shrink-0 items-center justify-center rounded-full border border-[rgba(251,191,36,0.18)] bg-[rgba(251,191,36,0.08)] px-3 text-xs font-semibold text-[color:var(--color-accent-soft)]"
+                                      class="flex h-9 min-w-[3rem] shrink-0 items-center justify-center rounded-[0.75rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-3 text-xs font-semibold text-[color:var(--color-accent-soft)]"
                                     >
                                       {substep.number}
                                     </div>
@@ -699,17 +701,19 @@
 
                                       {#if substep.command}
                                         <div
-                                          class="mt-4 overflow-x-auto rounded-2xl border border-[rgba(235,219,178,0.12)] bg-[rgba(16,15,14,0.9)]"
+                                          class="local-setup-command mt-4"
                                         >
-                                          <pre
-                                            class="px-4 py-3 text-sm leading-7 text-[color:var(--color-text)]"
-                                          ><code>{substep.command}</code></pre>
+                                          <div class="local-setup-command__inner">
+                                            <pre class="local-setup-command__code"><code
+                                                >{substep.command}</code
+                                              ></pre>
+                                          </div>
                                         </div>
                                       {/if}
 
                                       {#if substep.imagePlaceholderLabel}
                                         <div
-                                          class="mt-4 flex min-h-[11rem] items-center justify-center rounded-[1.25rem] border border-dashed border-[rgba(235,219,178,0.22)] bg-[rgba(251,241,199,0.02)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                                          class="mt-4 flex min-h-[11rem] items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
                                         >
                                           {substep.imagePlaceholderLabel}
                                         </div>
