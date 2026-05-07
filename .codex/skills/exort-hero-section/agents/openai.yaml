@@ -1,4 +1,4 @@
 interface:
   display_name: "Exort Hero Section"
-  short_description: "Exort landing hero section edits"
-  default_prompt: "Use $exort-hero-section to update the Exort landing page hero and migrate touched styling to Tailwind."
+  short_description: "Exort landing hero and sweep edits"
+  default_prompt: "Use $exort-hero-section to update the Exort landing page hero, including the animated Open Source color sweep."
