@@ -341,7 +341,7 @@
 
     <FeaturesSection {features} />
 
-    <DownloadSection />
+    <DownloadSection showInstallationGuide={false} />
   </main>
 
   <footer class="bg-[rgba(60,56,54,0.42)]">
