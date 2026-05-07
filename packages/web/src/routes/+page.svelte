@@ -232,31 +232,36 @@
   />
 </svelte:head>
 
-<div
-  class="site-shell min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]"
->
+<div class="relative isolate min-h-screen bg-gruvbox-bg text-gruvbox-text">
   <SiteNav />
 
   <main id="top">
     <section
-      class="hero-section relative mx-auto max-w-7xl overflow-hidden px-6 pb-8 pt-12 lg:px-8 lg:pt-16"
+      class="relative mx-auto max-w-7xl overflow-hidden px-6 pb-8 pt-12 lg:px-8 lg:pt-16"
     >
       <div
         class="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center"
       >
         <h1
-          class="hero-title max-w-4xl text-3xl font-semibold sm:text-4xl lg:max-w-5xl lg:text-5xl"
+          class="flex max-w-4xl flex-col gap-[0.08em] overflow-visible font-heading text-3xl font-semibold leading-none tracking-[0.04em] sm:text-4xl lg:max-w-5xl lg:text-5xl"
         >
           <span class="block">
-            <span bind:this={headlineLineEls[0]} class="hero-title__line block">
-              <span class="hero-title__accent">Open Source</span>
-              <span class="hero-title__plain">Coding Agent</span></span
+            <span
+              bind:this={headlineLineEls[0]}
+              class="block overflow-visible pb-[0.08em] leading-[1.08] text-gruvbox-fg0"
+            >
+              <span
+                class="inline-block bg-[linear-gradient(115deg,#fbf1c7_0%,#ebdbb2_24%,#fabd2f_56%,#fe8019_100%)] bg-[length:240%_100%] bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(250,189,47,0.14)] animate-hero-title-gradient-shift motion-reduce:animate-none"
+              >
+                Open Source
+              </span>
+              <span class="inline-block text-gruvbox-fg0">Coding Agent</span></span
             >
           </span>
           <span class="block">
             <span
               bind:this={headlineLineEls[1]}
-              class="hero-title__line block md:whitespace-nowrap"
+              class="block overflow-visible pb-[0.08em] leading-[1.08] text-gruvbox-fg0 md:whitespace-nowrap"
             >
               For Embedded Development
             </span>
@@ -265,7 +270,7 @@
 
         <p
           bind:this={heroCopy}
-          class="mt-4 max-w-2xl text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-base"
+          class="mt-4 max-w-2xl text-sm leading-6 text-gruvbox-muted sm:text-base"
         >
           Edit, compile, upload, and monitor devices from one desktop workspace.
         </p>
@@ -276,7 +281,7 @@
         >
           <a
             href="/download"
-            class="inline-flex items-center justify-center rounded-full bg-[color:var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110"
+            class="inline-flex items-center justify-center rounded-full bg-gruvbox-accent px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(247,84,0,0.28)] transition hover:brightness-110 motion-reduce:transition-none"
           >
             Download Exort
           </a>
@@ -284,11 +289,16 @@
 
         <div
           bind:this={heroHighlightsWrap}
-          class="hero-highlights mt-8"
+          class="mt-8 flex w-full max-w-full flex-nowrap items-center justify-center whitespace-nowrap text-[clamp(0.62rem,1vw,0.82rem)] uppercase tracking-[clamp(0.04em,0.12vw,0.08em)] text-[color:color-mix(in_srgb,rgba(213,196,161,0.78)_72%,#282828_28%)]"
           aria-label="Key hero highlights"
         >
-          {#each heroHighlights as highlight}
-            <span class="hero-highlights__item">{highlight}</span>
+          {#each heroHighlights as highlight, index}
+            <span class="inline-flex shrink-0 items-center whitespace-nowrap">
+              {#if index > 0}
+                <span class="mx-[0.7rem]" aria-hidden="true">&bull;</span>
+              {/if}
+              {highlight}
+            </span>
           {/each}
         </div>
       </div>
@@ -301,7 +311,7 @@
           bind:this={heroScreenshot}
           src={heroAppImage}
           alt="Exort desktop application screenshot"
-          class="hero-screenshot h-auto w-full object-contain object-top"
+          class="block h-auto w-full object-contain object-top [will-change:transform]"
         />
       </div>
     </section>
@@ -313,7 +323,7 @@
 
   <footer class="bg-[rgba(60,56,54,0.42)]">
     <div
-      class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-[color:var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between lg:px-8"
+      class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-gruvbox-muted sm:flex-row sm:items-center sm:justify-between lg:px-8"
     >
       <p>
         made with love by
@@ -321,7 +331,7 @@
           href="https://github.com/Razz19"
           target="_blank"
           rel="noreferrer"
-          class="text-[color:var(--color-text)] transition hover:text-[color:var(--color-accent)]"
+          class="text-gruvbox-text transition-colors duration-200 hover:text-gruvbox-accent motion-reduce:transition-none"
         >
           Razz19
         </a>

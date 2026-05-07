@@ -11,9 +11,7 @@
   />
 </svelte:head>
 
-<div
-  class="site-shell min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]"
->
+<div class="relative isolate min-h-screen bg-gruvbox-bg text-gruvbox-text">
   <SiteNav />
 
   <main class="pt-8 sm:pt-12">

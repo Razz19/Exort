@@ -35,15 +35,22 @@
 </script>
 
 <nav
-  class:nav-scrolled={isNavScrolled}
-  class="site-nav sticky top-0 z-30 bg-[color:var(--color-nav)]/80 backdrop-blur-2xl"
+  class={`sticky top-0 z-30 transition-[background-color,box-shadow,backdrop-filter] duration-200 ease-out ${
+    isNavScrolled
+      ? "bg-[rgba(40,40,40,0.92)] shadow-[0_16px_40px_rgba(0,0,0,0.18)] backdrop-blur-[30px]"
+      : "bg-gruvbox-nav/80 backdrop-blur-2xl"
+  } motion-reduce:transition-none`}
 >
   <div
     class="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8"
   >
     <a href="/" class="flex items-center gap-3">
       <img src="/exort-logo.png" alt="Exort" class="h-12 w-12 object-contain" />
-      <span class="brand-wordmark pt-2 font-mono">Exort</span>
+      <span
+        class="inline-block pt-2 font-heading text-[clamp(1.55rem,1.1rem+1vw,2rem)] font-extrabold leading-[0.96] tracking-[0.08em] text-gruvbox-fg0"
+      >
+        Exort
+      </span>
     </a>
 
     <div
@@ -54,7 +61,7 @@
           href={item.href}
           target={item.external ? "_blank" : undefined}
           rel={item.external ? "noreferrer" : undefined}
-          class="text-sm text-[color:var(--color-text-muted)] transition hover:text-white"
+          class="text-sm text-gruvbox-muted transition-colors duration-200 hover:text-white motion-reduce:transition-none"
         >
           {item.label}
         </a>
@@ -67,9 +74,9 @@
         target="_blank"
         rel="noreferrer"
         aria-label="Exort GitHub repository"
-        class="social-nav-link"
+        class="inline-flex items-center justify-center text-gruvbox-text transition-colors duration-200 hover:text-gruvbox-orange focus-visible:text-gruvbox-orange focus-visible:outline-none motion-reduce:transition-none"
       >
-        <span class="social-nav-link__icon" aria-hidden="true">
+        <span class="inline-flex h-7 w-7" aria-hidden="true">
           {@html githubIcon}
         </span>
       </a>
@@ -79,12 +86,9 @@
         target="_blank"
         rel="noreferrer"
         aria-label="Join the Exort Discord"
-        class="social-nav-link social-nav-link--discord"
+        class="inline-flex items-center justify-center text-gruvbox-text transition-colors duration-200 hover:text-gruvbox-purple focus-visible:text-gruvbox-purple focus-visible:outline-none motion-reduce:transition-none"
       >
-        <span
-          class="social-nav-link__icon social-nav-link__icon--discord"
-          aria-hidden="true"
-        >
+        <span class="inline-flex h-7 w-7" aria-hidden="true">
           {@html discordIcon}
         </span>
       </a>

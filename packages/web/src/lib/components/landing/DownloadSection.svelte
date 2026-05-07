@@ -483,7 +483,7 @@
     >
       <div bind:this={ctaIntroEl}>
         <span
-          class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+          class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
         >
           Get Exort
         </span>
@@ -491,56 +491,64 @@
           Let&apos;s get Exort running on your setup
         </h2>
         <p
-          class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]"
+          class="mt-4 text-base leading-8 text-gruvbox-muted"
         >
           Choose your platform to download the right version
         </p>
       </div>
 
       <div
-        class="download-grid mt-10 grid w-fit grid-cols-1 gap-5 justify-items-center sm:grid-cols-2"
+        class="mt-10 grid w-fit grid-cols-1 justify-items-center gap-5 sm:grid-cols-2"
       >
         {#each downloads as item, index}
           <article
             bind:this={downloadCardEls[index]}
-            class="download-card group relative h-56 w-56 overflow-hidden"
+            class="group relative h-56 w-56 overflow-hidden border border-[rgba(235,219,178,0.08)] shadow-[0_18px_44px_rgba(0,0,0,0.16)] [isolation:isolate]"
             style={`--download-card-color:${item.color};`}
-            on:mouseenter={() => void showDownloadOverlay(index)}
-            on:mouseleave={() => void hideDownloadOverlay(index)}
-            on:focusin={() => void showDownloadOverlay(index)}
-            on:focusout={() => void hideDownloadOverlay(index)}
+            onmouseenter={() => void showDownloadOverlay(index)}
+            onmouseleave={() => void hideDownloadOverlay(index)}
+            onfocusin={() => void showDownloadOverlay(index)}
+            onfocusout={() => void hideDownloadOverlay(index)}
           >
             <div
-              class="download-card__base absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
+              class="absolute inset-0 z-[1] flex flex-col items-center justify-center bg-gruvbox-ink px-6 text-center"
             >
-              <span class="download-card__icon" aria-hidden="true">
+              <span
+                class="inline-flex h-[4.5rem] w-[4.5rem] items-center justify-center text-[rgba(251,241,199,0.78)] [&>svg]:h-full [&>svg]:w-full"
+                aria-hidden="true"
+              >
                 {@html item.icon}
               </span>
               <p
-                class="mt-4 text-sm font-light text-[color:var(--color-text)] sm:text-base"
+                class="mt-4 text-sm font-light text-gruvbox-text sm:text-base"
               >
                 {item.label}
               </p>
             </div>
 
-            <div class="download-card__overlay absolute inset-0 p-6">
-              <span class="download-card__overlay-icon" aria-hidden="true">
+            <div
+              class="download-card__overlay absolute inset-0 z-[2] overflow-hidden bg-[var(--download-card-color,#fe8019)] p-6 shadow-[inset_0_0_0_1px_rgba(251,241,199,0.14)] [will-change:transform]"
+            >
+              <span
+                class="download-card__overlay-icon absolute left-[1.4rem] top-[1.4rem] inline-flex h-[2.1rem] w-[2.1rem] items-center justify-center text-gruvbox-text [will-change:transform,opacity] [&>svg]:h-full [&>svg]:w-full"
+                aria-hidden="true"
+              >
                 {@html item.icon}
               </span>
               <div
-                class="download-card__overlay-content flex h-full flex-col items-center justify-center text-center"
+                class="download-card__overlay-content absolute inset-0 flex h-full items-center justify-center p-6 text-center [will-change:transform,opacity]"
               >
-                <p
-                  class="text-base font-medium text-[color:var(--color-ink)] sm:text-lg"
-                >
+                <p class="text-base font-medium text-gruvbox-ink sm:text-lg">
                   Exort {downloadVersion}
                 </p>
               </div>
-              <div class="download-card__overlay-actions flex justify-center">
+              <div
+                class="download-card__overlay-actions absolute bottom-6 left-6 right-6 flex justify-center"
+              >
                 <a
                   href={item.href}
                   download
-                  class="download-card__button mt-5 inline-flex items-center justify-center px-5 py-2 text-sm font-medium transition"
+                  class="mt-5 inline-flex min-w-[8.25rem] items-center justify-center rounded-full border border-[rgba(69,44,18,0.18)] bg-[rgba(251,241,199,0.92)] px-5 py-2 text-sm font-medium text-[#3c3836] shadow-[0_10px_24px_rgba(69,44,18,0.18)] transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gruvbox-fg0 hover:shadow-[0_14px_28px_rgba(69,44,18,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(60,56,54,0.35)] motion-reduce:transition-none"
                 >
                   Download
                 </a>
@@ -553,7 +561,7 @@
       <div class="mt-16 w-full max-w-6xl text-left">
         <div class="mx-auto max-w-3xl text-center">
           <span
-            class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+            class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
           >
             Installation Guide
           </span>
@@ -561,7 +569,7 @@
             Follow these steps to install Exort on your computer
           </h3>
           <p
-            class="mt-4 text-base leading-8 text-[color:var(--color-text-muted)]"
+            class="mt-4 text-base leading-8 text-gruvbox-muted"
           >
             Choose your platform below.
           </p>
@@ -580,12 +588,12 @@
                   role="tab"
                   aria-selected={activeInstallationGuidePlatform ===
                     platform.name}
-                  class={`group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium backdrop-blur transition ${
+                  class={`group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full px-6 py-3 text-sm font-medium backdrop-blur transition motion-reduce:transition-none ${
                     activeInstallationGuidePlatform === platform.name
                       ? "text-[#333231]"
-                      : "border border-[rgba(235,219,178,0.12)] bg-[#333231] hover:border-[rgba(235,219,178,0.2)]"
+                      : "border border-[rgba(235,219,178,0.12)] bg-gruvbox-ink hover:border-[rgba(235,219,178,0.2)]"
                   }`}
-                  on:click={() => {
+                  onclick={() => {
                     activeInstallationGuidePlatform = platform.name;
                   }}
                 >
@@ -593,11 +601,11 @@
                     class={`absolute inset-0 transition-transform duration-300 ease-out ${
                       platform.name === "macOS"
                         ? "bg-[#b8bb26]"
-                        : "bg-[color:var(--gruvbox-orange)]"
+                        : "bg-gruvbox-orange"
                     } ${
                       activeInstallationGuidePlatform === platform.name
                         ? "translate-x-0"
-                        : "translate-x-full group-hover:translate-x-0"
+                        : "translate-x-full group-hover:translate-x-0 motion-reduce:translate-x-full"
                     }`}
                     aria-hidden="true"
                   ></span>
@@ -605,7 +613,7 @@
                     class={`relative z-10 transition-colors duration-300 ${
                       activeInstallationGuidePlatform === platform.name
                         ? "text-[#333231]"
-                        : "text-[color:var(--color-text-muted)] group-hover:text-[color:var(--color-ink)]"
+                        : "text-gruvbox-muted group-hover:text-gruvbox-ink"
                     }`}
                   >
                     {platform.name}
@@ -618,14 +626,14 @@
           {#each installationGuidePlatforms as platform}
             {#if activeInstallationGuidePlatform === platform.name}
               <div
-                class="local-setup-panel mx-auto mt-6 w-full max-w-4xl text-left"
+                class="mx-auto mt-6 w-full max-w-4xl rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-5 text-left shadow-[0_18px_44px_rgba(0,0,0,0.16)]"
                 role="tabpanel"
               >
                 <div
                   class="border-b items-center flex flex-col border-[rgba(235,219,178,0.1)] pb-5"
                 >
                   <span
-                    class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+                    class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
                   >
                     {platform.eyebrow}
                   </span>
@@ -641,7 +649,7 @@
                     >
                       <div class="flex items-start gap-4">
                         <div
-                          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-[color:var(--color-accent)]"
+                          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
                         >
                           {step.number}
                         </div>
@@ -658,7 +666,7 @@
                           >
                             <div class="min-w-0">
                               <div
-                                class="space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                class="space-y-3 text-sm leading-7 text-gruvbox-muted"
                               >
                                 {#each step.body as paragraph}
                                   <p>{paragraph}</p>
@@ -667,16 +675,16 @@
 
                               {#if step.warningTitle}
                                 <div
-                                  class="mt-4 rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] p-4"
+                                  class="mt-4 rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-4"
                                 >
                                   <p
-                                    class="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-accent)]"
+                                    class="text-xs font-semibold uppercase tracking-[0.18em] text-gruvbox-accent"
                                   >
                                     {step.warningTitle}
                                   </p>
                                   {#if step.warningBody}
                                     <div
-                                      class="mt-2 space-y-2 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                      class="mt-2 space-y-2 text-sm leading-7 text-gruvbox-muted"
                                     >
                                       {#each step.warningBody as paragraph}
                                         <p>{paragraph}</p>
@@ -687,9 +695,11 @@
                               {/if}
 
                               {#if step.command}
-                                <div class="local-setup-command mt-4">
-                                  <div class="local-setup-command__inner">
-                                    <pre class="local-setup-command__code"><code
+                                <div class="mt-4">
+                                  <div class="relative">
+                                    <pre
+                                      class="m-0 overflow-x-auto rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] text-gruvbox-fg0"
+                                    ><code
                                         >{step.command}</code
                                       ></pre>
                                   </div>
@@ -702,7 +712,7 @@
                                 class="flex min-h-[12rem] items-start xl:pt-1"
                               >
                                 <div
-                                  class="flex min-h-[12rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                                  class="flex min-h-[12rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
                                 >
                                   {step.imagePlaceholderLabel}
                                 </div>
@@ -718,7 +728,7 @@
                                 >
                                   <div class="flex items-start gap-3">
                                     <div
-                                      class="flex h-9 min-w-[3rem] shrink-0 items-center justify-center rounded-[0.75rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-3 text-xs font-semibold text-[color:var(--color-accent-soft)]"
+                                      class="flex h-9 min-w-[3rem] shrink-0 items-center justify-center rounded-[0.75rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-3 text-xs font-semibold text-gruvbox-accent-soft"
                                     >
                                       {substep.number}
                                     </div>
@@ -737,7 +747,7 @@
                                       >
                                         <div class="min-w-0">
                                           <div
-                                            class="space-y-3 text-sm leading-7 text-[color:var(--color-text-muted)]"
+                                            class="space-y-3 text-sm leading-7 text-gruvbox-muted"
                                           >
                                             {#each substep.body as paragraph}
                                               <p>{paragraph}</p>
@@ -745,14 +755,11 @@
                                           </div>
 
                                           {#if substep.command}
-                                            <div
-                                              class="local-setup-command mt-4"
-                                            >
-                                              <div
-                                                class="local-setup-command__inner"
-                                              >
+                                            <div class="mt-4">
+                                              <div class="relative">
                                                 <pre
-                                                  class="local-setup-command__code"><code
+                                                  class="m-0 overflow-x-auto rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] text-gruvbox-fg0"
+                                                ><code
                                                     >{substep.command}</code
                                                   ></pre>
                                               </div>
@@ -765,7 +772,7 @@
                                             class="flex min-h-[11rem] items-start xl:pt-1"
                                           >
                                             <div
-                                              class="flex min-h-[11rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-[color:var(--color-text-muted)]"
+                                              class="flex min-h-[11rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
                                             >
                                               {substep.imagePlaceholderLabel}
                                             </div>
@@ -791,7 +798,7 @@
 
       <div
         bind:this={localSetupPanelEl}
-        class="local-setup-panel mt-12 w-full max-w-4xl text-left"
+        class="mt-12 w-full max-w-4xl rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-5 text-left shadow-[0_18px_44px_rgba(0,0,0,0.16)]"
       >
         <div
           bind:this={localSetupHeaderEl}
@@ -799,7 +806,7 @@
         >
           <div>
             <span
-              class="text-sm uppercase tracking-[0.24em] text-[color:var(--color-accent-soft)]"
+              class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
             >
               OR Run Locally
             </span>
@@ -810,8 +817,8 @@
 
           <button
             type="button"
-            class="local-setup-copy-all inline-flex items-center justify-center self-start p-2 transition"
-            on:click={() => void copyCommand("copy-all", localSetupAllCommand)}
+            class="inline-flex h-9 w-9 items-center justify-center self-start bg-transparent p-2 text-gruvbox-fg1 transition-colors duration-200 hover:text-white focus-visible:outline-none motion-reduce:transition-none"
+            onclick={() => void copyCommand("copy-all", localSetupAllCommand)}
             aria-label="Copy all local setup commands"
             title="Copy all commands"
           >
@@ -827,16 +834,18 @@
           {#each localSetupCommands as item, index}
             <div
               bind:this={localSetupCommandEls[index]}
-              class="local-setup-command"
+              class=""
             >
-              <div class="local-setup-command__inner">
-                <pre class="local-setup-command__code"><code
+              <div class="relative">
+                <pre
+                  class="m-0 overflow-x-auto rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] text-gruvbox-fg0"
+                ><code
                     >{item.command}</code
                   ></pre>
                 <button
                   type="button"
-                  class="local-setup-copy inline-flex items-center justify-center p-2 transition"
-                  on:click={() => void copyCommand(item.key, item.command)}
+                  class="absolute right-[0.6rem] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center bg-transparent p-2 text-gruvbox-fg1 transition-colors duration-200 hover:text-white focus-visible:outline-none motion-reduce:transition-none"
+                  onclick={() => void copyCommand(item.key, item.command)}
                   aria-label="Copy command"
                   title="Copy command"
                 >
