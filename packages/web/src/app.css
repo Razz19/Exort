@@ -107,7 +107,15 @@ html {
   line-height: 1.08;
   padding-bottom: 0.08em;
   overflow: visible;
-  color: transparent;
+  color: var(--gruvbox-fg0);
+}
+
+.hero-title__accent,
+.hero-title__plain {
+  display: inline-block;
+}
+
+.hero-title__accent {
   background-image: linear-gradient(
     115deg,
     var(--gruvbox-fg0) 0%,
@@ -121,6 +129,12 @@ html {
   -webkit-background-clip: text;
   filter: drop-shadow(0 0 14px rgba(250, 189, 47, 0.14));
   animation: hero-title-gradient-shift 9s ease-in-out infinite alternate;
+  color: transparent;
+}
+
+.hero-title__plain {
+  margin-left: 0.34em;
+  color: var(--gruvbox-fg0);
 }
 
 .feature-showcase {

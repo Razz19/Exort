@@ -290,7 +290,8 @@
         >
           <span class="block">
             <span bind:this={headlineLineEls[0]} class="hero-title__line block">
-              Open Source Coding Agent</span
+              <span class="hero-title__accent">Open Source</span>
+              <span class="hero-title__plain">Coding Agent</span></span
             >
           </span>
           <span class="block">
