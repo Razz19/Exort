@@ -16,6 +16,7 @@ module.exports = {
           fg0: '#fbf1c7',
           fg1: '#ebdbb2',
           blue: '#458588',
+          green: '#98971a',
           yellow: '#fabd2f',
           orange: '#fe8019',
           purple: '#d3869b',
