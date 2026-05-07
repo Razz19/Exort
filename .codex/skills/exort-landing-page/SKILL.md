@@ -46,6 +46,11 @@ Run `npm run build --workspace=packages/web` after substantial landing-page chan
 
 - Keep `app.css` for global concerns only: font-face declarations, document-level resets, body-level background treatment, selection styling, and reduced-motion globals.
 - Keep shared colors, fonts, shadows, and animation tokens in `tailwind.config.cjs`.
+- Preserve the current SiteNav hover color sequence unless the user asks to change it:
+  - `Features` hovers/focuses to gruvbox orange
+  - `Download` hovers/focuses to gruvbox green
+  - `View on GitHub` hovers/focuses to gruvbox blue
+  - do not switch the main nav links to white on hover
 - Keep section ownership clear. Avoid mixing hero work into download or feature components unless the request requires a cross-section redesign.
 - Preserve the current landing-page download composition unless the user asks otherwise:
   - the landing page shows the `Get Exort` cards and local-run block

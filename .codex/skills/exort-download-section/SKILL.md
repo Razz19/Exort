@@ -37,6 +37,12 @@ Retain non-utility classes only where the script queries DOM nodes directly for 
 5. Preserve behavior by default.
 Keep copy-to-clipboard behavior, overlay hover timelines, section animations, and reduced-motion compatibility unless the user explicitly requests a behavior change.
 
+Download CTA hover specifics:
+- Match the installation-guide tab treatment when the request mentions the four download buttons.
+- Keep the hover layer sweeping from right to left.
+- Invert the default button colors on hover instead of scaling or lifting the button.
+- Scope the hover trigger to the button itself, not the full download card hover state.
+
 6. Verify in the web package.
 Run `npm run build --workspace=packages/web` after substantial changes.
 
@@ -51,6 +57,12 @@ Run `npm run build --workspace=packages/web` after substantial changes.
   - download card bases use solid `#333231`
   - installation-guide and local-run outer panels use solid `#333231`
   - nested code or warning surfaces can stay darker for contrast
+- Keep the current local setup copy-accent mapping unless the user asks otherwise:
+  - copy-all icon hovers and copied state use gruvbox orange while resting in `gruvbox-fg1`
+  - `git clone ...` copy icon and copied command text use gruvbox orange
+  - `cd Exort` copy icon and copied command text use gruvbox green
+  - `npm install` copy icon and copied command text use gruvbox blue
+  - `npm run dev` copy icon and copied command text use gruvbox yellow
 - Remove dead selectors when a visual treatment is migrated or deleted.
 - Do not add new section-specific selectors to `app.css`.
 

@@ -95,9 +95,9 @@
         target="_blank"
         rel="noreferrer"
         aria-label="Join the Exort Discord"
-        class="inline-flex items-center justify-center text-gruvbox-text transition-colors duration-200 hover:text-gruvbox-purple focus-visible:text-gruvbox-purple focus-visible:outline-none motion-reduce:transition-none"
+        class="inline-flex items-center justify-center text-gruvbox-text transition-colors duration-200 hover:text-gruvbox-blue focus-visible:text-gruvbox-blue focus-visible:outline-none motion-reduce:transition-none"
       >
-        <span class="inline-flex h-7 w-7" aria-hidden="true">
+        <span class="inline-flex h-9 w-9" aria-hidden="true">
           {@html discordIcon}
         </span>
       </a>
