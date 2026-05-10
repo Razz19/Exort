@@ -164,81 +164,83 @@
   });
 </script>
 
-<div
-  bind:this={localSetupPanelEl}
-  class="mx-auto mt-12 mb-16 w-full max-w-4xl rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-5 text-left shadow-[0_18px_44px_rgba(0,0,0,0.16)]"
->
+<div class="px-4 sm:px-6 lg:px-8">
   <div
-    bind:this={localSetupHeaderEl}
-    class="flex flex-col gap-3 border-b border-[rgba(235,219,178,0.08)] pb-4 md:flex-row md:items-end md:justify-between"
+    bind:this={localSetupPanelEl}
+    class="mx-auto mt-8 sm:mt-10 mb-16 w-full max-w-4xl rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-5 text-left shadow-card-sm"
   >
-    <div>
-      <span
-        class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
+    <div
+      bind:this={localSetupHeaderEl}
+      class="relative gap-3 pb-4 md:flex-row md:items-end md:justify-between"
+    >
+      <div>
+        <span
+          class="text-xs sm:text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
+        >
+          Run Exort Locally
+        </span>
+        <h3 class="mt-2 text-sm font-semibold text-white sm:text-2xl">
+          Clone the repo and run Exort locally
+        </h3>
+      </div>
+
+      <button
+        type="button"
+        class={`inline-flex absolute top-0 right-0 h-9 w-9 items-center justify-center self-start bg-transparent p-2 transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${
+          copiedCommandKey === "copy-all"
+            ? "text-gruvbox-orange"
+            : localSetupCopyAccentClasses["copy-all"]
+        }`}
+        onclick={() => void copyCommand("copy-all", localSetupAllCommand)}
+        aria-label="Copy all local setup commands"
+        title="Copy all commands"
       >
-        Run Exort Locally
-      </span>
-      <h3 class="mt-2 text-xl font-semibold text-white sm:text-2xl">
-        Clone the repo and run Exort locally
-      </h3>
+        {#if copiedCommandKey === "copy-all"}
+          <CopyCheck class="h-4 w-4" aria-hidden="true" />
+        {:else}
+          <Copy class="h-4 w-4" aria-hidden="true" />
+        {/if}
+      </button>
     </div>
 
-    <button
-      type="button"
-      class={`inline-flex h-9 w-9 items-center justify-center self-start bg-transparent p-2 transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${
-        copiedCommandKey === "copy-all"
-          ? "text-gruvbox-orange"
-          : localSetupCopyAccentClasses["copy-all"]
-      }`}
-      onclick={() => void copyCommand("copy-all", localSetupAllCommand)}
-      aria-label="Copy all local setup commands"
-      title="Copy all commands"
-    >
-      {#if copiedCommandKey === "copy-all"}
-        <CopyCheck class="h-4 w-4" aria-hidden="true" />
-      {:else}
-        <Copy class="h-4 w-4" aria-hidden="true" />
-      {/if}
-    </button>
-  </div>
-
-  <div class="mt-4 space-y-2">
-    {#each localSetupCommands as item, index (item.key)}
-      <div bind:this={localSetupCommandEls[index]}>
-        <div class="relative">
-          <pre
-            class={`m-0 overflow-x-auto rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
-              copiedCommandKey === "copy-all"
-                ? localSetupCopiedTextClasses["copy-all"]
-                : copiedCommandKey === item.key
-                  ? localSetupCopiedTextClasses[item.key]
-                  : "text-gruvbox-fg0"
-            }`}><code>{item.command}</code></pre>
-          <button
-            type="button"
-            class={`absolute right-[0.6rem] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center bg-transparent p-2 transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${
-              copiedCommandKey === item.key
-                ? item.key === "clone"
-                  ? "text-gruvbox-orange"
-                  : item.key === "cd"
-                    ? "text-gruvbox-green"
-                    : item.key === "install"
-                      ? "text-gruvbox-blue"
-                      : "text-gruvbox-yellow"
-                : `text-gruvbox-fg1 ${localSetupCopyAccentClasses[item.key]}`
-            }`}
-            onclick={() => void copyCommand(item.key, item.command)}
-            aria-label="Copy command"
-            title="Copy command"
-          >
-            {#if copiedCommandKey === item.key}
-              <CopyCheck class="h-4 w-4" aria-hidden="true" />
-            {:else}
-              <Copy class="h-4 w-4" aria-hidden="true" />
-            {/if}
-          </button>
+    <div class="mt-4 space-y-2">
+      {#each localSetupCommands as item, index (item.key)}
+        <div bind:this={localSetupCommandEls[index]}>
+          <div class="relative">
+            <pre
+              class={`m-0 overflow-x-auto rounded-[0.85rem] bg-gruvbox-ink-strong px-[0.85rem] py-[0.72rem] pr-14 text-xs sm:text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
+                copiedCommandKey === "copy-all"
+                  ? localSetupCopiedTextClasses["copy-all"]
+                  : copiedCommandKey === item.key
+                    ? localSetupCopiedTextClasses[item.key]
+                    : "text-gruvbox-fg0"
+              }`}><code>{item.command}</code></pre>
+            <button
+              type="button"
+              class={`absolute right-[0.6rem] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center bg-transparent p-2 transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${
+                copiedCommandKey === item.key
+                  ? item.key === "clone"
+                    ? "text-gruvbox-orange"
+                    : item.key === "cd"
+                      ? "text-gruvbox-green"
+                      : item.key === "install"
+                        ? "text-gruvbox-blue"
+                        : "text-gruvbox-yellow"
+                  : `text-gruvbox-fg1 ${localSetupCopyAccentClasses[item.key]}`
+              }`}
+              onclick={() => void copyCommand(item.key, item.command)}
+              aria-label="Copy command"
+              title="Copy command"
+            >
+              {#if copiedCommandKey === item.key}
+                <CopyCheck class="h-4 w-4" aria-hidden="true" />
+              {:else}
+                <Copy class="h-4 w-4" aria-hidden="true" />
+              {/if}
+            </button>
+          </div>
         </div>
-      </div>
-    {/each}
+      {/each}
+    </div>
   </div>
 </div>

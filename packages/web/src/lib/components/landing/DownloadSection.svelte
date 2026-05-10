@@ -291,9 +291,9 @@
 
 <section
   id="try-exort"
-  class="mx-auto max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24"
+  class="mx-auto w-full max-w-7xl px-6 pb-16 pt-4 lg:px-8 lg:pb-24"
 >
-  <div bind:this={ctaSection} class="p-8 sm:p-10 lg:p-12">
+  <div bind:this={ctaSection} class="p-4 sm:p-10 lg:p-12">
     <div
       class="flex min-h-[22rem] flex-col items-center justify-center text-center"
     >
@@ -303,21 +303,21 @@
         >
           Get Exort
         </span>
-        <h2 class="mt-3 text-3xl font-semibold text-white sm:text-4xl">
+        <h2 class="mt-3 text-md font-semibold text-white sm:text-4xl">
           Let&apos;s get Exort running on your setup
         </h2>
-        <p class="mt-4 text-base leading-8 text-gruvbox-muted">
+        <p class="mt-4 text-sm sm:text-base leading-8 text-gruvbox-muted">
           Choose your platform to download the right version
         </p>
       </div>
 
       <div
-        class="mt-10 grid w-fit grid-cols-1 justify-items-center gap-5 sm:grid-cols-2"
+        class="mt-10 grid w-full grid-cols-1 justify-items-center gap-5 sm:mx-auto sm:w-fit sm:grid-cols-2"
       >
         {#each downloads as item, index}
           <article
             bind:this={downloadCardEls[index]}
-            class="group relative h-56 w-56 overflow-hidden border border-[rgba(235,219,178,0.08)] shadow-[0_18px_44px_rgba(0,0,0,0.16)] [isolation:isolate]"
+            class="group relative h-56 w-56 overflow-hidden shadow-card-sm [isolation:isolate]"
             style={`--download-card-color:${item.color};`}
             onmouseenter={() => void showDownloadOverlay(index)}
             onmouseleave={() => void hideDownloadOverlay(index)}
@@ -379,17 +379,17 @@
       </div>
 
       {#if showInstallationGuide}
-        <div class="mt-16 w-full max-w-6xl text-left">
+        <div class="mt-32 w-full max-w-6xl text-left">
           <div class="mx-auto max-w-3xl text-center">
             <span
               class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
             >
               Installation Guide
             </span>
-            <h3 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
+            <h3 class="mt-3 text-md font-semibold text-white sm:text-3xl">
               Follow these steps to install Exort on your computer
             </h3>
-            <p class="mt-4 text-base leading-8 text-gruvbox-muted">
+            <p class="mt-4 text-sm sm:text-base leading-8 text-gruvbox-muted">
               Choose your platform below.
             </p>
           </div>
@@ -397,7 +397,7 @@
           <div class="mt-10">
             <div class="flex justify-center">
               <div
-                class="inline-flex w-fit flex-wrap justify-center gap-3"
+                class="inline-flex w-fit flex-nowrap justify-center gap-3"
                 role="tablist"
                 aria-label="Installation guide platforms"
               >
@@ -469,7 +469,7 @@
 
             {#if activeInstallationGuidePlatform === "macOS"}
               <div
-                class="mx-auto mt-6 w-full max-w-4xl rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-5 text-left shadow-[0_18px_44px_rgba(0,0,0,0.16)]"
+                class="mx-auto mt-6 w-full max-w-4xl bg-gruvbox-ink p-4 sm:p-5 text-left shadow-card-sm"
                 role="tabpanel"
               >
                 <div
@@ -480,31 +480,36 @@
                   >
                     For Mac devices
                   </span>
-                  <h4 class="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                  <h4 class="mt-2 text-md font-semibold text-white sm:text-2xl">
                     macOS
                   </h4>
                 </div>
 
-                <div class="mt-6 space-y-5">
-                  <section
-                    class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
-                  >
+                <div class="mt-1 sm:mt-6 space-y-5">
+                  <section class="bg-gruvbox-bg p-4 sm:p-5">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
+                        class="h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent hidden sm:flex"
                       >
                         1
                       </div>
                       <div class="min-w-0 flex-1">
-                        <h5 class="text-lg font-medium text-white">
-                          Open the downloaded DMG file
-                        </h5>
+                        <div class="w-full flex items-start gap-4 sm:gap-0">
+                          <div
+                            class="flex sm:hidden h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent"
+                          >
+                            1
+                          </div>
+                          <h5 class="text-sm sm:text-lg font-medium text-white">
+                            Open the downloaded DMG file
+                          </h5>
+                        </div>
                         <div
-                          class="mt-3 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
+                          class="mt-0 sm:mt-3 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
                         >
                           <div class="min-w-0">
                             <div
-                              class="space-y-3 text-md leading-7 text-gruvbox-muted"
+                              class="space-y-3 text-sm sm:text-md leading-7 text-gruvbox-muted"
                             >
                               <p>
                                 - Locate the downloaded Exort dmg file and
@@ -514,9 +519,11 @@
                             </div>
                           </div>
 
-                          <div class="flex min-h-[12rem] items-start xl:pt-1">
+                          <div
+                            class="flex h-fit sm:min-h-[12rem] items-start xl:pt-1"
+                          >
                             <div
-                              class="flex min-h-[12rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
+                              class="flex h-fit sm:min-h-[12rem] w-full items-center justify-center bg-gruvbox-ink-strong px-4 sm:px-5 py-4 sm:py-8 text-center text-sm leading-6 text-gruvbox-muted"
                             >
                               <img
                                 src={macInstallImg}
@@ -529,27 +536,30 @@
                     </div>
                   </section>
 
-                  <section
-                    class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
-                  >
+                  <section class="bg-gruvbox-bg p-4 sm:p-5">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
+                        class="h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent hidden sm:flex"
                       >
                         2
                       </div>
                       <div class="min-w-0 flex-1">
-                        <h5 class="text-lg font-medium text-white">
-                          Handle security warnings
-                        </h5>
+                        <div class="w-full flex items-start gap-4 sm:gap-0">
+                          <div
+                            class="flex sm:hidden h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent"
+                          >
+                            2
+                          </div>
+                          <h5 class="text-sm sm:text-lg font-medium text-white">
+                            Handle security warnings
+                          </h5>
+                        </div>
                         <div class="mt-3 min-w-0">
                           <div
                             class="space-y-3 text-sm leading-7 text-gruvbox-muted"
                           ></div>
 
-                          <div
-                            class="mt-4 rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-4"
-                          >
+                          <div class="mt-4 bg-gruvbox-ink p-4">
                             <p
                               class="text-xs font-semibold uppercase tracking-[0.18em] text-gruvbox-accent"
                             >
@@ -568,20 +578,20 @@
                         </div>
 
                         <div class="mt-5 space-y-4">
-                          <div
-                            class="rounded-[0.95rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.24)] p-4"
-                          >
+                          <div class="bg-gruvbox-ink p-4">
                             <div class="flex items-start gap-3">
                               <div class="min-w-0 flex-1">
-                                <h6 class="text-base font-medium text-white">
+                                <h6
+                                  class="text-sm sm:text-base font-medium text-white"
+                                >
                                   If you see "Exort is damaged" error
                                 </h6>
                                 <div
-                                  class="mt-3 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)] xl:items-start"
+                                  class="mt-0 sm:mt-0 sm:mt-3 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)] xl:items-start"
                                 >
                                   <div class="min-w-0">
                                     <div
-                                      class="space-y-3 text-md leading-7 text-gruvbox-muted mt-10"
+                                      class="space-y-3 text-sm sm:text-md leading-7 text-gruvbox-muted mt-2 sm:mt-10"
                                     >
                                       <p>
                                         Open Terminal (Command + Spacebar to
@@ -596,10 +606,10 @@
                                   </div>
 
                                   <div
-                                    class="flex min-h-[11rem] items-start xl:pt-1"
+                                    class="flex h-fit sm:min-h-[11rem] items-start xl:pt-1"
                                   >
                                     <div
-                                      class="flex min-h-[11rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
+                                      class="flex h-fit sm:min-h-[11rem] w-full items-center justify-center bg-gruvbox-ink-strong px-4 sm:px-5 py-1 sm:py-8 text-center text-sm leading-6 text-gruvbox-muted"
                                     >
                                       <img
                                         src={macDamagedImg}
@@ -611,7 +621,7 @@
                                 <div class="mt-4">
                                   <div class="relative">
                                     <pre
-                                      class={`m-0 overflow-x-auto rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.72)] px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
+                                      class={`m-0 overflow-x-auto bg-gruvbox-ink-strong px-[0.85rem] py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
                                         copiedCommandKey === "mac-security"
                                           ? "text-gruvbox-orange"
                                           : "text-gruvbox-fg0"
@@ -649,21 +659,21 @@
                             </div>
                           </div>
 
-                          <div
-                            class="rounded-[0.95rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.24)] p-4 mt-10"
-                          >
+                          <div class="bg-gruvbox-ink p-4 mt-10">
                             <div class="flex items-start gap-3">
                               <div class="min-w-0 flex-1">
-                                <h6 class="text-base font-medium text-white">
+                                <h6
+                                  class="text-sm sm:text-base font-medium text-white"
+                                >
                                   If you see "Developer cannot be verified"
                                   error
                                 </h6>
                                 <div
-                                  class="mt-3 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)] xl:items-start"
+                                  class="mt-0 sm:mt-0 sm:mt-3 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)] xl:items-start"
                                 >
                                   <div class="min-w-0">
                                     <div
-                                      class="space-y-3 text-md leading-7 text-gruvbox-muted mt-10"
+                                      class="space-y-3 text-sm sm:text-md leading-7 text-gruvbox-muted mt-2 sm:mt-10"
                                     >
                                       <p>Click "Cancel" on the error dialog.</p>
                                       <p>
@@ -678,10 +688,10 @@
                                   </div>
 
                                   <div
-                                    class="flex min-h-[11rem] items-start xl:pt-1"
+                                    class="flex h-fit sm:min-h-[11rem] items-start xl:pt-1"
                                   >
                                     <div
-                                      class="flex min-h-[11rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
+                                      class="flex h-fit sm:min-h-[11rem] w-full items-center justify-center bg-gruvbox-ink-strong px-4 sm:px-5 py-3 sm:py-8text-center text-sm leading-6 text-gruvbox-muted"
                                     >
                                       <img src={macVerifiedImg} alt="" />
                                     </div>
@@ -695,21 +705,26 @@
                     </div>
                   </section>
 
-                  <section
-                    class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
-                  >
+                  <section class="bg-gruvbox-bg p-4 sm:p-5">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
+                        class="h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent hidden sm:flex"
                       >
                         3
                       </div>
                       <div class="min-w-0 flex-1">
-                        <h5 class="text-lg font-medium text-white">
-                          Launch Exort
-                        </h5>
+                        <div class="w-full flex items-start gap-4 sm:gap-0">
+                          <div
+                            class="flex sm:hidden h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent"
+                          >
+                            3
+                          </div>
+                          <h5 class="text-sm sm:text-lg font-medium text-white">
+                            Launch Exort
+                          </h5>
+                        </div>
                         <div
-                          class="mt-3 space-y-3 text-md leading-7 text-gruvbox-muted"
+                          class="mt-3 space-y-3 text-sm sm:text-md leading-7 text-gruvbox-muted"
                         >
                           <p>
                             You can now open Exort from the Applications folder
@@ -727,7 +742,7 @@
               </div>
             {:else if activeInstallationGuidePlatform === "Windows"}
               <div
-                class="mx-auto mt-6 w-full max-w-4xl rounded-[1.5rem] border border-[rgba(235,219,178,0.08)] bg-gruvbox-ink p-5 text-left shadow-[0_18px_44px_rgba(0,0,0,0.16)]"
+                class="mx-auto mt-6 w-full max-w-4xl rounded-[1.5rem] bg-gruvbox-ink p-4 sm:p-5 text-left shadow-card-sm"
                 role="tabpanel"
               >
                 <div
@@ -738,31 +753,29 @@
                   >
                     For Windows devices
                   </span>
-                  <h4 class="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                  <h4 class="mt-2 text-md font-semibold text-white sm:text-2xl">
                     Windows
                   </h4>
                 </div>
 
-                <div class="mt-6 space-y-5">
-                  <section
-                    class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
-                  >
+                <div class="mt-1 sm:mt-6 space-y-5">
+                  <section class="bg-gruvbox-bg p-5">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
+                        class="h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent hidden sm:flex"
                       >
                         1
                       </div>
                       <div class="min-w-0 flex-1">
-                        <h5 class="text-lg font-medium text-white">
+                        <h5 class="text-sm sm:text-lg font-medium text-white">
                           Run the installer
                         </h5>
                         <div
-                          class="mt-3 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
+                          class="mt-0 sm:mt-3 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
                         >
                           <div class="min-w-0">
                             <div
-                              class="space-y-3 text-md leading-7 text-gruvbox-muted mt-10"
+                              class="space-y-3 text-sm sm:text-md leading-7 text-gruvbox-muted mt-2 sm:mt-3 xl:mt-10"
                             >
                               <p>
                                 Locate the downloaded Exort.exe file and
@@ -779,7 +792,7 @@
 
                           <div class="flex min-h-[12rem] items-start xl:pt-1">
                             <div
-                              class="flex min-h-[12rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
+                              class="flex min-h-[12rem] w-full items-center justify-center bg-gruvbox-ink-strong px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
                             >
                               <img
                                 src={winWarningImg}
@@ -792,25 +805,23 @@
                     </div>
                   </section>
 
-                  <section
-                    class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
-                  >
+                  <section class="bg-gruvbox-bg p-5">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
+                        class="h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent hidden sm:flex"
                       >
                         2
                       </div>
                       <div class="min-w-0 flex-1">
-                        <h5 class="text-lg font-medium text-white">
+                        <h5 class="text-sm sm:text-lg font-medium text-white">
                           Bypass Windows security warnings
                         </h5>
                         <div
-                          class="mt-3 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
+                          class="mt-0 sm:mt-3 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)] xl:items-start"
                         >
                           <div class="min-w-0">
                             <div
-                              class="space-y-3 text-md leading-7 text-gruvbox-muted mt-10"
+                              class="space-y-3 text-sm sm:text-md leading-7 text-gruvbox-muted mt-2 sm:mt-3 xl:mt-10"
                             >
                               <p>
                                 On the next window, click "Run anyway" to
@@ -821,7 +832,7 @@
 
                           <div class="flex min-h-[12rem] items-start xl:pt-1">
                             <div
-                              class="flex min-h-[12rem] w-full items-center justify-center rounded-[0.85rem] border border-dashed border-[rgba(235,219,178,0.14)] bg-[rgba(29,32,33,0.72)] px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
+                              class="flex min-h-[12rem] w-full items-center justify-center bg-gruvbox-ink-strong px-5 py-8 text-center text-sm leading-6 text-gruvbox-muted"
                             >
                               <img src={winRunImg} alt="Windows Run dialog" />
                             </div>
@@ -831,17 +842,15 @@
                     </div>
                   </section>
 
-                  <section
-                    class="rounded-[1.1rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(29,32,33,0.28)] p-5"
-                  >
+                  <section class="bg-gruvbox-bg p-5">
                     <div class="flex items-start gap-4">
                       <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] border border-[rgba(235,219,178,0.08)] bg-[rgba(60,56,54,0.42)] text-sm font-semibold text-gruvbox-accent"
+                        class="h-6 w-6 sm:h-10 sm:w-10 shrink-0 items-center justify-center bg-gruvbox-ink text-sm font-semibold text-gruvbox-accent hidden sm:flex"
                       >
                         3
                       </div>
                       <div class="min-w-0 flex-1">
-                        <h5 class="text-lg font-medium text-white">
+                        <h5 class="text-sm sm:text-lg font-medium text-white">
                           Complete installation
                         </h5>
                         <div

@@ -1,93 +1,40 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
-
-  const featureRotationDelay = 4000;
-  const manualFeaturePause = 8000;
+  import AppFrame from "$lib/components/landing/AppFrame.svelte";
 
   type FeatureItem = {
     title: string;
     description: string;
-    image?: string;
+    video: string;
   };
 
   let { features }: { features: FeatureItem[] } = $props();
 
   let prefersReducedMotion = $state(false);
   let activeFeatureIndex = $state(0);
-  let featureRotationTimeout: number | null = null;
-  let featureRotationResumeAt = 0;
   let featuresSection: HTMLElement | null = null;
   let featuresIntroEl: HTMLElement | null = null;
   let featureSidebarEl: HTMLElement | null = null;
   let featurePanelEl: HTMLElement | null = null;
   let gsapRef: Awaited<typeof import("gsap")>["gsap"] | null = null;
 
-  const clearFeatureRotation = () => {
-    if (featureRotationTimeout) {
-      window.clearTimeout(featureRotationTimeout);
-      featureRotationTimeout = null;
-    }
-  };
-
-  const scheduleFeatureRotation = (delay = featureRotationDelay) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    clearFeatureRotation();
-    featureRotationTimeout = window.setTimeout(() => {
-      const pauseRemaining = featureRotationResumeAt - Date.now();
-      if (pauseRemaining > 0) {
-        scheduleFeatureRotation(pauseRemaining);
-        return;
-      }
-
-      activeFeatureIndex = (activeFeatureIndex + 1) % features.length;
-      scheduleFeatureRotation(featureRotationDelay);
-    }, delay);
-  };
-
-  const setActiveFeature = (index: number, pauseAuto = false) => {
+  const setActiveFeature = (index: number) => {
     activeFeatureIndex = index;
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (pauseAuto) {
-      featureRotationResumeAt = Date.now() + manualFeaturePause;
-      scheduleFeatureRotation(manualFeaturePause);
-      return;
-    }
-
-    scheduleFeatureRotation(featureRotationDelay);
   };
 
   const showPreviousFeature = () => {
     setActiveFeature(
       (activeFeatureIndex - 1 + features.length) % features.length,
-      true,
     );
   };
 
   const showNextFeature = () => {
-    setActiveFeature((activeFeatureIndex + 1) % features.length, true);
+    setActiveFeature((activeFeatureIndex + 1) % features.length);
   };
 
-  const preloadFeatureImages = () => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    features.forEach((feature) => {
-      if (!feature.image) {
-        return;
-      }
-
-      const image = new Image();
-      image.src = feature.image;
-    });
+  const handleFeatureVideoEnded = () => {
+    showNextFeature();
   };
 
   const ensureGsap = async () => {
@@ -191,13 +138,10 @@
       };
     };
 
-    scheduleFeatureRotation(featureRotationDelay);
-    preloadFeatureImages();
     void loadAnimations();
 
     return () => {
       mediaQuery.removeEventListener("change", syncReducedMotion);
-      clearFeatureRotation();
       cleanupAnimations();
     };
   });
@@ -206,12 +150,10 @@
 <section
   id="features"
   bind:this={featuresSection}
-  class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24"
+  class="mx-auto max-w-6xl px-6 py-16 lg:px-8 lg:py-24"
 >
-  <div bind:this={featuresIntroEl} class="max-w-2xl">
-    <span
-      class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft"
-    >
+  <div bind:this={featuresIntroEl} class="flex w-full justify-center">
+    <span class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft">
       Core Features
     </span>
   </div>
@@ -222,79 +164,50 @@
     >
       <div bind:this={featurePanelEl} class="min-w-0">
         <div class="grid gap-6">
-          <div class="relative">
-            <div
-              class="group relative h-[clamp(19rem,46vw,38rem)] w-full overflow-hidden bg-transparent sm:h-[clamp(22rem,44vw,38rem)] md:h-[clamp(20rem,42vw,34rem)] lg:h-[clamp(27rem,36vw,38rem)]"
-            >
-              <div class="relative h-full w-full">
+          <div class="relative mx-auto w-full max-w-4xl">
+            <AppFrame contentClass="p-2 sm:p-3">
+              <div
+                class="relative aspect-[16/10] w-full overflow-hidden bg-gruvbox-ink-strong"
+                style="border-radius: 10px !important;"
+              >
                 {#key activeFeatureIndex}
                   <div
                     class="absolute inset-0"
                     in:fade={{ duration: prefersReducedMotion ? 0 : 180 }}
                     out:fade={{ duration: prefersReducedMotion ? 0 : 140 }}
                   >
-                    {#if features[activeFeatureIndex].image}
-                      <img
-                        src={features[activeFeatureIndex].image}
-                        alt={`${features[activeFeatureIndex].title} screenshot`}
-                        class="block h-full max-h-full w-full max-w-full object-fill"
-                      />
-                    {:else}
-                      <div
-                        class="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,rgba(146,131,116,0.34),rgba(104,92,83,0.54)),rgba(120,110,100,0.42)]"
-                      >
-                        <span
-                          class="px-6 text-center text-sm uppercase tracking-[0.22em] text-gruvbox-muted"
-                        >
-                          Image Coming Soon
-                        </span>
-                      </div>
-                    {/if}
+                    <video
+                      src={features[activeFeatureIndex].video}
+                      aria-label={`${features[activeFeatureIndex].title} demo video`}
+                      class="block h-full w-full object-contain object-top"
+                      autoplay
+                      onended={handleFeatureVideoEnded}
+                      muted
+                      playsinline
+                      preload="metadata"
+                    ></video>
                   </div>
                 {/key}
-
-                {#key activeFeatureIndex}
-                  <article
-                    class="absolute bottom-0 left-0 z-10 flex h-full w-full items-end justify-center p-0 transition-[transform,opacity] duration-200 ease-out group-hover:translate-y-[1.35rem] group-hover:opacity-0 group-focus-within:translate-y-[1.35rem] group-focus-within:opacity-0 motion-reduce:transition-none"
-                    in:fade={{ duration: prefersReducedMotion ? 0 : 180 }}
-                    out:fade={{ duration: prefersReducedMotion ? 0 : 140 }}
-                  >
-                    <p
-                      class="m-0 max-h-80 w-full overflow-auto bg-[rgba(255,255,255,0.1)] px-4 py-[0.9rem] text-sm leading-7 text-gruvbox-muted shadow-[0_-10px_24px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[18px]"
-                    >
-                      {features[activeFeatureIndex].description}
-                    </p>
-                  </article>
-                {/key}
               </div>
-
-              <div
-                class="absolute inset-y-0 left-3 z-10 flex items-center sm:hidden"
-              >
-                <button
-                  type="button"
-                  class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(235,219,178,0.12)] bg-[rgba(40,40,40,0.72)] text-base leading-none text-gruvbox-text shadow-[0_10px_26px_rgba(0,0,0,0.18)] backdrop-blur-[12px] transition-[transform,border-color,color,background-color] duration-200 ease-out hover:-translate-y-px hover:border-[rgba(254,128,25,0.3)] hover:bg-[rgba(60,56,54,0.9)] hover:text-white motion-reduce:transition-none"
-                  onclick={showPreviousFeature}
-                  aria-label="Show previous feature"
-                >
-                  &larr;
-                </button>
-              </div>
-              <div
-                class="absolute inset-y-0 right-3 z-10 flex items-center sm:hidden"
-              >
-                <button
-                  type="button"
-                  class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(235,219,178,0.12)] bg-[rgba(40,40,40,0.72)] text-base leading-none text-gruvbox-text shadow-[0_10px_26px_rgba(0,0,0,0.18)] backdrop-blur-[12px] transition-[transform,border-color,color,background-color] duration-200 ease-out hover:-translate-y-px hover:border-[rgba(254,128,25,0.3)] hover:bg-[rgba(60,56,54,0.9)] hover:text-white motion-reduce:transition-none"
-                  onclick={showNextFeature}
-                  aria-label="Show next feature"
-                >
-                  &rarr;
-                </button>
-              </div>
-            </div>
+            </AppFrame>
           </div>
         </div>
+      </div>
+
+      <div class="mt-1.5 flex items-center justify-center gap-2.5 lg:hidden">
+        {#each features as _, index}
+          <button
+            type="button"
+            aria-label={`Show feature ${index + 1}`}
+            aria-pressed={index === activeFeatureIndex}
+            class={`h-0.5 w-4 rounded-full transition-colors ${
+              index === activeFeatureIndex
+                ? "bg-gruvbox-accent"
+                : "bg-gruvbox-muted/70"
+            }`}
+            onclick={() => setActiveFeature(index)}
+          ></button>
+        {/each}
       </div>
 
       <aside bind:this={featureSidebarEl} class="hidden lg:block">
@@ -304,10 +217,10 @@
               type="button"
               class={`group relative w-full bg-transparent py-[0.7rem] pr-[14px] text-right text-base font-light leading-[1.35] transition-[color,transform,opacity] duration-200 ease-out motion-reduce:transition-none ${
                 index === activeFeatureIndex
-                  ? "font-semibold text-gruvbox-accent [text-shadow:0_0_18px_rgba(254,128,25,0.12)]"
-                  : "text-[rgba(235,219,178,0.88)] hover:-translate-x-1 hover:text-gruvbox-text"
+                  ? "font-semibold text-gruvbox-accent "
+                  : "text-gruvbox-muted hover:-translate-x-1 hover:text-gruvbox-text"
               }`}
-              onclick={() => setActiveFeature(index, true)}
+              onclick={() => setActiveFeature(index)}
               aria-pressed={index === activeFeatureIndex}
             >
               <span

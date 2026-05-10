@@ -20,7 +20,8 @@ module.exports = {
           yellow: '#fabd2f',
           orange: '#fe8019',
           purple: '#d3869b',
-          ink: '#333231'
+          ink: '#333231',
+          'ink-strong': 'rgba(29, 32, 33, 0.9)'
         }
       },
       fontFamily: {
@@ -42,8 +43,14 @@ module.exports = {
         ]
       },
       boxShadow: {
-        soft: '0 18px 48px rgba(0, 0, 0, 0.24)',
-        strong: '0 26px 90px rgba(0, 0, 0, 0.3)'
+        soft: '0 18px 48px rgba(29, 32, 33, 0.24)',
+        strong: '0 26px 90px rgba(29, 32, 33, 0.3)',
+        'outline-subtle': '0 0 0 1px rgba(0, 0, 0, 0.18)',
+        'card-sm': '0 12px 30px rgba(29, 32, 33, 0.16)',
+        'card-md':
+          '0 18px 50px rgba(0, 0, 0, 0.38), 0 8px 40px rgba(0, 0, 0, 0.32)',
+        'card-lg': '0 16px 38px rgba(29, 32, 33, 0.18)',
+        nav: '0 10px 24px rgba(29, 32, 33, 0.14)'
       },
       keyframes: {
         'hero-text-sweep-right': {

@@ -14,8 +14,7 @@
 
 <div class="relative isolate min-h-screen bg-gruvbox-bg text-gruvbox-text">
   <SiteNav />
-
-  <main class="flex flex-col items-center pt-8 sm:pt-12">
+  <main class="flex w-full flex-col items-stretch pt-8 sm:pt-12">
     <DownloadSection />
     <!-- <p class="text-gruvbox-fg1">OR</p> -->
     <RunLocallySection />
