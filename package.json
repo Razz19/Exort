@@ -14,6 +14,7 @@
   "scripts": {
     "dev": "npm --workspace @exort/desktop run dev",
     "dev:web": "npm --workspace @exort/web run dev",
+    "dev:webi": "npm --workspace @exort/web run devi",
     "dev:all": "turbo run dev",
     "build": "npm --workspace @exort/desktop run build",
     "build:web": "npm --workspace @exort/web run build",

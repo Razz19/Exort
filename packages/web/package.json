@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "devi": "LAUNCH_EDITOR=code vite dev",
     "build": "svelte-kit sync && vite build",
     "preview": "svelte-kit sync && vite preview",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
