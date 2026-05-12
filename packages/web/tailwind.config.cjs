@@ -103,7 +103,11 @@ module.exports = {
           'hero-text-sweep-right 6s linear infinite',
         'hero-text-sweep-left':
           'hero-text-sweep-left 6s linear infinite'
-      }
+      },
+       backgroundImage: {
+    'feature-overlay':
+      'linear-gradient(90deg, rgba(29, 32, 33, 0.08) 0%, rgba(29, 32, 33, 0.34) 16%, rgba(29, 32, 33, 0.66) 38%, rgba(29, 32, 33, 0.88) 100%)'
+  }
     }
   },
   plugins: []

@@ -5,11 +5,15 @@
     title = "EXORT",
     frameClass = "",
     contentClass = "",
+    showIndicator = false,
+    indicator,
     children,
   }: {
     title?: string;
     frameClass?: string;
     contentClass?: string;
+    showIndicator?: boolean;
+    indicator?: Snippet;
     children?: Snippet;
   } = $props();
 </script>
@@ -52,8 +56,15 @@
         {title}
       </span>
     </div>
-    <div class={`flex-1 min-h-0 bg-gruvbox-ink-strong ${contentClass}`.trim()}>
+    <div
+      class={`relative flex-1 min-h-0 bg-gruvbox-ink-strong ${contentClass}`.trim()}
+    >
       {@render children?.()}
+      {#if showIndicator}
+        <div class="pointer-events-none absolute bottom-4 right-4 z-10">
+          {@render indicator?.()}
+        </div>
+      {/if}
     </div>
   </div>
 </div>

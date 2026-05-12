@@ -12,11 +12,17 @@
   />
 </svelte:head>
 
-<div class="relative isolate min-h-screen bg-gruvbox-bg text-gruvbox-text">
+<div class="relative isolate">
   <SiteNav />
   <main class="flex w-full flex-col items-stretch pt-8 sm:pt-12">
     <DownloadSection />
-    <!-- <p class="text-gruvbox-fg1">OR</p> -->
-    <RunLocallySection />
+    <div class="mx-auto mt-16 w-full max-w-7xl">
+      <p
+        class="text-sm uppercase text-center tracking-[0.24em] text-gruvbox-accent-soft w-full"
+      >
+        Clone Exort
+      </p>
+      <RunLocallySection />
+    </div>
   </main>
 </div>

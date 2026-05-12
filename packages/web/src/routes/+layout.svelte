@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import SiteFooter from '$lib/components/landing/SiteFooter.svelte';
 
   let { children } = $props();
 </script>
@@ -12,4 +13,9 @@
   ></script>
 </svelte:head>
 
-{@render children()}
+<div class="flex min-h-screen flex-col bg-gruvbox-bg text-gruvbox-text">
+  <div class="flex-1">
+    {@render children()}
+  </div>
+  <SiteFooter />
+</div>
