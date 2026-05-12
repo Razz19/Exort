@@ -88,7 +88,8 @@
           href={item.href}
           target={item.external ? "_blank" : undefined}
           rel={item.external ? "noreferrer" : undefined}
-          class={`text-sm text-gruvbox-muted transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${item.hoverClass}`}
+          class={`text-sm text-gruvbox-muted transition-colors duration-200 focus-visible:outline-none m
+          otion-reduce:transition-none ${item.hoverClass}`}
         >
           {item.label}
         </a>

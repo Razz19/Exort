@@ -304,7 +304,7 @@
           Get Exort
         </span>
         <h2 class="mt-3 text-md font-semibold text-gruvbox-fg0 sm:text-4xl">
-          Let&apos;s get Exort running on your setup
+          Let&apos;s get Exort running on your device
         </h2>
         <p class="mt-4 text-sm sm:text-base leading-8 text-gruvbox-muted">
           Choose your platform to download the right version
@@ -512,7 +512,7 @@
                         >
                           <div class="min-w-0">
                             <div
-                              class="space-y-3 text-sm sm:text-lg leading-7 text-gruvbox-muted"
+                              class="space-y-3 pt-10 text-sm sm:text-lg leading-7 text-gruvbox-muted"
                             >
                               <p>
                                 - Locate the downloaded Exort dmg file and
@@ -581,11 +581,11 @@
                         </div>
 
                         <div class="mt-5 space-y-4">
-                          <div class="bg-gruvbox-ink p-4">
+                          <div class=" p-4">
                             <div class="flex items-start gap-3">
                               <div class="min-w-0 flex-1 space-y-2">
                                 <h6
-                                  class="text-sm sm:text-base font-medium text-gruvbox-fg0"
+                                  class="text-sm mt-5 sm:text-base font-medium text-gruvbox-fg0"
                                 >
                                   If you see "Exort is damaged" error
                                 </h6>
@@ -594,7 +594,7 @@
                                 >
                                   <div class="min-w-0">
                                     <div
-                                      class="space-y-3 text-sm sm:text-lg leading-7 text-gruvbox-muted"
+                                      class="space-y-3 pt-10 text-sm sm:text-lg leading-7 text-gruvbox-muted"
                                     >
                                       <p>
                                         - Open Terminal (Command + Spacebar to
@@ -622,7 +622,7 @@
                                 <div class="mt-4">
                                   <div class="relative">
                                     <pre
-                                      class={`m-0 overflow-x-auto bg-gruvbox-ink-strong h-9 flex items-center justify-start px-[0.85rem] py-0 sm:py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
+                                      class={`m-0 overflow-x-auto overflow-y-hidden bg-gruvbox-ink-strong h-9 flex items-center justify-start px-[0.85rem] py-0 sm:py-[0.72rem] pr-14 text-[0.88rem] leading-[1.45] transition-colors duration-200 ${
                                         copiedCommandKey === "mac-security"
                                           ? "text-gruvbox-orange"
                                           : "text-gruvbox-fg0"
@@ -660,7 +660,7 @@
                             </div>
                           </div>
 
-                          <div class="bg-gruvbox-ink p-4 mt-10">
+                          <div class="p-4 mt-10">
                             <div class="flex items-start gap-3">
                               <div class="min-w-0 flex-1 space-y-2">
                                 <h6
@@ -674,7 +674,7 @@
                                 >
                                   <div class="min-w-0">
                                     <div
-                                      class="space-y-3 text-sm sm:text-lg leading-7 text-gruvbox-muted"
+                                      class="space-y-3 pt-10 text-sm sm:text-lg leading-7 text-gruvbox-muted"
                                     >
                                       <p>
                                         - Click "Cancel" on the error dialog.
@@ -767,7 +767,7 @@
                         >
                           <div class="min-w-0">
                             <div
-                              class="space-y-3 text-sm sm:text-lg leading-7 text-gruvbox-muted"
+                              class="space-y-3 pt-10 text-sm sm:text-lg leading-7 text-gruvbox-muted"
                             >
                               <p>
                                 - Locate the downloaded Exort.exe file and
@@ -817,7 +817,7 @@
                         >
                           <div class="min-w-0">
                             <div
-                              class="space-y-3 text-sm sm:text-lg leading-7 text-gruvbox-muted"
+                              class="space-y-3 pt-10 text-sm sm:text-lg leading-7 text-gruvbox-muted"
                             >
                               <p>
                                 - On the next window, click "Run anyway" to

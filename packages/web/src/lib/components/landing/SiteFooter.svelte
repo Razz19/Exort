@@ -13,6 +13,6 @@
         Razz19
       </a>
     </p>
-    <p>AGPL-3.0-only</p>
+    <!-- <p>AGPL-3.0-only</p> -->
   </div>
 </footer>

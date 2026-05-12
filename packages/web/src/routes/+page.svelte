@@ -56,21 +56,22 @@
 
   const workflowSteps = [
     {
-      number: "01",
+      title: "4 Free AI Models",
       color: "text-gruvbox-orange",
       description:
-        "Ask Exort to understand the project and suggest the next change.",
+        "Start with free included models or connect your own provider.",
     },
     {
-      number: "02",
+      title: "Designed for Hardware",
       color: "text-gruvbox-blue",
-      description: "Edit, compile, and upload to the selected board.",
+      description:
+        "The agent helps debug, compile, and upload to your target board.",
     },
     {
-      number: "03",
+      title: "Code, Monitor, Improve",
       color: "text-gruvbox-green",
       description:
-        "Read live output with Serial Monitor or Plotter, then keep improving.",
+        "Write code, monitor device output, and iterate with built-in tools.",
     },
   ];
 
@@ -426,16 +427,16 @@
             <h1
               class="max-w-full overflow-hidden sm:overflow-visible font-heading font-bold leading-none text-2xl sm:text-4xl"
             >
-              Open-source AI <span class="hero-gruvbox-text-cycle">
+              Free AI-powered <span class="hero-gruvbox-text-cycle">
                 coding environment
-              </span> for Microcontrollers.
+              </span> for Microcontrollers
             </h1>
             <p
               class="mt-5 max-w-2xl text-md leading-6 sm:leading-8 text-gruvbox-muted sm:text-lg"
             >
-              An agent-driven coding environment for Arduino that helps turn
-              ideas into working projects. Start with an idea, shape the code,
-              and bring it to life.
+              An <span class="underline">open-source </span> coding environment for
+              embedded development that helps you generate, shape, and improve microcontroller
+              code with AI assistance.
             </p>
 
             <div
@@ -536,16 +537,21 @@
           What is Exort
         </span>
         <h1
-          class="mt-2 max-w-xl text-lg uppercase tracking-[0.24em] text-gruvbox-fg1"
+          class="mt-2 max-w-xl text-md uppercase font-extrabold tracking-[0.24em] text-gruvbox-fg1"
         >
-          A coding environment built for Arduino projects
+          One prompt away from idea to microcontroller code.
         </h1>
-        <p
+        <!-- <p
           class="mt-5 max-w-2xl text-sm leading-7 text-gruvbox-muted sm:text-base sm:leading-[1.45]"
         >
-          Exort is an agent-driven coding environment for Arduino projects,
-          built to take ideas from code to working hardware.
-        </p>
+          Exort is a desktop coding environment for Arduino and compatible board
+          platforms, designed to make embedded development faster and more
+          approachable. It combines AI-assisted coding with the workflows
+          hardware projects actually need, so you can go from an idea to real
+          firmware without jumping between disconnected tools. From early
+          prototyping to refining behavior on-device, Exort helps keep the
+          entire process in one focused workspace.
+        </p> -->
       </div>
 
       <div
@@ -559,15 +565,15 @@
           >
             <div
               bind:this={workflowStepEls[index]}
-              class="flex h-full flex-col gap-5 p-3 transition-all bg-gruvbox-ink duration-300"
+              class="flex h-full flex-col gap-5 p-4 transition-all bg-gruvbox-ink duration-300"
             >
               <span
-                class={`text-xl font-heading font-semibold leading-none ${step.color} sm:text-2xl`}
+                class={`text-base font-heading font-semibold leading-none ${step.color} sm:text-xl`}
               >
-                {step.number}
+                {step.title}
               </span>
 
-              <p class=" text-sm leading-6 text-gruvbox-fg1 sm:text-[0.92rem]">
+              <p class=" leading-6 text-gruvbox-fg1 sm:text-[0.9rem]">
                 {step.description}
               </p>
             </div>
@@ -602,7 +608,7 @@
             class="mt-5 max-w-md text-sm leading-7 text-gruvbox-muted sm:text-base sm:leading-[1.45]"
           >
             Exort is available for Windows, macOS, and Linux. Download the
-            latest version and get started on your next embedded project today.
+            latest version and get started today.
           </p>
 
           <div
