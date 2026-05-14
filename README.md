@@ -1,12 +1,12 @@
-
-<a href="https://exort.dev" style="text-decoration: none; display: inline-flex; align-items: end; ">
-<img src="assets/exort-logo.png" alt="Exort application screenshot" width="5%" style="background-color: #2f3239; border-radius: 15px; padding: 10px 20px 10px 20px ">
-  <span style="margin-left: 10px; font-size: 36px; font-weight: bold; color: #dc5005;">Exort</span>
+<a href="https://exort.dev">
+<img src="assets/exort-logo.png" alt="Exort application screenshot" width="70px">
 </a>
 
 [![GitHub stars](https://img.shields.io/github/stars/Razz19/Exort?style=for-the-badge&logo=github&logoColor=white&label=Stars&color=8aa11e)](https://github.com/Razz19/Exort/stargazers) [![Discord](https://img.shields.io/badge/Discord-Join-8c7ae6?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/xmcmcWkr4V) [![Support](https://img.shields.io/badge/Support-Project-f0a35b?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Razz19)
 
-<hr/>
+
+# Exort
+
 
 ### Free, open-source AI coding workspace for microcontrollers.
 
