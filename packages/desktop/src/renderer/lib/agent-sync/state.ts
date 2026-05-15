@@ -9,6 +9,7 @@ import type {
   AgentSyncState,
 } from "./types";
 import { parseAgentPermissionReply } from "./types";
+import { mergeAssistantContent } from "./contentMerge";
 
 function cloneState(state: AgentSyncState): AgentSyncState {
   return {
@@ -309,7 +310,7 @@ export function applyRuntimeEventToSyncState(params: {
     let updatedParts = upsertPart(currentParts, {
       id: `${assistantMessageId}:live-text`,
       type: "text",
-      text: (textPart?.text ?? "") + event.content,
+      text: mergeAssistantContent(textPart?.text ?? "", event.content),
     });
     if (event.partId) {
       const syncPartId = `${assistantMessageId}:part:${event.partId}`;
@@ -320,7 +321,7 @@ export function applyRuntimeEventToSyncState(params: {
       updatedParts = upsertPart(updatedParts, {
         id: syncPartId,
         type: nextType,
-        text: (existingStructuredPart?.text ?? "") + event.content,
+        text: mergeAssistantContent(existingStructuredPart?.text ?? "", event.content),
       });
     }
     next.part[assistantMessageId] = updatedParts;

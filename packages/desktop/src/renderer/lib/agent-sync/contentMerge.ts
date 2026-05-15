@@ -9,8 +9,8 @@ export function mergeAssistantContent(current: string, incoming: string): string
     return incoming;
   }
 
-  // Older duplicate/slice that does not add information.
-  if (current.startsWith(incoming) || current.includes(incoming)) {
+  // Older prefix snapshot that does not add information.
+  if (current.startsWith(incoming)) {
     return current;
   }
 
