@@ -23,6 +23,7 @@ export type ChatAttachment = {
 export type ChatSendPayload = {
   prompt: string;
   attachments: ChatAttachment[];
+  mode: "build" | "plan";
 };
 
 export type AgentQuestionOption = {

@@ -325,6 +325,7 @@ type WorkspaceState = {
   rootPath: string;
   workspaceName: string;
   lastOpenedAt: string;
+  agentMode: 'build' | 'plan';
   boardFqbn: string;
   boardOptionSelections: Record<string, string>;
   serialPort: string;
@@ -574,6 +575,7 @@ const electronAPI = {
     prompt: string;
     attachments?: ChatAttachment[];
     sessionId?: string;
+    agent?: string;
     model?: {
       providerID: string;
       modelID: string;

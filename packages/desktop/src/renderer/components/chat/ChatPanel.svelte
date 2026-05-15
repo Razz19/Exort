@@ -22,6 +22,8 @@
     stopping,
     sessionStatus,
     onSend,
+    agentMode = "build",
+    onAgentModeChange,
     onStop,
     onNewSession,
     onOpenWorkspace,
@@ -41,6 +43,8 @@
       stopping: boolean;
       sessionStatus: "running" | "idle" | "error";
       onSend: (payload: ChatSendPayload) => void;
+      agentMode?: "build" | "plan";
+      onAgentModeChange: (mode: "build" | "plan") => void;
       onStop: () => Promise<void> | void;
       onNewSession: () => void;
       onOpenWorkspace: () => Promise<void> | void;
@@ -73,7 +77,15 @@
         {onQuestionReject}
       />
     {/if}
-    <ChatComposer {activeWorkspaceRoot} {busy} {stopping} {onSend} {onStop} />
+    <ChatComposer
+      {activeWorkspaceRoot}
+      {busy}
+      {stopping}
+      {onSend}
+      {onStop}
+      {agentMode}
+      {onAgentModeChange}
+    />
   {:else if bootstrapping}
     <HistoryLoading />
   {:else}

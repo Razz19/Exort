@@ -24,10 +24,20 @@
     previewUrl?: string;
   };
 
-  let { activeWorkspaceRoot, busy, stopping, onSend, onStop } = $props<{
+  let {
+    activeWorkspaceRoot,
+    busy,
+    stopping,
+    agentMode,
+    onAgentModeChange,
+    onSend,
+    onStop,
+  } = $props<{
     activeWorkspaceRoot: string | null;
     busy: boolean;
     stopping: boolean;
+    agentMode: "build" | "plan";
+    onAgentModeChange: (mode: "build" | "plan") => void;
     onSend: (payload: ChatSendPayload) => Promise<void> | void;
     onStop: () => Promise<void> | void;
   }>();
@@ -230,6 +240,7 @@
     const payload: ChatSendPayload = {
       prompt: text || ATTACHMENT_ONLY_PROMPT,
       attachments: toSendAttachments(),
+      mode: agentMode,
     };
 
     prompt = "";
@@ -386,7 +397,7 @@
       draggingFiles
         ? "border-primary-500 bg-dark-bg1"
         : "border-dark-border bg-dark-bgS/80"
-    }`}
+    } focus-within:border-dark-orange2/50`}
     ondragenter={handleDragEnter}
     ondragover={handleDragOver}
     ondragleave={handleDragLeave}
@@ -562,49 +573,74 @@
         </div>
       </div>
 
-      {#if busy}
-        <button
-          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-dark-fg2 bg-dark-fg2 text-dark-border transition-colors duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={stopping}
-          onclick={() => void onStop()}
-          aria-label={stopping ? "Stopping agent turn" : "Stop agent turn"}
-          title={stopping ? "Stopping" : "Stop"}
+      <div class="flex items-center gap-2">
+        <div
+          class="inline-flex items-center gap-2 rounded-md border border-dark-border px-2 py-1"
+          role="group"
+          aria-label="Agent mode"
         >
-          {#if stopping}
-            <LoaderCircle
-              class="block h-4 w-4 animate-spin"
+          <span class="text-xs font-medium text-dark-fg3">Mode</span>
+          <button
+            type="button"
+            class={`inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium transition-colors ${
+              agentMode === "build"
+                ? "border-dark-blue bg-dark-blue text-dark-bg"
+                : "border-dark-green bg-dark-green text-dark-bg"
+            }`}
+            disabled={busy}
+            onclick={() =>
+              onAgentModeChange(agentMode === "build" ? "plan" : "build")}
+            aria-pressed={true}
+            title={`Switch to ${agentMode === "build" ? "Plan" : "Build"} mode`}
+          >
+            {agentMode === "build" ? "Build" : "Plan"}
+          </button>
+        </div>
+
+        {#if busy}
+          <button
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-dark-fg2 bg-dark-fg2 text-dark-border transition-colors duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={stopping}
+            onclick={() => void onStop()}
+            aria-label={stopping ? "Stopping agent turn" : "Stop agent turn"}
+            title={stopping ? "Stopping" : "Stop"}
+          >
+            {#if stopping}
+              <LoaderCircle
+                class="block h-4 w-4 animate-spin"
+                size={16}
+                color="currentColor"
+                strokeWidth={2.2}
+              />
+            {:else}
+              <Square
+                class="block h-4 w-4"
+                size={16}
+                color="currentColor"
+                strokeWidth={2.2}
+              />
+            {/if}
+          </button>
+        {:else}
+          <button
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-dark-fg2 bg-dark-fg2 text-dark-border transition-colors duration-150 hover:opacity-90"
+            class:cursor-not-allowed={!canSend}
+            class:opacity-60={!canSend}
+            class:pointer-events-none={!canSend}
+            aria-disabled={!canSend}
+            onclick={submit}
+            aria-label="Send prompt"
+            title="Send"
+          >
+            <ArrowUp
+              class="block h-5 w-5"
               size={16}
               color="currentColor"
               strokeWidth={2.2}
             />
-          {:else}
-            <Square
-              class="block h-4 w-4"
-              size={16}
-              color="currentColor"
-              strokeWidth={2.2}
-            />
-          {/if}
-        </button>
-      {:else}
-        <button
-          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-dark-fg2 bg-dark-fg2 text-dark-border transition-colors duration-150 hover:opacity-90"
-          class:cursor-not-allowed={!canSend}
-          class:opacity-60={!canSend}
-          class:pointer-events-none={!canSend}
-          aria-disabled={!canSend}
-          onclick={submit}
-          aria-label="Send prompt"
-          title="Send"
-        >
-          <ArrowUp
-            class="block h-5 w-5"
-            size={16}
-            color="currentColor"
-            strokeWidth={2.2}
-          />
-        </button>
-      {/if}
+          </button>
+        {/if}
+      </div>
     </div>
   </div>
 </div>

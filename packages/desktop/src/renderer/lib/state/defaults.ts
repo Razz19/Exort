@@ -135,6 +135,7 @@ export function createDefaultWorkspaceState(rootPath: string, workspaceName = ''
     rootPath,
     workspaceName,
     lastOpenedAt: new Date(0).toISOString(),
+    agentMode: 'build',
     boardFqbn: '',
     boardOptionSelections: {},
     serialPort: '',
@@ -238,6 +239,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
   const persistedRoot = asNonBlankString(candidate.rootPath) ?? rootPath;
   const workspaceName = asNonBlankString(candidate.workspaceName) ?? '';
   const lastOpenedAt = asNonBlankString(candidate.lastOpenedAt) ?? defaults.lastOpenedAt;
+  const agentMode = candidate.agentMode === 'plan' ? 'plan' : 'build';
   const boardFqbn = asNonBlankString(candidate.boardFqbn) ?? '';
   const boardOptionSelections = asStringRecord(candidate.boardOptionSelections);
   const serialPort = asNonBlankString(candidate.serialPort) ?? '';
@@ -260,6 +262,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
     rootPath: persistedRoot,
     workspaceName,
     lastOpenedAt,
+    agentMode,
     boardFqbn,
     boardOptionSelections,
     serialPort,

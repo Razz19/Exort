@@ -74,6 +74,7 @@ export type WorkspaceState = {
   rootPath: string;
   workspaceName: string;
   lastOpenedAt: string;
+  agentMode: "build" | "plan";
   boardFqbn: string;
   boardOptionSelections: Record<string, string>;
   serialPort: string;

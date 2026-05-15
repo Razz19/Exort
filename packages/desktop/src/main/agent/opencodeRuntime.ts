@@ -171,6 +171,7 @@ type RunOpenCodeTurnParams = {
   prompt: string;
   attachments?: OpenCodePromptAttachment[];
   sessionId?: string;
+  agent?: string;
   model?: {
     providerID: string;
     modelID: string;
@@ -229,6 +230,17 @@ function logSessionHighlight(log: ((line: string) => void) | undefined, sessionI
   if (loggedSessionIds.has(sessionId)) return;
   loggedSessionIds.add(sessionId);
   log(`\u001b[33msession:active id=${sessionId} workspace=${workspaceRoot}\u001b[0m`);
+}
+
+function isPlanAgentUnavailableError(message: string): boolean {
+  const normalized = message.trim().toLowerCase();
+  if (!normalized.includes('agent') || !normalized.includes('plan')) return false;
+  return (
+    normalized.includes('not found') ||
+    normalized.includes('unknown agent') ||
+    normalized.includes('unavailable') ||
+    normalized.includes('does not exist')
+  );
 }
 
 function isArduinoCompileToolName(toolName: string): boolean {
@@ -2475,6 +2487,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     emitSafeLog(params.onLog, line);
   };
   const usingExplicitProviderModel = Boolean(params.model?.providerID && params.model?.modelID);
+  const requestedAgent = getFirstNonBlankString(params.agent);
 
   const toolNames = new Map<string, string>();
   const toolPermissionContext = new Map<string, string>();
@@ -2680,9 +2693,15 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     } else {
       log(`prompt:model provider=default model=${OPEN_CODE_MODEL}`);
     }
+    if (requestedAgent) {
+      log(`prompt:agent name=${requestedAgent}`);
+    }
     let response: unknown;
     let usedPromptAsync = false;
-    try {
+    const sendPromptAttempt = async (agentName: string | null): Promise<{
+      response: unknown;
+      usedPromptAsync: boolean;
+    }> => {
       const parts = buildPromptParts(params.prompt, params.attachments);
       const promptBody: Record<string, unknown> = {
         parts
@@ -2692,6 +2711,9 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
           providerID: params.model.providerID,
           modelID: params.model.modelID
         };
+      }
+      if (agentName) {
+        promptBody.agent = agentName;
       }
 
       const promptPayload = {
@@ -2713,53 +2735,76 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
       }
 
       const promptAsync = runtime.client.session.promptAsync;
+      let attemptResponse: unknown;
+      let attemptUsedPromptAsync = false;
       if (typeof promptAsync === 'function') {
-        usedPromptAsync = true;
+        attemptUsedPromptAsync = true;
         log('prompt:mode async');
-        response = await promptAsync(promptPayload, {
+        attemptResponse = await promptAsync(promptPayload, {
           signal: params.signal
         });
       } else {
         log('prompt:mode sync');
-        response = await runtime.client.session.prompt({
+        attemptResponse = await runtime.client.session.prompt({
           ...promptPayload,
           variant: typeof promptBody.variant === 'string' ? promptBody.variant : undefined
         }, {
           signal: params.signal
         });
       }
+      const responseError = getResponseErrorMessage(attemptResponse);
+      if (responseError) {
+        log(`prompt:response:error ${serializeForLog(responseError, 2000)}`);
+        throw new Error(responseError);
+      }
+
+      return {
+        response: attemptResponse,
+        usedPromptAsync: attemptUsedPromptAsync
+      };
+    };
+
+    try {
+      const attempt = await sendPromptAttempt(requestedAgent);
+      response = attempt.response;
+      usedPromptAsync = attempt.usedPromptAsync;
     } catch (error) {
       if (params.signal.aborted || isAbortLikeError(error)) {
         log('prompt:aborted');
         throw new Error('Turn cancelled');
       }
-      log(`prompt:error ${getErrorMessage(error)}`);
-      throw error;
-    }
 
-    const responseError = getResponseErrorMessage(response);
-    if (responseError) {
-      log(`prompt:response:error ${serializeForLog(responseError, 2000)}`);
-      throw new Error(responseError);
+      const message = getErrorMessage(error);
+      const canFallbackToBuild =
+        requestedAgent === 'plan' && isPlanAgentUnavailableError(message);
+      if (!canFallbackToBuild) {
+        log(`prompt:error ${message}`);
+        throw error;
+      }
+
+      log(`prompt:agent-fallback from=plan to=build reason=${serializeForLog(message, 2000)}`);
+      const fallbackAttempt = await sendPromptAttempt('build');
+      response = fallbackAttempt.response;
+      usedPromptAsync = fallbackAttempt.usedPromptAsync;
     }
 
     emitTaskFromFinalResponse(response, emitTask);
     emitFallbackFromFinalResponse(response, handleEvent, streamedAnyContent);
-    const fallbackParts = extractFinalResponseParts(response);
+    const finalResponseParts = extractFinalResponseParts(response);
     log(
-      `prompt:response:summary parts=${fallbackParts.length} streamed=${streamedAnyContent ? 'yes' : 'no'} events=${parsedEventCount}`
+      `prompt:response:summary parts=${finalResponseParts.length} streamed=${streamedAnyContent ? 'yes' : 'no'} events=${parsedEventCount}`
     );
     log('prompt:response-received');
 
     if (usedPromptAsync) {
       log('prompt:awaiting-stream');
       await streamSettled;
-    } else if (!streamFinished && !streamedAnyContent && fallbackParts.length === 0) {
+    } else if (!streamFinished && !streamedAnyContent && finalResponseParts.length === 0) {
       log('prompt:response:empty-await-stream');
       await Promise.race([streamSettled, wait(1500)]);
     }
 
-    if (!usedPromptAsync && !streamFinished && !streamedAnyContent && fallbackParts.length === 0) {
+    if (!usedPromptAsync && !streamFinished && !streamedAnyContent && finalResponseParts.length === 0) {
       const emptyMessage = usingExplicitProviderModel
         ? 'Agent returned no response. Check Settings > Providers and reconnect your selected provider.'
         : 'Agent returned no response from ExortAI default model (big-pickle). Retry once, then restart the app if it persists.';

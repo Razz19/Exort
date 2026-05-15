@@ -181,6 +181,7 @@
     activeWorkspaceState?.expandedDirKeys ?? [],
   );
   let activePaneTab = $derived(activeWorkspaceState?.activePaneTab ?? "code");
+  let activeAgentMode = $derived(activeWorkspaceState?.agentMode ?? "build");
   let activeFile = $derived(
     activeFilePath ? (openFiles[activeFilePath] ?? null) : null,
   );
@@ -358,6 +359,13 @@
     persistWorkspaceMetadata(activeWorkspace, {
       openFileOrder: workspaceOpenFileOrder,
       activeFilePath: normalizedActiveFilePath,
+    });
+  }
+
+  function handleAgentModeChange(mode: "build" | "plan"): void {
+    if (!activeWorkspace) return;
+    persistWorkspaceMetadata(activeWorkspace, {
+      agentMode: mode,
     });
   }
 
@@ -2055,6 +2063,7 @@
 
     const prompt = payload.prompt.trim();
     const attachments = payload.attachments;
+    const turnAgent = payload.mode;
     const turnWorkspaceRoot = activeWorkspace.rootPath;
     const turnWorkspaceId = activeWorkspace.id;
     const turnSessionId = normalizeSessionId(
@@ -2397,6 +2406,7 @@
         prompt,
         attachments,
         sessionId: turnSessionId ?? undefined,
+        agent: turnAgent,
         model: turnModelOverride,
       });
 
@@ -2545,7 +2555,9 @@
             busy={agentBusy}
             stopping={stoppingAgentTurn}
             sessionStatus={activeChatSessionStatus}
+            agentMode={activeAgentMode}
             onSend={sendPrompt}
+            onAgentModeChange={handleAgentModeChange}
             onStop={stopAgentTurn}
             onNewSession={createNewSession}
             onOpenWorkspace={openFolder}

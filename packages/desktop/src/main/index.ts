@@ -96,6 +96,7 @@ type WorkspaceState = {
   rootPath: string;
   workspaceName: string;
   lastOpenedAt: string;
+  agentMode: 'build' | 'plan';
   boardFqbn: string;
   boardOptionSelections: Record<string, string>;
   serialPort: string;
@@ -317,6 +318,7 @@ function createDefaultWorkspaceState(rootPath: string, workspaceName = ''): Work
     rootPath,
     workspaceName,
     lastOpenedAt: new Date(0).toISOString(),
+    agentMode: 'build',
     boardFqbn: '',
     boardOptionSelections: {},
     serialPort: '',
@@ -423,6 +425,7 @@ function sanitizeWorkspaceState(input: unknown, rootPath: string): WorkspaceStat
     rootPath: persistedRoot,
     workspaceName: asNonBlankString(candidate.workspaceName) ?? '',
     lastOpenedAt: asNonBlankString(candidate.lastOpenedAt) ?? defaults.lastOpenedAt,
+    agentMode: candidate.agentMode === 'plan' ? 'plan' : 'build',
     boardFqbn: asNonBlankString(candidate.boardFqbn) ?? '',
     boardOptionSelections: asStringRecord(candidate.boardOptionSelections),
     serialPort: asNonBlankString(candidate.serialPort) ?? '',
@@ -1557,6 +1560,7 @@ app.whenReady().then(() => {
         prompt: string;
         attachments?: OpenCodePromptAttachment[];
         sessionId?: string;
+        agent?: string;
         model?: {
           providerID: string;
           modelID: string;
@@ -1590,6 +1594,7 @@ app.whenReady().then(() => {
           prompt: payload.prompt,
           attachments: payload.attachments,
           sessionId: payload.sessionId,
+          agent: payload.agent,
           model: payload.model,
           signal: abortController.signal,
           onEvent: sendEvent,
