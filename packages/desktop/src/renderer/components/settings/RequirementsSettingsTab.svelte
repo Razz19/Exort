@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import {
     CheckCircle2,
+    ChevronDown,
+    ChevronRight,
     Download,
     Loader,
     RefreshCw,
@@ -39,9 +41,11 @@
   let refreshBusy = $state(false);
   let installAllBusy = $state(false);
   let installingIds = $state<Partial<Record<RequirementId, true>>>({});
+  let expandedInfoIds = $state<Partial<Record<RequirementId, true>>>({});
+  let installProgress = $state<Partial<Record<RequirementId, number>>>({});
   let errorMessage = $state<string | null>(null);
-  let statusMessage = $state<string | null>(null);
   let manualCommands = $state<string[]>([]);
+  const progressTimers = new Map<RequirementId, number>();
 
   let requirements = $derived(requirementsState.requirements);
   let loading = $derived(requirementsState.loading);
@@ -65,6 +69,13 @@
     return () => {
       unsubscribe();
     };
+  });
+
+  onDestroy(() => {
+    for (const timer of progressTimers.values()) {
+      window.clearInterval(timer);
+    }
+    progressTimers.clear();
   });
 
   function normalizeStatusMessage(input: string): string {
@@ -92,14 +103,6 @@
   function getVersionText(status: RequirementStatus | undefined): string {
     if (!status) return "Checking...";
     return status.version ?? "Not found";
-  }
-
-  function getDetailsText(
-    status: RequirementStatus | undefined,
-  ): string | null {
-    if (!status || status.installed) return null;
-    if (!status.details) return null;
-    return normalizeStatusText(status.details);
   }
 
   function getRequirementMetaLines(
@@ -150,6 +153,64 @@
     return lines;
   }
 
+  function toggleInfo(id: RequirementId): void {
+    expandedInfoIds = {
+      ...expandedInfoIds,
+      [id]: expandedInfoIds[id] ? undefined : true,
+    };
+  }
+
+  function setInstalling(id: RequirementId, installing: boolean): void {
+    if (installing) {
+      installingIds = {
+        ...installingIds,
+        [id]: true,
+      };
+      return;
+    }
+
+    const next = { ...installingIds };
+    delete next[id];
+    installingIds = next;
+  }
+
+  function setProgress(id: RequirementId, value: number): void {
+    installProgress = {
+      ...installProgress,
+      [id]: Math.max(0, Math.min(100, Math.round(value))),
+    };
+  }
+
+  function clearProgress(id: RequirementId): void {
+    const next = { ...installProgress };
+    delete next[id];
+    installProgress = next;
+  }
+
+  function stopProgressTimer(id: RequirementId): void {
+    const timer = progressTimers.get(id);
+    if (!timer) return;
+    window.clearInterval(timer);
+    progressTimers.delete(id);
+  }
+
+  function startProgress(id: RequirementId): void {
+    stopProgressTimer(id);
+    setProgress(id, 8);
+
+    const timer = window.setInterval(() => {
+      const current = installProgress[id] ?? 8;
+      if (current >= 92) return;
+      setProgress(id, current + Math.max(1, (92 - current) * 0.12));
+    }, 300);
+    progressTimers.set(id, timer);
+  }
+
+  function finishProgress(id: RequirementId): void {
+    stopProgressTimer(id);
+    setProgress(id, 100);
+  }
+
   async function loadRequirements(
     options: { refresh?: boolean } = {},
   ): Promise<void> {
@@ -158,8 +219,6 @@
     if (refresh) {
       if (refreshBusy) return;
       refreshBusy = true;
-    } else {
-      loading = true;
     }
 
     errorMessage = null;
@@ -180,10 +239,6 @@
       onRequirementsUpdated(nextRequirements);
     }
     if (refresh) {
-      statusMessage = normalizeStatusMessage("Requirements status refreshed.");
-    }
-
-    if (refresh) {
       refreshBusy = false;
     }
   }
@@ -199,9 +254,6 @@
 
     const result = response.result;
     if (result.ok) {
-      statusMessage = normalizeStatusMessage(
-        formatRequirementInstallMessage(id, result.message),
-      );
       return true;
     }
 
@@ -218,25 +270,23 @@
     const currentStatus = requirementMap[id];
     if (currentStatus?.installed) return;
 
-    installingIds = {
-      ...installingIds,
-      [id]: true,
-    };
+    setInstalling(id, true);
+    startProgress(id);
     errorMessage = null;
-    statusMessage = null;
     manualCommands = [];
 
     try {
-      await installRequirement(id);
+      const installed = await installRequirement(id);
+      if (installed) finishProgress(id);
       await loadRequirements();
     } catch (error) {
       errorMessage = normalizeStatusMessage(
         error instanceof Error ? error.message : `Failed to install ${id}.`,
       );
     } finally {
-      const next = { ...installingIds };
-      delete next[id];
-      installingIds = next;
+      stopProgressTimer(id);
+      setInstalling(id, false);
+      clearProgress(id);
     }
   }
 
@@ -245,27 +295,20 @@
 
     installAllBusy = true;
     errorMessage = null;
-    statusMessage = null;
     manualCommands = [];
-    installingIds = Object.fromEntries(
-      missingRequirementIds.map((id) => [id, true]),
-    ) as Partial<Record<RequirementId, true>>;
 
-    let installedCount = 0;
     try {
       for (const id of missingRequirementIds) {
+        setInstalling(id, true);
+        startProgress(id);
         const installed = await installRequirement(id);
-        if (installed) installedCount += 1;
+        if (installed) finishProgress(id);
+        stopProgressTimer(id);
+        setInstalling(id, false);
+        clearProgress(id);
       }
 
       await loadRequirements();
-      if (!errorMessage) {
-        statusMessage = normalizeStatusMessage(
-          installedCount === 0
-            ? "No requirements were installed."
-            : `Installed ${installedCount} requirement${installedCount === 1 ? "" : "s"}.`,
-        );
-      }
     } catch (error) {
       errorMessage = normalizeStatusMessage(
         error instanceof Error
@@ -274,7 +317,11 @@
       );
     } finally {
       installAllBusy = false;
+      for (const id of requirementOrder) {
+        stopProgressTimer(id);
+      }
       installingIds = {};
+      installProgress = {};
     }
   }
 </script>
@@ -322,9 +369,6 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2 text-[11px] text-dark-fg3">
-      <span class="rounded border border-dark-border bg-dark-surface px-2 py-1">
-        Tracked: {requirementOrder.length}
-      </span>
       {#if loading}
         <span
           class="inline-flex items-center gap-1 rounded border border-dark-border bg-dark-surface px-2 py-1"
@@ -341,14 +385,6 @@
       class="rounded-md border border-dark-red/40 bg-dark-red/15 px-3 py-2 text-sm text-dark-red2"
     >
       {errorMessage}
-    </div>
-  {/if}
-
-  {#if statusMessage}
-    <div
-      class="rounded-md border border-dark-green/40 bg-dark-green/15 px-3 py-2 text-sm text-dark-green2"
-    >
-      {statusMessage}
     </div>
   {/if}
 
@@ -372,6 +408,8 @@
       {@const installing = !!installingIds[id]}
       {@const installed = status?.installed === true}
       {@const metaLines = getRequirementMetaLines(id, status)}
+      {@const expanded = !!expandedInfoIds[id]}
+      {@const progress = installProgress[id] ?? 0}
       <section class="card flex flex-col gap-2 px-3 py-2.5">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
@@ -405,6 +443,23 @@
           </span>
         </div>
 
+        {#if installing}
+          <div class="rounded">
+            <div
+              class="flex items-center justify-between gap-3 text-[11px] text-dark-fg3"
+            >
+              <span>Downloading and installing...</span>
+              <span>{progress}%</span>
+            </div>
+            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-dark-bg2">
+              <div
+                class="h-full rounded-full bg-primary-600 transition-[width] duration-300"
+                style={`width: ${progress}%`}
+              ></div>
+            </div>
+          </div>
+        {/if}
+
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="inline-flex items-center gap-2 text-xs text-dark-fg3">
             <Wrench class="h-3.5 w-3.5" />
@@ -429,22 +484,31 @@
           {/if}
         </div>
 
-        {#if getDetailsText(status)}
-          <p
-            class="rounded border border-dark-border bg-dark-bg px-2 py-1 text-[11px] text-dark-fg3"
-          >
-            {getDetailsText(status)}
-          </p>
-        {/if}
-
         {#if metaLines.length > 0}
-          <div
-            class="rounded border border-dark-border bg-dark-bg px-2 py-1 text-[11px] text-dark-fg3"
+          <button
+            class="inline-flex w-fit items-center gap-1 rounded-md text-xs
+             text-dark-fg3 hover:text-dark-fg"
+            onclick={() => toggleInfo(id)}
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Hide" : "Show"} ${requirementDisplayNames[id]} information`}
           >
-            {#each metaLines as line (line)}
-              <p class="break-all">{line}</p>
-            {/each}
-          </div>
+            {#if expanded}
+              <ChevronDown class="h-3.5 w-3.5" />
+            {:else}
+              <ChevronRight class="h-3.5 w-3.5" />
+            {/if}
+            <span>Info</span>
+          </button>
+
+          {#if expanded}
+            <div
+              class="rounded border border-dark-border bg-dark-bg px-2 py-1 text-[11px] text-dark-fg3"
+            >
+              {#each metaLines as line (line)}
+                <p class="break-all">{line}</p>
+              {/each}
+            </div>
+          {/if}
         {/if}
       </section>
     {/each}
