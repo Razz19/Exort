@@ -21,6 +21,25 @@ export type SelectedModelRef = {
   modelId: string;
 };
 
+export type RuntimeRequirementId = "opencode" | "arduino-cli";
+
+export type RuntimeRequirementStatus = {
+  id: RuntimeRequirementId;
+  label: string;
+  installed: boolean;
+  version: string | null;
+  checkedAt: string;
+  details?: string;
+  provisionDiagnostics?: string;
+  binaryPath?: string;
+  source?: "managed" | "system";
+  managedVersion?: string;
+  runtimeDataRoot?: string;
+  runtimeConfigRoot?: string;
+  runtimeStateRoot?: string;
+  isolated?: boolean;
+};
+
 export type AppState = {
   version: typeof APP_STATE_VERSION;
   activeWorkspaceRoot: string | null;
@@ -40,6 +59,13 @@ export type AppState = {
   providers: {
     selectedModel: SelectedModelRef | null;
   };
+};
+
+export type RequirementsState = {
+  requirements: RuntimeRequirementStatus[];
+  loading: boolean;
+  error: string | null;
+  checkedAt: string | null;
 };
 
 export type PaneTab = "code" | "monitor";

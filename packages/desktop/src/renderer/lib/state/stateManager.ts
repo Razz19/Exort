@@ -9,7 +9,14 @@ import {
   sanitizeWorkspaceState,
   MAX_RECENT_WORKSPACES
 } from './defaults';
-import type { AppState, StateBootstrap, WorkspaceManagerState, WorkspaceState } from './types';
+import type {
+  AppState,
+  RuntimeRequirementStatus,
+  RequirementsState,
+  StateBootstrap,
+  WorkspaceManagerState,
+  WorkspaceState
+} from './types';
 
 type AppStatePatch = {
   activeWorkspaceRoot?: string | null;
@@ -36,6 +43,12 @@ type WorkspaceManagerStatePatch = Partial<WorkspaceManagerState>;
 
 export const appStateStore = writable<AppState>(createDefaultAppState());
 export const workspaceManagerStore = writable<WorkspaceManagerState>(createDefaultWorkspaceManagerState());
+export const requirementsStore = writable<RequirementsState>({
+  requirements: [],
+  loading: false,
+  error: null,
+  checkedAt: null
+});
 
 let hydrated = false;
 let hydrating = false;
@@ -90,6 +103,54 @@ export async function hydrateStateManager(): Promise<void> {
     hydrated = true;
   } finally {
     hydrating = false;
+  }
+}
+
+export function setRequirementsStatus(requirements: RuntimeRequirementStatus[]): void {
+  requirementsStore.set({
+    requirements,
+    loading: false,
+    error: null,
+    checkedAt: new Date().toISOString()
+  });
+}
+
+export async function refreshRequirementsStatus(): Promise<{
+  ok: boolean;
+  requirements?: RuntimeRequirementStatus[];
+  error?: string;
+}> {
+  requirementsStore.update((current) => ({
+    ...current,
+    loading: true,
+    error: null
+  }));
+
+  try {
+    const response = await window.electronAPI.getRequirementsStatus();
+    if (!response.ok) {
+      const error = response.error ?? 'Failed to load requirements status.';
+      requirementsStore.update((current) => ({
+        ...current,
+        loading: false,
+        error,
+        checkedAt: new Date().toISOString()
+      }));
+      return { ok: false, error };
+    }
+
+    const requirements = response.requirements ?? [];
+    setRequirementsStatus(requirements);
+    return { ok: true, requirements };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load requirements status.';
+    requirementsStore.update((current) => ({
+      ...current,
+      loading: false,
+      error: message,
+      checkedAt: new Date().toISOString()
+    }));
+    return { ok: false, error: message };
   }
 }
 

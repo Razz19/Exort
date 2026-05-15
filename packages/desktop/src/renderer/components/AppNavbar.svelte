@@ -125,7 +125,6 @@
   let uploadRequestId = $state<string | null>(null);
   let portsError = $state<string | null>(null);
   let boardsError = $state<string | null>(null);
-  let arduinoCliInstalled = $state<boolean | null>(null);
   let portsDropdownOpen = $state(false);
   let boardsDropdownOpen = $state(false);
   let boardSettingsDropdownOpen = $state(false);
@@ -255,24 +254,26 @@
     if (!selectedBoardFqbn) return "Select a board first";
     return "Configure board-specific settings";
   });
-  let arduinoCliMissingFromErrors = $derived.by(() => {
-    const missingPattern = "arduino-cli not found in path";
-    return [portsError, boardsError].some((message) =>
-      message?.toLowerCase().includes(missingPattern),
-    );
-  });
   let navbarErrorMessage = $derived.by(() => {
-    if (arduinoCliInstalled === false || arduinoCliMissingFromErrors) {
-      return "Arduino CLI is not installed, you can install it in the settings";
-    }
-
     const messages = [
-      portsError ? `Ports: ${portsError}` : null,
-      boardsError ? `Boards: ${boardsError}` : null,
+      portsError && !isArduinoCliMissingError(portsError)
+        ? `Ports: ${portsError}`
+        : null,
+      boardsError && !isArduinoCliMissingError(boardsError)
+        ? `Boards: ${boardsError}`
+        : null,
     ].filter((value): value is string => value !== null);
 
     return messages.length > 0 ? messages.join(" ") : null;
   });
+
+  function isArduinoCliMissingError(message: string): boolean {
+    const normalized = message.toLowerCase();
+    return (
+      normalized.includes("arduino-cli not found in path") ||
+      normalized.includes("arduino cli is not installed")
+    );
+  }
 
   function getSelectedBoardOptionValues(
     details: ArduinoBoardDetails | null,
@@ -641,29 +642,8 @@
     }
   }
 
-  async function refreshArduinoCliRequirement(): Promise<void> {
-    try {
-      const response = await window.electronAPI.getRequirementsStatus();
-      if (!response.ok) {
-        arduinoCliInstalled = null;
-        return;
-      }
-
-      const arduinoCliStatus = response.requirements?.find(
-        (requirement) => requirement.id === "arduino-cli",
-      );
-      arduinoCliInstalled = arduinoCliStatus?.installed ?? null;
-    } catch {
-      arduinoCliInstalled = null;
-    }
-  }
-
   async function refreshArduinoEnvironment(): Promise<void> {
-    await Promise.all([
-      refreshArduinoCliRequirement(),
-      refreshPorts(),
-      refreshBoards(),
-    ]);
+    await Promise.all([refreshPorts(), refreshBoards()]);
   }
 
   async function compileActiveSketch(): Promise<void> {

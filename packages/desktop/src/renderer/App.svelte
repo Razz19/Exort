@@ -6,6 +6,7 @@
   import OutputWindow from "./components/OutputWindow.svelte";
   import PaneManager from "./components/Panes/PaneManager.svelte";
   import SettingsModal from "./components/settings/SettingsModal.svelte";
+  import ToastHost from "./components/toast/ToastHost.svelte";
   import WorkspaceBar from "./components/WorkspaceBar.svelte";
   import {
     applyRuntimeEventToSyncState,
@@ -46,11 +47,13 @@
     hydrateStateManager,
     patchAppState,
     patchWorkspaceManagerState,
+    refreshRequirementsStatus,
     touchRecentWorkspace,
     upsertWorkspaceState,
     workspaceManagerStore,
   } from "./lib/state/stateManager";
   import type { ChatFontSizePreset, MonacoThemeId } from "./lib/state/types";
+  import type { ToastMessage } from "./components/toast/types";
   import type {
     AgentPermissionReply,
     AgentPendingInterrupts,
@@ -69,7 +72,7 @@
   } from "./lib/types";
 
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
-  type SettingsTab = "general" | "providers" | "boards";
+  type SettingsTab = "general" | "requirements" | "providers" | "boards";
 
   function buildEffectiveBoardFqbn(
     baseFqbn: string,
@@ -125,6 +128,7 @@
   let settingsModalOpen = $state(false);
   let navbarOverlayOpen = $state(false);
   let settingsModalTab = $state<SettingsTab>("general");
+  let toasts = $state<ToastMessage[]>([]);
   let arduinoEnvironmentRefreshKey = $state(0);
   let outputRun = $state<ArduinoOutputRun | null>(null);
   let draggingSplitter = $state<"outer" | "inner" | null>(null);
@@ -132,6 +136,8 @@
   let innerSplitContainerEl = $state<HTMLDivElement | null>(null);
   let watchedWorkspaceRoot: string | null = null;
   let workspaceWatchRequestId = 0;
+  let requirementsStartupToastChecked = false;
+  const toastActions = new Map<string, () => void>();
 
   let activeWorkspace = $derived(
     workspaces.find((item) => item.id === activeWorkspaceId) ?? null,
@@ -531,6 +537,7 @@
     }
 
     await initializeSavedWorkspaces();
+    void checkRequirementsForStartupToast();
     if (statusText === "Local mode") {
       statusText = "Local mode ready";
     }
@@ -655,6 +662,8 @@
       settingsModalTab = "boards";
     } else if (initialTab === "providers") {
       settingsModalTab = "providers";
+    } else if (initialTab === "requirements") {
+      settingsModalTab = "requirements";
     } else {
       settingsModalTab = "general";
     }
@@ -665,10 +674,87 @@
     settingsModalOpen = false;
   }
 
+  function showToast(
+    toast: Omit<ToastMessage, "id"> & {
+      id?: string;
+      onAction?: () => void;
+    },
+  ): string {
+    const id =
+      toast.id ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    const nextToast: ToastMessage = {
+      id,
+      title: toast.title,
+      message: toast.message,
+      variant: toast.variant,
+      actionLabel: toast.actionLabel,
+    };
+
+    toasts = [...toasts.filter((item) => item.id !== id), nextToast];
+    if (toast.onAction) {
+      toastActions.set(id, toast.onAction);
+    } else {
+      toastActions.delete(id);
+    }
+    return id;
+  }
+
+  function dismissToast(id: string): void {
+    toasts = toasts.filter((toast) => toast.id !== id);
+    toastActions.delete(id);
+  }
+
+  function runToastAction(id: string): void {
+    const action = toastActions.get(id);
+    dismissToast(id);
+    action?.();
+  }
+
+  function formatMissingRequirementNames(
+    missingRequirements: RequirementStatus[],
+  ): string {
+    const names = missingRequirements.map((requirement) => requirement.label);
+    if (names.length <= 1) return names[0] ?? "requirements";
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+    return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+  }
+
+  async function checkRequirementsForStartupToast(): Promise<void> {
+    if (requirementsStartupToastChecked) return;
+    requirementsStartupToastChecked = true;
+
+    try {
+      const response = await refreshRequirementsStatus();
+      if (!response.ok) return;
+
+      const missingRequirements = (response.requirements ?? []).filter(
+        (requirement) => !requirement.installed,
+      );
+      if (missingRequirements.length === 0) return;
+
+      showToast({
+        id: "missing-requirements",
+        title: "Requirements missing",
+        message: `${formatMissingRequirementNames(missingRequirements)} missing.`,
+        variant: "warning",
+        actionLabel: "Open Requirements",
+        onAction: () => openSettingsModal("requirements"),
+      });
+    } catch {
+      // Startup status is advisory; feature-specific errors and Settings handle failures.
+    }
+  }
+
   function handleRequirementsUpdated(requirements: RequirementStatus[]): void {
     const hasArduinoCliStatus = requirements.some(
       (requirement) => requirement.id === "arduino-cli",
     );
+    if (requirements.length > 0 && requirements.every((item) => item.installed)) {
+      dismissToast("missing-requirements");
+    }
     if (!hasArduinoCliStatus) return;
     arduinoEnvironmentRefreshKey += 1;
   }
@@ -2486,6 +2572,12 @@
       />
     </div>
   </div>
+
+  <ToastHost
+    {toasts}
+    onDismiss={dismissToast}
+    onAction={runToastAction}
+  />
 
   {#if settingsModalOpen}
     <SettingsModal

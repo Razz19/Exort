@@ -1,10 +1,19 @@
 <script lang="ts">
-  import { BringToFront, Dice6, MonitorCog, X } from "lucide-svelte";
+  import { onMount } from "svelte";
+  import {
+    BringToFront,
+    Dice6,
+    MonitorCog,
+    PackageCheck,
+    X,
+  } from "lucide-svelte";
   import BoardsSettingsTab from "./BoardsSettingsTab.svelte";
   import GeneralSettingsTab from "./GeneralSettingsTab.svelte";
   import ProvidersSettingsTab from "./ProvidersSettingsTab.svelte";
+  import RequirementsSettingsTab from "./RequirementsSettingsTab.svelte";
+  import { requirementsStore } from "../../lib/state/stateManager";
 
-  type SettingsTab = "general" | "providers" | "boards";
+  type SettingsTab = "general" | "requirements" | "providers" | "boards";
 
   let {
     onClose,
@@ -19,6 +28,7 @@
   }>();
 
   let activeTab = $state<SettingsTab>("general");
+  let requirements = $state<RequirementStatus[]>([]);
 
   const tabs: Array<{
     id: SettingsTab;
@@ -26,12 +36,26 @@
     icon: typeof X;
   }> = [
     { id: "general", label: "General", icon: MonitorCog },
+    { id: "requirements", label: "Requirements", icon: PackageCheck },
     { id: "providers", label: "Providers", icon: BringToFront },
     { id: "boards", label: "Boards", icon: Dice6 },
   ];
   const activeTabLabel = $derived.by(
     () => tabs.find((tab) => tab.id === activeTab)?.label ?? "Settings",
   );
+  const missingRequirementsCount = $derived(
+    requirements.filter((requirement) => !requirement.installed).length,
+  );
+
+  onMount(() => {
+    const unsubscribe = requirementsStore.subscribe((state) => {
+      requirements = state.requirements;
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  });
 
   $effect(() => {
     activeTab = initialTab;
@@ -97,7 +121,14 @@
             aria-current={activeTab === tab.id ? "page" : undefined}
           >
             <tab.icon class="h-4 w-4 shrink-0" />
-            <span>{tab.label}</span>
+            <span class="min-w-0 truncate">{tab.label}</span>
+            {#if tab.id === "requirements" && missingRequirementsCount > 0}
+              <span
+                class="ml-auto h-2 w-2 shrink-0 rounded-full bg-dark-red"
+                aria-label={`${missingRequirementsCount} requirements missing`}
+                title={`${missingRequirementsCount} requirements missing`}
+              ></span>
+            {/if}
           </button>
         {/each}
       </nav>
@@ -120,7 +151,9 @@
 
       <div class="min-h-0 flex-1 overflow-y-auto p-5">
         {#if activeTab === "general"}
-          <GeneralSettingsTab {onRequirementsUpdated} />
+          <GeneralSettingsTab />
+        {:else if activeTab === "requirements"}
+          <RequirementsSettingsTab {onRequirementsUpdated} />
         {:else if activeTab === "providers"}
           <ProvidersSettingsTab {activeWorkspaceRoot} />
         {:else}
