@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
-  import { TriangleAlert, Info, X, CircleX } from "lucide-svelte";
+  import { TriangleAlert, Info, X, ShieldX } from "lucide-svelte";
   import type { ToastMessage } from "./types";
 
   let { toasts, onDismiss, onAction } = $props<{
@@ -21,61 +21,59 @@
 
   function getIcon(toast: ToastMessage): typeof Info {
     if (toast.variant === "warning") return TriangleAlert;
-    if (toast.variant === "error") return CircleX;
+    if (toast.variant === "error") return ShieldX;
     return Info;
   }
 
   function getIconClass(toast: ToastMessage): string {
-    if (toast.variant === "warning") return "text-dark-yellow2";
-    if (toast.variant === "error") return "text-dark-red2";
+    if (toast.variant === "warning") return "text-dark-yellow2/70";
+    if (toast.variant === "error") return "text-dark-red2/70";
     return "text-dark-gray";
   }
 </script>
 
-{#if toasts.length > 0}
-  <div
-    class="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2"
-    aria-live="polite"
-    aria-relevant="additions removals"
-  >
-    {#each toasts as toast (toast.id)}
-      {@const Icon = getIcon(toast)}
-      <section
-        class={`pointer-events-auto rounded-lg border px-3 py-3 shadow-xl backdrop-blur ${getToastClasses(toast)}`}
-        in:fly={{ x: 250, duration: 300 }}
-        out:fly={{ x: 250, duration: 300 }}
-        role={toast.variant === "error" || toast.variant === "warning"
-          ? "alert"
-          : "status"}
-      >
-        <div class="flex items-start gap-3">
-          <Icon class={`mt-0.5 h-4 w-4 shrink-0 ${getIconClass(toast)}`} />
-          <div class="min-w-0 flex-1">
-            <div class="flex items-start justify-between gap-2">
-              <p class="text-sm font-semibold text-dark-fg">{toast.title}</p>
-              <button
-                class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-dark-fg3
+<div
+  class="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2"
+  aria-live="polite"
+  aria-relevant="additions removals"
+>
+  {#each toasts as toast (toast.id)}
+    {@const Icon = getIcon(toast)}
+    <section
+      class={`pointer-events-auto rounded-lg border px-3 py-3 shadow-xl backdrop-blur ${getToastClasses(toast)}`}
+      in:fly={{ x: 250, duration: 300 }}
+      out:fly={{ x: 250, duration: 300 }}
+      role={toast.variant === "error" || toast.variant === "warning"
+        ? "alert"
+        : "status"}
+    >
+      <div class="flex items-start gap-3">
+        <Icon class={`mt-0.5 h-4 w-4 shrink-0 ${getIconClass(toast)}`} />
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-sm font-semibold text-dark-fg">{toast.title}</p>
+            <button
+              class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-dark-fg3
                 transition-colors hover:bg-dark-bg/40 hover:text-dark-fg"
-                onclick={() => onDismiss(toast.id)}
-                aria-label={`Dismiss ${toast.title}`}
-              >
-                <X class="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <p class="mt-1 text-xs leading-5 text-dark-fg2">{toast.message}</p>
-            {#if toast.actionLabel}
-              <button
-                class="mt-3 inline-flex h-8 items-center justify-center rounded-md border border-dark-border
+              onclick={() => onDismiss(toast.id)}
+              aria-label={`Dismiss ${toast.title}`}
+            >
+              <X class="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <p class="mt-1 text-xs leading-5 text-dark-fg2">{toast.message}</p>
+          {#if toast.actionLabel}
+            <button
+              class="mt-3 inline-flex h-8 items-center justify-center rounded-md border border-dark-border
                  bg-dark-bgS px-2.5 py-0 text-xs font-medium text-dark-fg2 transition-colors hover:border-dark-gray
                   hover:bg-dark-bg1 hover:text-dark-fg"
-                onclick={() => onAction(toast.id)}
-              >
-                {toast.actionLabel}
-              </button>
-            {/if}
-          </div>
+              onclick={() => onAction(toast.id)}
+            >
+              {toast.actionLabel}
+            </button>
+          {/if}
         </div>
-      </section>
-    {/each}
-  </div>
-{/if}
+      </div>
+    </section>
+  {/each}
+</div>
