@@ -156,6 +156,9 @@
   let fileManagerCollapsed = $derived(
     appStateSnapshot.layout.fileManagerCollapsed ?? false,
   );
+  let effectiveFileManagerCollapsed = $derived(
+    fileManagerCollapsed || !activeWorkspace,
+  );
   let monacoTheme = $derived<MonacoThemeId>(
     appStateSnapshot.appearance.monacoTheme,
   );
@@ -1588,6 +1591,8 @@
   }
 
   function handleFileManagerCollapsedChange(nextCollapsed: boolean): void {
+    if (!activeWorkspace && !nextCollapsed) return;
+
     patchAppState({
       layout: {
         fileManagerCollapsed: nextCollapsed,
@@ -2503,6 +2508,7 @@
             onSend={sendPrompt}
             onStop={stopAgentTurn}
             onNewSession={createNewSession}
+            onOpenWorkspace={openFolder}
             newSessionDisabled={sessionBusy ||
               agentBusy ||
               !activeWorkspace}
@@ -2538,7 +2544,7 @@
           {activePaneTab}
           onPaneTabChange={handlePaneTabChange}
           {editorWidthPct}
-          {fileManagerCollapsed}
+          fileManagerCollapsed={effectiveFileManagerCollapsed}
           {monacoTheme}
           {activeWorkspace}
           {workspaces}

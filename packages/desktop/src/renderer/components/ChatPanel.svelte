@@ -14,6 +14,7 @@
     onSend: (prompt: string) => void;
     onStop: () => Promise<void> | void;
     onNewSession: () => void;
+    onOpenWorkspace: () => Promise<void> | void;
     onCollapse?: () => Promise<void> | void;
     newSessionDisabled: boolean;
     onPermissionReply: (

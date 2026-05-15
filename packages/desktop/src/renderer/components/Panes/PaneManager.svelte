@@ -146,11 +146,14 @@
         type="button"
         class="mb-1 inline-flex h-7 w-7 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         onclick={() => onFileManagerCollapsedChange(!fileManagerCollapsed)}
+        disabled={!activeWorkspace}
         aria-label={fileManagerCollapsed
           ? "Expand file manager"
           : "Collapse file manager"}
         title={fileManagerCollapsed
-          ? "Expand file manager"
+          ? activeWorkspace
+            ? "Expand file manager"
+            : "Open a workspace to use file manager"
           : "Collapse file manager"}
       >
         {#if fileManagerCollapsed}

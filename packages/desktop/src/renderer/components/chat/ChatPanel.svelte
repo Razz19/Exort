@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Plus } from "lucide-svelte";
   import type { AgentPermissionReply, ChatItem } from "../../lib/types";
   import type { ChatFontSizePreset } from "../../lib/state/types";
   import ChatComposer from "./ChatComposer.svelte";
@@ -16,6 +17,7 @@
     onSend,
     onStop,
     onNewSession,
+    onOpenWorkspace,
     newSessionDisabled,
     onPermissionReply,
     onQuestionReply,
@@ -32,6 +34,7 @@
       onSend: (prompt: string) => void;
       onStop: () => Promise<void> | void;
       onNewSession: () => void;
+      onOpenWorkspace: () => Promise<void> | void;
       newSessionDisabled: boolean;
       onPermissionReply: (requestId: string, reply: AgentPermissionReply) => Promise<void> | void;
       onQuestionReply: (requestId: string, answers: string[][]) => Promise<void> | void;
@@ -48,13 +51,26 @@
     {onNewSession}
     {newSessionDisabled}
   />
-  <ChatTimeline
-    {messages}
-    {busy}
-    {sessionStatus}
-    {onPermissionReply}
-    {onQuestionReply}
-    {onQuestionReject}
-  />
-  <ChatComposer {activeWorkspaceRoot} {busy} {stopping} {onSend} {onStop} />
+  {#if activeWorkspaceRoot}
+    <ChatTimeline
+      {messages}
+      {busy}
+      {sessionStatus}
+      {onPermissionReply}
+      {onQuestionReply}
+      {onQuestionReject}
+    />
+    <ChatComposer {activeWorkspaceRoot} {busy} {stopping} {onSend} {onStop} />
+  {:else}
+    <div class="flex min-h-0 flex-1 items-center justify-center p-4">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-md border border-dark-yellow bg-dark-surface px-3 py-2 text-sm font-medium text-dark-yellow transition-colors hover:bg-dark-yellow/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        onclick={() => void onOpenWorkspace()}
+      >
+        <Plus class="h-4 w-4" />
+        <span>Open workspace</span>
+      </button>
+    </div>
+  {/if}
 </div>
