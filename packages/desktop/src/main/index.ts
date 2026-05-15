@@ -25,6 +25,7 @@ import {
   runOpenCodeTurn,
   shutdownOpenCodeRuntime,
   type AgentHistoryMessage,
+  type OpenCodePromptAttachment,
   type OpenCodePendingInterrupts,
   type AgentStreamEvent,
   type OpenCodeSessionSummary
@@ -1554,6 +1555,7 @@ app.whenReady().then(() => {
         requestId: string;
         workspaceRoot: string;
         prompt: string;
+        attachments?: OpenCodePromptAttachment[];
         sessionId?: string;
         model?: {
           providerID: string;
@@ -1586,6 +1588,7 @@ app.whenReady().then(() => {
         await runOpenCodeTurn({
           workspaceRoot: payload.workspaceRoot,
           prompt: payload.prompt,
+          attachments: payload.attachments,
           sessionId: payload.sessionId,
           model: payload.model,
           signal: abortController.signal,

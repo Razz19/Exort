@@ -1,3 +1,5 @@
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
 import { getOpenCodeRuntime, shutdownOpenCode, type OpenCodeClient } from './openCode.js';
 import { OPEN_CODE_MODEL } from './openCodeConfig.js';
 
@@ -44,6 +46,7 @@ export type AgentHistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  attachments?: OpenCodePromptAttachment[];
 };
 
 export type OpenCodeSessionSummary = {
@@ -138,6 +141,24 @@ export type OpenCodeProviderOAuthCompleteResult = {
   ok: boolean;
 };
 
+export type OpenCodePromptAttachment = {
+  id: string;
+  name: string;
+  path: string;
+  mime: string;
+  size: number;
+  url?: string;
+};
+
+type OpenCodePromptPart =
+  | { type: 'text'; text: string }
+  | {
+      type: 'file';
+      mime: string;
+      filename?: string;
+      url: string;
+    };
+
 type OpenCodeSubscription = {
   stream?: AsyncIterable<unknown>;
   controller?: {
@@ -148,6 +169,7 @@ type OpenCodeSubscription = {
 type RunOpenCodeTurnParams = {
   workspaceRoot: string;
   prompt: string;
+  attachments?: OpenCodePromptAttachment[];
   sessionId?: string;
   model?: {
     providerID: string;
@@ -169,6 +191,38 @@ const workspaceSessions = new Map<string, string>();
 const loggedSessionIds = new Set<string>();
 const ANSI_GREEN = '\u001b[32m';
 const ANSI_RESET = '\u001b[0m';
+
+function normalizeAttachmentMime(mime: string): string {
+  const trimmed = mime.trim();
+  if (trimmed.startsWith('image/') || trimmed === 'application/pdf') {
+    return trimmed;
+  }
+  return 'text/plain';
+}
+
+function buildPromptParts(prompt: string, attachments: OpenCodePromptAttachment[] | undefined): OpenCodePromptPart[] {
+  const parts: OpenCodePromptPart[] = [
+    {
+      type: 'text',
+      text: prompt
+    }
+  ];
+
+  for (const attachment of attachments ?? []) {
+    const filePath = attachment.path.trim();
+    if (!filePath) continue;
+
+    const filename = attachment.name.trim() || filePath;
+    parts.push({
+      type: 'file',
+      mime: normalizeAttachmentMime(attachment.mime),
+      filename,
+      url: pathToFileURL(filePath).href
+    });
+  }
+
+  return parts;
+}
 
 function logSessionHighlight(log: ((line: string) => void) | undefined, sessionId: string, workspaceRoot: string): void {
   if (!log) return;
@@ -2151,6 +2205,101 @@ function extractDirectHistoryMessageContent(row: Record<string, unknown>): strin
   return '';
 }
 
+function isSyntheticHistoryPart(part: Record<string, unknown>): boolean {
+  return part.synthetic === true || part.ignored === true;
+}
+
+function getHistoryPartText(part: Record<string, unknown>): string {
+  return getFirstString(part.text, part.content, part.delta) ?? '';
+}
+
+function isReadToolSyntheticText(text: string): boolean {
+  const trimmed = text.trim();
+  return (
+    trimmed.startsWith('Called the Read tool with the following input:') ||
+    trimmed.startsWith('Read tool failed to read ')
+  );
+}
+
+function extractReadToolPath(text: string): string | null {
+  const marker = 'Called the Read tool with the following input:';
+  const index = text.indexOf(marker);
+  if (index === -1) return null;
+
+  const jsonText = text.slice(index + marker.length).trim();
+  if (!jsonText) return null;
+
+  try {
+    const parsed = JSON.parse(jsonText);
+    const record = asRecord(parsed);
+    return getFirstNonBlankString(record.filePath) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function filenameFromPath(value: string): string {
+  const normalized = value.replace(/\\/g, '/').replace(/\/+$/, '');
+  const filename = normalized.split('/').filter(Boolean).pop();
+  return filename ?? value;
+}
+
+function filePathFromPartUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'file:') return null;
+    return fileURLToPath(parsed);
+  } catch {
+    return null;
+  }
+}
+
+function extractHistoryAttachments(
+  role: 'user' | 'assistant',
+  parts: Array<Record<string, unknown>>
+): OpenCodePromptAttachment[] {
+  if (role !== 'user') return [];
+
+  const attachments: OpenCodePromptAttachment[] = [];
+  const seen = new Set<string>();
+  let recentReadToolPath: string | null = null;
+
+  for (const part of parts) {
+    const partType = getFirstString(part.type) ?? '';
+    const text = getHistoryPartText(part);
+    const readToolPath = extractReadToolPath(text);
+    if (readToolPath) {
+      recentReadToolPath = readToolPath;
+    }
+
+    if (partType !== 'file') continue;
+
+    const source = asRecord(part.source);
+    const sourcePath = getFirstNonBlankString(source.path);
+    const url = getFirstNonBlankString(part.url);
+    const urlPath = url ? filePathFromPartUrl(url) : null;
+    const path = sourcePath ?? urlPath ?? recentReadToolPath ?? getFirstNonBlankString(part.filename) ?? 'attachment';
+    const name = getFirstNonBlankString(part.filename) ?? filenameFromPath(path);
+    const mime = getFirstNonBlankString(part.mime) ?? 'application/octet-stream';
+    const size = getFirstNumber(part.size) ?? 0;
+    const id = getFirstNonBlankString(part.id) ?? `${path}:${attachments.length}`;
+    const key = `${path}:${name}:${mime}`;
+
+    if (seen.has(key)) continue;
+    seen.add(key);
+    attachments.push({
+      id,
+      name,
+      path,
+      mime,
+      size,
+      url: url && url.startsWith('data:') ? url : undefined
+    });
+  }
+
+  return attachments;
+}
+
 function renderHistoryMessageContent(role: 'user' | 'assistant', parts: Array<Record<string, unknown>>): string {
   let content = '';
 
@@ -2158,7 +2307,11 @@ function renderHistoryMessageContent(role: 'user' | 'assistant', parts: Array<Re
     const partType = getFirstString(part.type) ?? '';
 
     if (partType === 'text' || partType === 'output_text' || partType === 'assistant_text') {
-      content += getFirstString(part.text, part.content, part.delta) ?? '';
+      const text = getHistoryPartText(part);
+      if (role === 'user' && (isSyntheticHistoryPart(part) || isReadToolSyntheticText(text))) {
+        continue;
+      }
+      content += text;
       continue;
     }
 
@@ -2235,12 +2388,13 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
       const parts = extractHistoryRowParts(row);
       const content =
         renderHistoryMessageContent(role, parts) || extractDirectHistoryMessageContent(row);
+      const attachments = extractHistoryAttachments(role, parts);
       const id = getFirstString(info.id, row.id, message.id, dataMessage.id) ?? `${sessionId}-${index}`;
       const partTypes = parts
         .map((part) => getFirstString(part.type) ?? 'unknown')
         .filter((value) => value.length > 0)
         .join(',');
-      if (!content) {
+      if (!content && attachments.length === 0) {
         return null;
       }
 
@@ -2248,13 +2402,17 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
       const createdAt = toIsoDateTime(time.created);
       const createdEpoch = getFirstNumber(time.created) ?? 0;
 
-      return {
+      const entry: AgentHistoryMessage & { createdEpoch: number } = {
         id,
         role,
         content,
         createdAt,
         createdEpoch
       };
+      if (attachments.length > 0) {
+        entry.attachments = attachments;
+      }
+      return entry;
     })
     .filter((item): item is AgentHistoryMessage & { createdEpoch: number } => item !== null)
     .sort((a, b) => a.createdEpoch - b.createdEpoch)
@@ -2525,13 +2683,9 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     let response: unknown;
     let usedPromptAsync = false;
     try {
+      const parts = buildPromptParts(params.prompt, params.attachments);
       const promptBody: Record<string, unknown> = {
-        parts: [
-          {
-            type: 'text',
-            text: params.prompt
-          }
-        ]
+        parts
       };
       if (params.model?.providerID && params.model?.modelID) {
         promptBody.model = {
@@ -2552,8 +2706,11 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
             ? (promptBody.tools as Record<string, boolean>)
             : undefined,
         system: typeof promptBody.system === 'string' ? promptBody.system : undefined,
-        parts: promptBody.parts as Array<{ type: 'text'; text: string }>
+        parts: promptBody.parts as OpenCodePromptPart[]
       };
+      if (parts.length > 1) {
+        log(`prompt:attachments count=${parts.length - 1}`);
+      }
 
       const promptAsync = runtime.client.session.promptAsync;
       if (typeof promptAsync === 'function') {

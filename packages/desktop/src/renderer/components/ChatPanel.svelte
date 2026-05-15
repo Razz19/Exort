@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { AgentPermissionReply, ChatItem } from "../lib/types";
+  import type {
+    AgentPermissionReply,
+    ChatItem,
+    ChatSendPayload,
+  } from "../lib/types";
   import type { ChatFontSizePreset } from "../lib/state/types";
   import ChatPanelImpl from "./chat/ChatPanel.svelte";
 
@@ -11,7 +15,7 @@
     busy: boolean;
     stopping: boolean;
     sessionStatus: "running" | "idle" | "error";
-    onSend: (prompt: string) => void;
+    onSend: (payload: ChatSendPayload) => void;
     onStop: () => Promise<void> | void;
     onNewSession: () => void;
     onOpenWorkspace: () => Promise<void> | void;

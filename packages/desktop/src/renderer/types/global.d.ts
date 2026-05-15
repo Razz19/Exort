@@ -48,6 +48,14 @@ type AgentLogEnvelope = {
   requestId: string;
   line: string;
 };
+type ChatAttachment = {
+  id: string;
+  name: string;
+  path: string;
+  mime: string;
+  size: number;
+  url?: string;
+};
 type ArduinoCommandOutputEnvelope = {
   requestId: string;
   operation: 'compile' | 'upload';
@@ -67,6 +75,7 @@ type AgentHistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  attachments?: ChatAttachment[];
 };
 type AgentSessionSummary = {
   id: string;
@@ -379,6 +388,7 @@ declare global {
       watchFile: (filePath: string) => Promise<{ ok: boolean }>;
       unwatchFile: (filePath: string) => Promise<{ ok: boolean }>;
       unwatchAllFiles: () => Promise<{ ok: boolean }>;
+      getPathForFile: (file: File) => string;
       getRequirementsStatus: () => Promise<{
         ok: boolean;
         requirements?: RequirementStatus[];
@@ -462,6 +472,7 @@ declare global {
         requestId: string;
         workspaceRoot: string;
         prompt: string;
+        attachments?: ChatAttachment[];
         sessionId?: string;
         model?: {
           providerID: string;

@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 
 type AgentStreamEvent =
   | { type: 'content'; content: string; partId?: string; contentKind?: 'reasoning' | 'text' }
@@ -80,6 +80,15 @@ type AgentLogEnvelope = {
   requestId: string;
   line: string;
 };
+
+type ChatAttachment = {
+  id: string;
+  name: string;
+  path: string;
+  mime: string;
+  size: number;
+  url?: string;
+};
 type ArduinoCommandOutputEnvelope = {
   requestId: string;
   operation: 'compile' | 'upload';
@@ -99,6 +108,7 @@ type AgentHistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  attachments?: ChatAttachment[];
 };
 type AgentSessionSummary = {
   id: string;
@@ -409,6 +419,7 @@ const electronAPI = {
   watchFile: (filePath: string) => ipcRenderer.invoke('file:watch', filePath) as Promise<{ ok: boolean }>,
   unwatchFile: (filePath: string) => ipcRenderer.invoke('file:unwatch', filePath) as Promise<{ ok: boolean }>,
   unwatchAllFiles: () => ipcRenderer.invoke('file:unwatch-all') as Promise<{ ok: boolean }>,
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
   getRequirementsStatus: () =>
     ipcRenderer.invoke('requirements:get-status') as Promise<{
       ok: boolean;
@@ -561,6 +572,7 @@ const electronAPI = {
     requestId: string;
     workspaceRoot: string;
     prompt: string;
+    attachments?: ChatAttachment[];
     sessionId?: string;
     model?: {
       providerID: string;

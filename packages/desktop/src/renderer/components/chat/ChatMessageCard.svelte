@@ -1,6 +1,12 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { ChevronDown, ChevronUp, Copy, CopyCheck } from "lucide-svelte";
+  import {
+    ChevronDown,
+    ChevronUp,
+    Copy,
+    CopyCheck,
+    FileText,
+  } from "lucide-svelte";
 
   import type { AgentPermissionReply, ChatItem } from "../../lib/types";
   import { formatChatTime } from "./chatDate";
@@ -38,6 +44,7 @@
   let isAssistant = $derived(message.role === "assistant");
   let createdAtLabel = $derived(formatChatTime(message.createdAt));
   let stepCount = $derived(message.steps?.length ?? 0);
+  let userAttachments = $derived(isUser ? (message.attachments ?? []) : []);
   let structuredAssistantContentParts = $derived(
     isAssistant
       ? (message.assistantContentParts ?? []).filter(
@@ -152,6 +159,34 @@
     hasPlanningContent && planningIsLong && !showPlanningFull,
   );
 
+  function isImageAttachment(attachment: { name: string; mime: string }): boolean {
+    if (attachment.mime.startsWith("image/")) return true;
+    return /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(attachment.name);
+  }
+
+  function fileUrl(path: string): string {
+    const normalized = path.replace(/\\/g, "/");
+    const withLeadingSlash = normalized.startsWith("/")
+      ? normalized
+      : `/${normalized}`;
+    const encodedPath = withLeadingSlash
+      .split("/")
+      .map((segment, index) => {
+        if (index === 0) return "";
+        if (/^[A-Za-z]:$/.test(segment)) return segment;
+        return encodeURIComponent(segment);
+      })
+      .join("/");
+    return `file://${encodedPath}`;
+  }
+
+  function attachmentPreviewUrl(attachment: { path: string; url?: string }): string {
+    if (attachment.url?.startsWith("data:") || attachment.url?.startsWith("blob:")) {
+      return attachment.url;
+    }
+    return fileUrl(attachment.path);
+  }
+
   $effect(() => {
     if (lastMessageId === message.id) return;
     lastMessageId = message.id;
@@ -183,7 +218,7 @@
 </script>
 
 <div
-  class={`${isUser ? "group my-7 relative ml-auto w-fit max-w-[calc(100%-2rem)] items-center rounded-2xl border border-dark-bg3/50 bg-dark-bg1 px-3 py-2 flex" : "px-2 py-2"}`}
+  class={`${isUser ? "group my-7 relative ml-auto flex w-fit max-w-[calc(100%-2rem)] flex-col items-end gap-2" : "px-2 py-2"}`}
 >
   {#if !isUser}
     <div class="mb-2 flex items-center justify-between gap-2">
@@ -373,9 +408,38 @@
         <div class={`chat-markdown ${stepCount > 0 ? "mt-2" : ""}`}>
           {@html renderMarkdown(message.content)}
         </div>
+    {/if}
+  {:else}
+      {#if userAttachments.length > 0}
+        <div class="flex max-w-full flex-wrap justify-end gap-2 self-end">
+          {#each userAttachments as attachment (attachment.id)}
+            <div
+              class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3"
+              title={attachment.name}
+              aria-label={attachment.name}
+            >
+              {#if isImageAttachment(attachment)}
+                <img
+                  class="h-7 w-7 rounded object-cover"
+                  src={attachmentPreviewUrl(attachment)}
+                  alt={attachment.name}
+                />
+              {:else}
+                <span
+                  class="inline-flex h-7 w-7 items-center justify-center rounded bg-dark-bg1"
+                  aria-hidden="true"
+                >
+                  <FileText class="h-4 w-4" />
+                </span>
+              {/if}
+            </div>
+          {/each}
+        </div>
       {/if}
-    {:else}
-      <p class="whitespace-pre-wrap text-sm leading-relaxed text-white">
+
+      <p
+        class="whitespace-pre-wrap rounded-2xl border border-dark-bg3/50 bg-dark-bg1 px-3 py-2 text-sm leading-relaxed text-white"
+      >
         {message.content}
       </p>
     {/if}

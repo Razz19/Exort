@@ -63,7 +63,9 @@
     ArduinoOutputEvent,
     ArduinoOutputRun,
     AppState,
+    ChatAttachment,
     ChatItem,
+    ChatSendPayload,
     OpenFile,
     PaneTab,
     Workspace,
@@ -1009,6 +1011,7 @@
       role: message.role,
       content: message.content,
       createdAt: message.createdAt,
+      attachments: message.attachments,
     }));
 
     const syncSessionId = getHistoryCacheSessionKey(effectiveSessionId);
@@ -1733,6 +1736,7 @@
     content: string,
     workspaceRoot?: string,
     steps?: AgentStep[],
+    attachments?: ChatAttachment[],
   ): string {
     const entry: ChatItem = {
       id: crypto.randomUUID(),
@@ -1740,6 +1744,7 @@
       content,
       createdAt: new Date().toISOString(),
       steps,
+      attachments,
     };
 
     const targetWorkspaceRoot = workspaceRoot ?? activeWorkspace?.rootPath;
@@ -2011,7 +2016,7 @@
     return null;
   }
 
-  async function sendPrompt(prompt: string): Promise<void> {
+  async function sendPrompt(payload: ChatSendPayload): Promise<void> {
     if (agentBusy) return;
     if (!activeWorkspace) {
       pushMessage(
@@ -2021,6 +2026,8 @@
       return;
     }
 
+    const prompt = payload.prompt.trim();
+    const attachments = payload.attachments;
     const turnWorkspaceRoot = activeWorkspace.rootPath;
     const turnWorkspaceId = activeWorkspace.id;
     const turnSessionId = normalizeSessionId(
@@ -2034,7 +2041,7 @@
           modelID: string;
         }
       | undefined = undefined;
-    pushMessage("user", prompt, turnWorkspaceRoot);
+    pushMessage("user", prompt, turnWorkspaceRoot, undefined, attachments);
     let assistantMessageId = pushMessage(
       "assistant",
       "",
@@ -2361,6 +2368,7 @@
         requestId,
         workspaceRoot: activeWorkspace.rootPath,
         prompt,
+        attachments,
         sessionId: turnSessionId ?? undefined,
         model: turnModelOverride,
       });

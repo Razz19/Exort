@@ -1,6 +1,10 @@
 <script lang="ts">
   import { Plus } from "lucide-svelte";
-  import type { AgentPermissionReply, ChatItem } from "../../lib/types";
+  import type {
+    AgentPermissionReply,
+    ChatItem,
+    ChatSendPayload,
+  } from "../../lib/types";
   import type { ChatFontSizePreset } from "../../lib/state/types";
   import ChatComposer from "./ChatComposer.svelte";
   import ChatHeader from "./ChatHeader.svelte";
@@ -31,7 +35,7 @@
       busy: boolean;
       stopping: boolean;
       sessionStatus: "running" | "idle" | "error";
-      onSend: (prompt: string) => void;
+      onSend: (payload: ChatSendPayload) => void;
       onStop: () => Promise<void> | void;
       onNewSession: () => void;
       onOpenWorkspace: () => Promise<void> | void;

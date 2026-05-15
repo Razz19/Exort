@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import ArrowUp from "lucide-svelte/icons/arrow-up";
+  import FileText from "lucide-svelte/icons/file-text";
+  import Plus from "lucide-svelte/icons/plus";
   import LoaderCircle from "lucide-svelte/icons/loader-circle";
   import Square from "lucide-svelte/icons/square";
+  import X from "lucide-svelte/icons/x";
   import {
     findSelectedModel,
     resolveSelectedModel,
@@ -10,23 +13,33 @@
   } from "../../lib/modelCatalog";
   import { appStateStore, patchAppState } from "../../lib/state/stateManager";
   import type {
+    ChatAttachment,
+    ChatSendPayload,
     OpenCodeModelCatalogProvider,
     SelectedModelRef,
   } from "../../lib/types";
   import { OPEN_CODE_MODEL } from "../../../shared/openCodeModel.js";
 
+  type ComposerAttachment = ChatAttachment & {
+    previewUrl?: string;
+  };
+
   let { activeWorkspaceRoot, busy, stopping, onSend, onStop } = $props<{
     activeWorkspaceRoot: string | null;
     busy: boolean;
     stopping: boolean;
-    onSend: (prompt: string) => Promise<void> | void;
+    onSend: (payload: ChatSendPayload) => Promise<void> | void;
     onStop: () => Promise<void> | void;
   }>();
 
   const MAX_PROMPT_CHARS = 12000;
+  const ATTACHMENT_ONLY_PROMPT = "Please review the attached file.";
 
   let prompt = $state("");
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
+  let fileInputEl = $state<HTMLInputElement | null>(null);
+  let attachments = $state<ComposerAttachment[]>([]);
+  let draggingFiles = $state(false);
   let modelOpen = $state(false);
   let modelButtonEl = $state<HTMLButtonElement | null>(null);
   let modelPopoverEl = $state<HTMLDivElement | null>(null);
@@ -35,8 +48,11 @@
   let providerError = $state<string | null>(null);
   let selectedModel = $state<SelectedModelRef | null>(null);
   let providerRequestId = 0;
+  let dragDepth = 0;
 
-  let canSend = $derived(!busy && prompt.trim().length > 0);
+  let canSend = $derived(
+    !busy && (prompt.trim().length > 0 || attachments.length > 0),
+  );
   let selectedModelLabel = $derived.by(() => {
     const selectedEntry = findSelectedModel(catalogProviders, selectedModel);
     return selectedEntry?.model.name ?? selectedModel?.modelId ?? OPEN_CODE_MODEL;
@@ -54,14 +70,138 @@
     resizeInput();
   });
 
+  function normalizeAttachmentMime(file: File): string {
+    if (file.type.startsWith("image/") || file.type === "application/pdf") {
+      return file.type;
+    }
+    return "text/plain";
+  }
+
+  function formatFileSize(size: number): string {
+    if (size < 1024) return `${size} B`;
+    const kb = size / 1024;
+    if (kb < 1024) return `${kb.toFixed(kb >= 10 ? 0 : 1)} KB`;
+    const mb = kb / 1024;
+    return `${mb.toFixed(mb >= 10 ? 0 : 1)} MB`;
+  }
+
+  function revokeAttachmentPreview(attachment: ComposerAttachment): void {
+    if (!attachment.previewUrl) return;
+    URL.revokeObjectURL(attachment.previewUrl);
+  }
+
+  function removeAttachment(id: string): void {
+    const removed = attachments.find((attachment) => attachment.id === id);
+    if (removed) revokeAttachmentPreview(removed);
+    attachments = attachments.filter((attachment) => attachment.id !== id);
+  }
+
+  function clearAttachments(): void {
+    for (const attachment of attachments) {
+      revokeAttachmentPreview(attachment);
+    }
+    attachments = [];
+  }
+
+  function clearSentAttachments(): void {
+    attachments = [];
+  }
+
+  function addFiles(files: FileList | File[]): void {
+    const next = [...attachments];
+    const seenPaths = new Set(next.map((attachment) => attachment.path));
+
+    for (const file of Array.from(files)) {
+      const path = window.electronAPI.getPathForFile(file).trim();
+      if (!path || seenPaths.has(path)) continue;
+
+      const mime = normalizeAttachmentMime(file);
+      const attachment: ComposerAttachment = {
+        id: crypto.randomUUID(),
+        name: file.name || path.split(/[\\/]/).pop() || "attachment",
+        path,
+        mime,
+        size: file.size,
+        previewUrl: mime.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : undefined,
+      };
+      next.push(attachment);
+      seenPaths.add(path);
+    }
+
+    attachments = next;
+  }
+
+  function openFilePicker(): void {
+    fileInputEl?.click();
+  }
+
+  function handleFileInputChange(event: Event): void {
+    const input = event.currentTarget;
+    if (!(input instanceof HTMLInputElement) || !input.files) return;
+    addFiles(input.files);
+    input.value = "";
+  }
+
+  function hasDraggedFiles(event: DragEvent): boolean {
+    return Array.from(event.dataTransfer?.types ?? []).includes("Files");
+  }
+
+  function handleDragEnter(event: DragEvent): void {
+    if (!hasDraggedFiles(event)) return;
+    event.preventDefault();
+    dragDepth += 1;
+    draggingFiles = true;
+  }
+
+  function handleDragOver(event: DragEvent): void {
+    if (!hasDraggedFiles(event)) return;
+    event.preventDefault();
+    event.dataTransfer!.dropEffect = "copy";
+  }
+
+  function handleDragLeave(event: DragEvent): void {
+    if (!hasDraggedFiles(event)) return;
+    event.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) {
+      draggingFiles = false;
+    }
+  }
+
+  function handleDrop(event: DragEvent): void {
+    if (!hasDraggedFiles(event)) return;
+    event.preventDefault();
+    dragDepth = 0;
+    draggingFiles = false;
+    const files = event.dataTransfer?.files;
+    if (files) addFiles(files);
+  }
+
+  function toSendAttachments(): ChatAttachment[] {
+    return attachments.map(({ previewUrl, ...attachment }) => ({
+      ...attachment,
+      url: previewUrl,
+    }));
+  }
+
   function submit(): void {
     const text = prompt.trim();
-    if (!text || busy) return;
-    prompt = "";
-    void Promise.resolve(onSend(text)).catch((error) => {
+    if (busy || (!text && attachments.length === 0)) return;
+
+    const payload: ChatSendPayload = {
+      prompt: text || ATTACHMENT_ONLY_PROMPT,
+      attachments: toSendAttachments(),
+    };
+
+    void Promise.resolve(onSend(payload)).then(() => {
+      prompt = "";
+      clearSentAttachments();
+      queueMicrotask(() => resizeInput());
+    }).catch((error) => {
       console.error("[ChatComposer] send failed", error);
     });
-    queueMicrotask(() => resizeInput());
   }
 
   function getWorkspaceRoot(): string | undefined {
@@ -177,6 +317,10 @@
     };
   });
 
+  onDestroy(() => {
+    clearAttachments();
+  });
+
   $effect(() => {
     activeWorkspaceRoot;
     void refreshOpenCodeModelCatalog();
@@ -189,7 +333,71 @@
     event.preventDefault();
   }}
 >
-  <div class="rounded-xl border border-dark-border bg-dark-bgS/80 px-3 py-2.5">
+  <div
+    class={`rounded-xl border px-3 py-2.5 transition-colors duration-150 ${
+      draggingFiles
+        ? "border-primary-500 bg-dark-bg1"
+        : "border-dark-border bg-dark-bgS/80"
+    }`}
+    ondragenter={handleDragEnter}
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
+    role="group"
+    aria-label="Chat composer"
+  >
+    <input
+      class="hidden"
+      bind:this={fileInputEl}
+      type="file"
+      multiple
+      onchange={handleFileInputChange}
+      aria-label="Attach files"
+    />
+
+    {#if attachments.length > 0}
+      <div class="mb-2 flex flex-wrap gap-2">
+        {#each attachments as attachment (attachment.id)}
+          <div
+            class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border bg-dark-bg px-2 py-1 text-xs text-dark-fg2"
+            title={attachment.path}
+          >
+            {#if attachment.previewUrl}
+              <img
+                class="h-7 w-7 shrink-0 rounded object-cover"
+                src={attachment.previewUrl}
+                alt={attachment.name}
+              />
+            {:else}
+              <span
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg1 text-dark-fg3"
+                aria-hidden="true"
+              >
+                <FileText class="h-4 w-4" />
+              </span>
+            {/if}
+            <span class="min-w-0">
+              <span class="block max-w-40 truncate text-dark-fg1">
+                {attachment.name}
+              </span>
+              <span class="block text-[10px] text-dark-fg4">
+                {formatFileSize(attachment.size)}
+              </span>
+            </span>
+            <button
+              type="button"
+              class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              onclick={() => removeAttachment(attachment.id)}
+              aria-label={`Remove ${attachment.name}`}
+              title="Remove"
+            >
+              <X class="h-3.5 w-3.5" />
+            </button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
     <textarea
       class="w-full resize-none border-0 bg-transparent p-0 text-sm text-dark-fg focus:outline-none focus:ring-0"
       bind:this={textareaEl}
@@ -207,6 +415,17 @@
 
     <div class="mt-1.5 flex items-center justify-between">
       <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-fg3 transition-colors duration-150 hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          onclick={openFilePicker}
+          disabled={busy}
+          aria-label="Attach files"
+          title="Attach files"
+        >
+          <Plus class="h-4 w-4" />
+        </button>
+
         <div class="relative">
           <button
             class="inline-flex h-8 max-w-[180px] items-center gap-1.5 px-2 text-dark-fg3 transition-colors duration-150 hover:text-dark-fg1"

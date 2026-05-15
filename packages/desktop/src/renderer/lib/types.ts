@@ -11,6 +11,20 @@ export type OpenFile = {
   dirty: boolean;
 };
 
+export type ChatAttachment = {
+  id: string;
+  name: string;
+  path: string;
+  mime: string;
+  size: number;
+  url?: string;
+};
+
+export type ChatSendPayload = {
+  prompt: string;
+  attachments: ChatAttachment[];
+};
+
 export type AgentQuestionOption = {
   label: string;
   description: string;
@@ -76,6 +90,7 @@ export type ChatItem = {
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: string;
+  attachments?: ChatAttachment[];
   assistantContentParts?: Array<{
     id: string;
     kind: 'reasoning' | 'text';
