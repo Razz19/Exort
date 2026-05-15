@@ -6,7 +6,7 @@
   import OutputWindow from "./components/OutputWindow.svelte";
   import PaneManager from "./components/Panes/PaneManager.svelte";
   import SettingsModal from "./components/settings/SettingsModal.svelte";
-  import ToastHost from "./components/toast/ToastHost.svelte";
+  import Toast from "./components/toast/Toast.svelte";
   import WorkspaceBar from "./components/WorkspaceBar.svelte";
   import {
     applyRuntimeEventToSyncState,
@@ -739,7 +739,7 @@
         id: "missing-requirements",
         title: "Requirements missing",
         message: `${formatMissingRequirementNames(missingRequirements)} missing.`,
-        variant: "warning",
+        variant: "error",
         actionLabel: "Open Requirements",
         onAction: () => openSettingsModal("requirements"),
       });
@@ -2573,7 +2573,7 @@
     </div>
   </div>
 
-  <ToastHost
+  <Toast
     {toasts}
     onDismiss={dismissToast}
     onAction={runToastAction}

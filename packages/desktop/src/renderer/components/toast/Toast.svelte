@@ -1,11 +1,6 @@
 <script lang="ts">
-  import {
-    AlertTriangle,
-    CheckCircle2,
-    Info,
-    X,
-    XCircle,
-  } from "lucide-svelte";
+  import { fly } from "svelte/transition";
+  import { TriangleAlert, Info, X, CircleX } from "lucide-svelte";
   import type { ToastMessage } from "./types";
 
   let { toasts, onDismiss, onAction } = $props<{
@@ -15,23 +10,25 @@
   }>();
 
   function getToastClasses(toast: ToastMessage): string {
-    if (toast.variant === "success") {
-      return "border-dark-green/40 bg-dark-green/15 text-dark-green2";
-    }
     if (toast.variant === "warning") {
-      return "border-dark-yellow/40 bg-dark-yellow/15 text-dark-yellow2";
+      return "border-dark-yellow/60 bg-dark-bg0/40 hover:bg-dark-bg0/80";
     }
     if (toast.variant === "error") {
-      return "border-dark-red/40 bg-dark-red/15 text-dark-red2";
+      return "border-dark-red/60 bg-dark-bg0/40 hover:bg-dark-bg0/80";
     }
-    return "border-dark-blue/40 bg-dark-blue/15 text-dark-blue2";
+    return "border-dark-gray/60 bg-dark-bg0/40 hover:bg-dark-bg0/80 ";
   }
 
   function getIcon(toast: ToastMessage): typeof Info {
-    if (toast.variant === "success") return CheckCircle2;
-    if (toast.variant === "warning") return AlertTriangle;
-    if (toast.variant === "error") return XCircle;
+    if (toast.variant === "warning") return TriangleAlert;
+    if (toast.variant === "error") return CircleX;
     return Info;
+  }
+
+  function getIconClass(toast: ToastMessage): string {
+    if (toast.variant === "warning") return "text-dark-yellow2";
+    if (toast.variant === "error") return "text-dark-red2";
+    return "text-dark-gray";
   }
 </script>
 
@@ -45,17 +42,20 @@
       {@const Icon = getIcon(toast)}
       <section
         class={`pointer-events-auto rounded-lg border px-3 py-3 shadow-xl backdrop-blur ${getToastClasses(toast)}`}
+        in:fly={{ x: 250, duration: 300 }}
+        out:fly={{ x: 250, duration: 300 }}
         role={toast.variant === "error" || toast.variant === "warning"
           ? "alert"
           : "status"}
       >
         <div class="flex items-start gap-3">
-          <Icon class="mt-0.5 h-4 w-4 shrink-0" />
+          <Icon class={`mt-0.5 h-4 w-4 shrink-0 ${getIconClass(toast)}`} />
           <div class="min-w-0 flex-1">
             <div class="flex items-start justify-between gap-2">
               <p class="text-sm font-semibold text-dark-fg">{toast.title}</p>
               <button
-                class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-dark-fg3 transition-colors hover:bg-dark-bg/40 hover:text-dark-fg"
+                class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-dark-fg3
+                transition-colors hover:bg-dark-bg/40 hover:text-dark-fg"
                 onclick={() => onDismiss(toast.id)}
                 aria-label={`Dismiss ${toast.title}`}
               >
@@ -65,7 +65,9 @@
             <p class="mt-1 text-xs leading-5 text-dark-fg2">{toast.message}</p>
             {#if toast.actionLabel}
               <button
-                class="btn-secondary mt-3 inline-flex h-8 items-center justify-center px-2.5 py-0 text-xs"
+                class="mt-3 inline-flex h-8 items-center justify-center rounded-md border border-dark-border
+                 bg-dark-bgS px-2.5 py-0 text-xs font-medium text-dark-fg2 transition-colors hover:border-dark-gray
+                  hover:bg-dark-bg1 hover:text-dark-fg"
                 onclick={() => onAction(toast.id)}
               >
                 {toast.actionLabel}
