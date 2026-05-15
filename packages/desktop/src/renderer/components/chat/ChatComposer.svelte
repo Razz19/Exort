@@ -190,17 +190,26 @@
     const text = prompt.trim();
     if (busy || (!text && attachments.length === 0)) return;
 
+    const previousPrompt = prompt;
+    const previousAttachments = attachments;
     const payload: ChatSendPayload = {
       prompt: text || ATTACHMENT_ONLY_PROMPT,
       attachments: toSendAttachments(),
     };
 
+    prompt = "";
+    clearSentAttachments();
+    queueMicrotask(() => resizeInput());
+
     void Promise.resolve(onSend(payload)).then(() => {
-      prompt = "";
-      clearSentAttachments();
-      queueMicrotask(() => resizeInput());
+      // Cleared optimistically on submit.
     }).catch((error) => {
       console.error("[ChatComposer] send failed", error);
+      if (!prompt.trim() && attachments.length === 0) {
+        prompt = previousPrompt;
+        attachments = previousAttachments;
+        queueMicrotask(() => resizeInput());
+      }
     });
   }
 
