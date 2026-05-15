@@ -179,6 +179,39 @@
     if (files) addFiles(files);
   }
 
+  function extractClipboardFiles(event: ClipboardEvent): File[] {
+    const clipboard = event.clipboardData;
+    if (!clipboard) return [];
+
+    const files: File[] = [];
+    const seen = new Set<File>();
+
+    for (const file of Array.from(clipboard.files)) {
+      if (seen.has(file)) continue;
+      seen.add(file);
+      files.push(file);
+    }
+
+    for (const item of Array.from(clipboard.items)) {
+      if (item.kind !== "file") continue;
+      const file = item.getAsFile();
+      if (!file || seen.has(file)) continue;
+      seen.add(file);
+      files.push(file);
+    }
+
+    return files;
+  }
+
+  function handleComposerPaste(event: ClipboardEvent): void {
+    const files = extractClipboardFiles(event);
+    if (files.length === 0) return;
+    // When clipboard includes files, attach them without pasting fallback text
+    // such as the file name/path into the prompt.
+    event.preventDefault();
+    addFiles(files);
+  }
+
   function toSendAttachments(): ChatAttachment[] {
     return attachments.map(({ previewUrl, ...attachment }) => ({
       ...attachment,
@@ -414,6 +447,7 @@
       maxlength={MAX_PROMPT_CHARS}
       placeholder="Ask Exort..."
       style="min-height: 44px; max-height: 120px;"
+      onpaste={handleComposerPaste}
       onkeydown={(event) => {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
