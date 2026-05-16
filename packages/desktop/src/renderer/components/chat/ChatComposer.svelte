@@ -19,6 +19,7 @@
     SelectedModelRef,
   } from "../../lib/types";
   import { OPEN_CODE_MODEL } from "../../../shared/openCodeModel.js";
+  import { Blend, Bot, Brain } from "lucide-svelte";
 
   type ComposerAttachment = ChatAttachment & {
     previewUrl?: string;
@@ -570,17 +571,14 @@
 
       <div class="flex items-center gap-2">
         <div
-          class="inline-flex items-center gap-2 rounded-md border border-dark-border px-2 py-1"
+          class="inline-flex items-center rounded-md px-2 py-1"
           role="group"
           aria-label="Agent mode"
         >
-          <span class="text-xs font-medium text-dark-fg3">Mode</span>
           <button
             type="button"
-            class={`inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium transition-colors ${
-              agentMode === "build"
-                ? "border-dark-blue bg-dark-blue text-dark-bg"
-                : "border-dark-green bg-dark-green text-dark-bg"
+            class={`inline-flex h-6 items-center rounded-md text-[11px] font-bold transition-colors ${
+              agentMode === "build" ? "text-dark-yellow" : "text-dark-aqua"
             }`}
             disabled={busy}
             onclick={() =>
@@ -588,6 +586,10 @@
             aria-pressed={true}
             title={`Switch to ${agentMode === "build" ? "Plan" : "Build"} mode`}
           >
+            <span class="text-xs text-dark-fg3">
+              <Bot class="h-4 w-4 mr-1" /></span
+            >
+
             {agentMode === "build" ? "Build" : "Plan"}
           </button>
         </div>
