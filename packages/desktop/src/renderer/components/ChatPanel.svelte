@@ -7,10 +7,20 @@
   import type { ChatFontSizePreset } from "../lib/state/types";
   import ChatPanelImpl from "./chat/ChatPanel.svelte";
 
+  type ChatHeaderContextUsage = {
+    hasData: boolean;
+    usedTokens: number;
+    percentage: number;
+    rawPercentage: number;
+    contextLimit: number;
+    outputLimit: number;
+  } | null;
+
   let props = $props<{
     messages: ChatItem[];
     workspaceTitle: string;
     activeWorkspaceRoot: string | null;
+    contextUsage?: ChatHeaderContextUsage;
     chatFontSize: ChatFontSizePreset;
     busy: boolean;
     stopping: boolean;

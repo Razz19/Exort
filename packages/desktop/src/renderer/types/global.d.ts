@@ -2,6 +2,18 @@
 
 export {};
 
+type OpenCodeTokenBreakdown = {
+  input?: number;
+  output?: number;
+  reasoning?: number;
+  cache?: {
+    read?: number;
+    write?: number;
+  };
+};
+
+type OpenCodeTokenUsage = number | OpenCodeTokenBreakdown;
+
 type AgentStreamEvent =
   | { type: 'content'; content: string; partId?: string; contentKind?: 'reasoning' | 'text' }
   | { type: 'tool_call'; toolCallId: string; name: string; input?: string }
@@ -18,6 +30,7 @@ type AgentStreamEvent =
       messageId: string;
       role?: string;
       sessionId?: string;
+      tokens?: OpenCodeTokenUsage;
     }
   | {
       type: 'message_part_removed';
@@ -75,6 +88,7 @@ type AgentHistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  tokens?: OpenCodeTokenUsage;
   attachments?: ChatAttachment[];
 };
 type AgentSessionSummary = {
@@ -91,6 +105,10 @@ type OpenCodeProviderModel = {
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+  limit?: {
+    context?: number;
+    output?: number;
+  };
 };
 type OpenAIProviderModel = OpenCodeProviderModel;
 type OpenCodeModelCatalogProvider = {

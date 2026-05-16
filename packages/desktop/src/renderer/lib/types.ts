@@ -91,6 +91,7 @@ export type ChatItem = {
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: string;
+  tokens?: OpenCodeTokenUsage;
   attachments?: ChatAttachment[];
   assistantContentParts?: Array<{
     id: string;
@@ -99,6 +100,18 @@ export type ChatItem = {
   }>;
   steps?: AgentStep[];
 };
+
+export type OpenCodeTokenBreakdown = {
+  input?: number;
+  output?: number;
+  reasoning?: number;
+  cache?: {
+    read?: number;
+    write?: number;
+  };
+};
+
+export type OpenCodeTokenUsage = number | OpenCodeTokenBreakdown;
 
 export type AgentSessionSummary = {
   id: string;
@@ -115,6 +128,10 @@ export type OpenCodeProviderModel = {
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+  limit?: {
+    context?: number;
+    output?: number;
+  };
 };
 
 export type OpenAIProviderModel = OpenCodeProviderModel;

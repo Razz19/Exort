@@ -19,6 +19,7 @@ export type AgentStreamEvent =
       messageId: string;
       role?: string;
       sessionId?: string;
+      tokens?: OpenCodeTokenUsage;
     }
   | {
       type: 'message_part_removed';
@@ -46,8 +47,21 @@ export type AgentHistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  tokens?: OpenCodeTokenUsage;
   attachments?: OpenCodePromptAttachment[];
 };
+
+export type OpenCodeTokenBreakdown = {
+  input?: number;
+  output?: number;
+  reasoning?: number;
+  cache?: {
+    read?: number;
+    write?: number;
+  };
+};
+
+export type OpenCodeTokenUsage = number | OpenCodeTokenBreakdown;
 
 export type OpenCodeSessionSummary = {
   id: string;
@@ -98,6 +112,10 @@ export type OpenCodeProviderModel = {
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+  limit?: {
+    context?: number;
+    output?: number;
+  };
 };
 
 export type OpenCodeProviderCatalog = {
@@ -564,13 +582,34 @@ function parseProviderModels(modelsValue: unknown): OpenCodeProviderModel[] {
     const id = getFirstNonBlankString(model.id, key);
     if (!id) continue;
 
+    const limitRecord = asRecord(model.limit);
+    const contextLimit = getFirstNumber(
+      limitRecord.context,
+      limitRecord.maxInputTokens,
+      model.context_window,
+      model.contextWindow
+    );
+    const outputLimit = getFirstNumber(
+      limitRecord.output,
+      limitRecord.maxOutputTokens,
+      model.max_output_tokens,
+      model.maxOutputTokens
+    );
+
     parsed.push({
       id,
       name: getFirstNonBlankString(model.name) ?? id,
       releaseDate: getFirstNonBlankString(model.release_date, model.releaseDate) ?? null,
       status: parseProviderModelStatus(getFirstNonBlankString(model.status)),
       reasoning: model.reasoning === true || capabilities.reasoning === true,
-      toolCall: model.tool_call === true || model.toolCall === true || capabilities.tool_call === true
+      toolCall: model.tool_call === true || model.toolCall === true || capabilities.tool_call === true,
+      limit:
+        contextLimit != null || outputLimit != null
+          ? {
+              context: contextLimit ?? undefined,
+              output: outputLimit ?? undefined
+            }
+          : undefined
     });
   }
 
@@ -1553,6 +1592,63 @@ function parseContentKindFromPartType(partType: string | null): 'reasoning' | 't
   return null;
 }
 
+function parseTokenBreakdown(value: unknown): OpenCodeTokenBreakdown | null {
+  const record = asRecord(value);
+  const cacheRecord = asRecord(record.cache);
+  const input = getFirstNumber(record.input) ?? undefined;
+  const output = getFirstNumber(record.output) ?? undefined;
+  const reasoning = getFirstNumber(record.reasoning) ?? undefined;
+  const cacheRead = getFirstNumber(cacheRecord.read) ?? undefined;
+  const cacheWrite = getFirstNumber(cacheRecord.write) ?? undefined;
+  const hasCache = cacheRead != null || cacheWrite != null;
+
+  if (
+    input == null &&
+    output == null &&
+    reasoning == null &&
+    !hasCache
+  ) {
+    return null;
+  }
+
+  return {
+    input,
+    output,
+    reasoning,
+    cache: hasCache
+      ? {
+          read: cacheRead,
+          write: cacheWrite
+        }
+      : undefined
+  };
+}
+
+function parseTokenUsage(value: unknown): OpenCodeTokenUsage | undefined {
+  const direct = getFirstNumber(value);
+  if (direct != null) {
+    return direct;
+  }
+
+  const breakdown = parseTokenBreakdown(value);
+  if (breakdown) {
+    return breakdown;
+  }
+
+  return undefined;
+}
+
+function parseTokenUsageFromCandidates(...candidates: unknown[]): OpenCodeTokenUsage | undefined {
+  for (const candidate of candidates) {
+    const parsed = parseTokenUsage(candidate);
+    if (parsed !== undefined) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
 function compactLogValue(value: string, maxLength = 120): string {
   const compact = value.replace(/\s+/g, ' ').trim();
   if (compact.length <= maxLength) return compact;
@@ -1833,11 +1929,17 @@ function parseEvent(rawEvent: unknown, expectedSessionId: string): AgentStreamEv
       info.sessionID,
       info.sessionId
     ) ?? undefined;
+    const tokens = parseTokenUsageFromCandidates(
+      info.tokens,
+      properties.tokens,
+      messageRecord.tokens
+    );
     return {
       type: 'message_updated',
       messageId,
       role,
-      sessionId
+      sessionId,
+      tokens
     };
   }
 
@@ -2149,6 +2251,35 @@ function extractHistoryRowParts(row: Record<string, unknown>): Array<Record<stri
   return [];
 }
 
+function extractHistoryTokenUsage(
+  row: Record<string, unknown>,
+  parts: Array<Record<string, unknown>>
+): OpenCodeTokenUsage | undefined {
+  const info = asRecord(row.info);
+  const message = asRecord(row.message);
+  const data = asRecord(row.data);
+  const dataMessage = asRecord(data.message);
+  const direct = parseTokenUsageFromCandidates(
+    info.tokens,
+    row.tokens,
+    message.tokens,
+    data.tokens,
+    dataMessage.tokens
+  );
+  if (direct !== undefined) {
+    return direct;
+  }
+
+  for (const part of parts) {
+    const partTokens = parseTokenUsageFromCandidates(part.tokens);
+    if (partTokens !== undefined) {
+      return partTokens;
+    }
+  }
+
+  return undefined;
+}
+
 function renderDirectHistoryContent(value: unknown): string {
   if (typeof value === 'string') {
     return value;
@@ -2401,6 +2532,7 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
       const content =
         renderHistoryMessageContent(role, parts) || extractDirectHistoryMessageContent(row);
       const attachments = extractHistoryAttachments(role, parts);
+      const tokens = extractHistoryTokenUsage(row, parts);
       const id = getFirstString(info.id, row.id, message.id, dataMessage.id) ?? `${sessionId}-${index}`;
       const partTypes = parts
         .map((part) => getFirstString(part.type) ?? 'unknown')
@@ -2419,7 +2551,8 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
         role,
         content,
         createdAt,
-        createdEpoch
+        createdEpoch,
+        tokens
       };
       if (attachments.length > 0) {
         entry.attachments = attachments;

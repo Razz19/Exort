@@ -11,10 +11,20 @@
   import HistoryLoading from "./HistoryLoading.svelte";
   import ChatTimeline from "./ChatTimeline.svelte";
 
+  type ChatHeaderContextUsage = {
+    hasData: boolean;
+    usedTokens: number;
+    percentage: number;
+    rawPercentage: number;
+    contextLimit: number;
+    outputLimit: number;
+  } | null;
+
   let {
     messages,
     workspaceTitle,
     activeWorkspaceRoot,
+    contextUsage = null,
     chatFontSize = "default",
     bootstrapping = false,
     historyLoading = false,
@@ -36,6 +46,7 @@
       messages: ChatItem[];
       workspaceTitle: string;
       activeWorkspaceRoot: string | null;
+      contextUsage?: ChatHeaderContextUsage;
       chatFontSize?: ChatFontSizePreset;
       bootstrapping?: boolean;
       historyLoading?: boolean;
@@ -61,6 +72,7 @@
 >
   <ChatHeader
     {workspaceTitle}
+    {contextUsage}
     {onNewSession}
     {newSessionDisabled}
   />

@@ -1,5 +1,17 @@
 import type { AgentPermissionReply, AgentQuestionInfo } from "../types";
 
+export type OpenCodeTokenBreakdown = {
+  input?: number;
+  output?: number;
+  reasoning?: number;
+  cache?: {
+    read?: number;
+    write?: number;
+  };
+};
+
+export type OpenCodeTokenUsage = number | OpenCodeTokenBreakdown;
+
 export type AgentRuntimeStreamEvent =
   | {
       type: "content";
@@ -26,6 +38,7 @@ export type AgentRuntimeStreamEvent =
       messageId: string;
       role?: string;
       sessionId?: string;
+      tokens?: OpenCodeTokenUsage;
     }
   | {
       type: "message_part_removed";

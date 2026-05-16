@@ -67,7 +67,10 @@
     ChatItem,
     ChatSendPayload,
     OpenFile,
+    OpenCodeModelCatalogProvider,
+    OpenCodeTokenUsage,
     PaneTab,
+    SelectedModelRef,
     Workspace,
     WorkspaceManagerState,
     WorkspaceState,
@@ -75,6 +78,17 @@
 
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
   type SettingsTab = "general" | "requirements" | "providers" | "boards";
+  type WorkspaceContextLimits = {
+    contextLimit: number;
+    outputLimit: number;
+  };
+  type WorkspaceContextUsage = WorkspaceContextLimits & {
+    hasData: boolean;
+    usedTokens: number;
+    percentage: number;
+    rawPercentage: number;
+    lastMessageId?: string;
+  };
 
   function buildEffectiveBoardFqbn(
     baseFqbn: string,
@@ -120,6 +134,8 @@
 
   let messages = $state<ChatItem[]>([]);
   let workspaceMessagesByRoot = $state<Record<string, ChatItem[]>>({});
+  let workspaceContextLimitsByRoot = $state<Record<string, WorkspaceContextLimits>>({});
+  let workspaceContextUsageByRoot = $state<Record<string, WorkspaceContextUsage>>({});
   let workspaceSyncStateByRoot = $state<Record<string, AgentSyncState>>({});
   let historyLoadedSessionKeyByRoot = $state<Record<string, string>>({});
   let historyLoadInFlightByRoot = $state<Record<string, number>>({});
@@ -238,6 +254,201 @@
   let activeHistoryLoading = $derived.by(() => {
     if (!activeWorkspace) return false;
     return (historyLoadInFlightByRoot[activeWorkspace.rootPath] ?? 0) > 0;
+  });
+  let activeWorkspaceContextUsage = $derived.by(() => {
+    if (!activeWorkspace) return null;
+    return (
+      workspaceContextUsageByRoot[activeWorkspace.rootPath] ?? {
+        hasData: false,
+        usedTokens: 0,
+        percentage: 0,
+        rawPercentage: 0,
+        contextLimit:
+          workspaceContextLimitsByRoot[activeWorkspace.rootPath]?.contextLimit ??
+          0,
+        outputLimit:
+          workspaceContextLimitsByRoot[activeWorkspace.rootPath]?.outputLimit ??
+          0,
+      }
+    );
+  });
+
+  function sumTokenUsage(tokens: OpenCodeTokenUsage | undefined): number {
+    if (typeof tokens === "number" && Number.isFinite(tokens)) {
+      return Math.max(0, tokens);
+    }
+    if (!tokens || typeof tokens !== "object") {
+      return 0;
+    }
+
+    const input =
+      typeof tokens.input === "number" && Number.isFinite(tokens.input)
+        ? tokens.input
+        : 0;
+    const output =
+      typeof tokens.output === "number" && Number.isFinite(tokens.output)
+        ? tokens.output
+        : 0;
+    const reasoning =
+      typeof tokens.reasoning === "number" && Number.isFinite(tokens.reasoning)
+        ? tokens.reasoning
+        : 0;
+    const cacheRead =
+      typeof tokens.cache?.read === "number" &&
+      Number.isFinite(tokens.cache.read)
+        ? tokens.cache.read
+        : 0;
+    const cacheWrite =
+      typeof tokens.cache?.write === "number" &&
+      Number.isFinite(tokens.cache.write)
+        ? tokens.cache.write
+        : 0;
+    return Math.max(0, input + output + reasoning + cacheRead + cacheWrite);
+  }
+
+  function findLastAssistantTokenUsage(
+    source: ChatItem[],
+  ): { usedTokens: number; messageId: string } | null {
+    for (let index = source.length - 1; index >= 0; index -= 1) {
+      const message = source[index];
+      if (message.role !== "assistant") continue;
+      const usedTokens = sumTokenUsage(message.tokens);
+      if (usedTokens <= 0) continue;
+      return {
+        usedTokens,
+        messageId: message.id,
+      };
+    }
+    return null;
+  }
+
+  function refreshWorkspaceContextUsage(
+    workspaceRoot: string,
+    sourceMessages?: ChatItem[],
+  ): void {
+    const messagesForWorkspace =
+      sourceMessages ?? getMessagesForWorkspaceRoot(workspaceRoot);
+    const lastUsage = findLastAssistantTokenUsage(messagesForWorkspace);
+    const limits = workspaceContextLimitsByRoot[workspaceRoot] ?? {
+      contextLimit: 0,
+      outputLimit: 0,
+    };
+    const contextLimit = Math.max(0, limits.contextLimit);
+    const outputLimit = Math.max(0, limits.outputLimit);
+    const hasData = !!lastUsage && contextLimit > 0;
+    const usedTokens = lastUsage?.usedTokens ?? 0;
+    const rawPercentage = hasData ? (usedTokens / contextLimit) * 100 : 0;
+    const next: WorkspaceContextUsage = {
+      hasData,
+      usedTokens,
+      percentage: Math.min(Math.max(rawPercentage, 0), 100),
+      rawPercentage: Math.max(rawPercentage, 0),
+      contextLimit,
+      outputLimit,
+      lastMessageId: lastUsage?.messageId,
+    };
+    const previous = workspaceContextUsageByRoot[workspaceRoot];
+    if (
+      previous &&
+      previous.hasData === next.hasData &&
+      previous.usedTokens === next.usedTokens &&
+      previous.percentage === next.percentage &&
+      previous.rawPercentage === next.rawPercentage &&
+      previous.contextLimit === next.contextLimit &&
+      previous.outputLimit === next.outputLimit &&
+      previous.lastMessageId === next.lastMessageId
+    ) {
+      return;
+    }
+    workspaceContextUsageByRoot = {
+      ...workspaceContextUsageByRoot,
+      [workspaceRoot]: next,
+    };
+  }
+
+  function applyWorkspaceContextLimits(
+    workspaceRoot: string,
+    contextLimit: number,
+    outputLimit: number,
+  ): void {
+    const nextLimits: WorkspaceContextLimits = {
+      contextLimit: Math.max(0, contextLimit),
+      outputLimit: Math.max(0, outputLimit),
+    };
+    const previous = workspaceContextLimitsByRoot[workspaceRoot];
+    if (
+      previous &&
+      previous.contextLimit === nextLimits.contextLimit &&
+      previous.outputLimit === nextLimits.outputLimit
+    ) {
+      return;
+    }
+    workspaceContextLimitsByRoot = {
+      ...workspaceContextLimitsByRoot,
+      [workspaceRoot]: nextLimits,
+    };
+    refreshWorkspaceContextUsage(workspaceRoot);
+  }
+
+  function applyWorkspaceContextLimitsFromCatalog(
+    workspaceRoot: string,
+    providers: OpenCodeModelCatalogProvider[],
+    persistedSelectedModel: SelectedModelRef | null,
+  ): SelectedModelRef | null {
+    const resolvedSelectedModel = resolveSelectedModel(
+      providers,
+      persistedSelectedModel,
+    );
+    const provider = resolvedSelectedModel
+      ? providers.find(
+          (item) => item.providerId === resolvedSelectedModel.providerId,
+        )
+      : null;
+    const model =
+      provider && resolvedSelectedModel
+        ? provider.models.find(
+            (item) => item.id === resolvedSelectedModel.modelId,
+          )
+        : null;
+
+    applyWorkspaceContextLimits(
+      workspaceRoot,
+      model?.limit?.context ?? 0,
+      model?.limit?.output ?? 0,
+    );
+    return resolvedSelectedModel;
+  }
+
+  async function refreshWorkspaceContextLimits(
+    workspaceRoot: string,
+    persistedSelectedModel: SelectedModelRef | null = appStateSnapshot.providers.selectedModel,
+  ): Promise<void> {
+    try {
+      const response = await window.electronAPI.getOpenCodeModelCatalog({
+        workspaceRoot,
+      });
+      if (!response.ok || !response.providers) return;
+
+      const resolvedSelectedModel = applyWorkspaceContextLimitsFromCatalog(
+        workspaceRoot,
+        response.providers,
+        persistedSelectedModel,
+      );
+      if (!sameSelectedModel(resolvedSelectedModel, persistedSelectedModel)) {
+        patchAppState({
+          providers: {
+            selectedModel: resolvedSelectedModel,
+          },
+        });
+      }
+    } catch {
+      // Ignore model-catalog lookup failures; ring falls back to muted state.
+    }
+  }
+
+  $effect(() => {
+    if (!activeWorkspace) return;
+    void refreshWorkspaceContextLimits(activeWorkspace.rootPath);
   });
 
   const watchedFilePaths: Record<string, true> = {};
@@ -930,6 +1141,7 @@
     if (activeWorkspace?.rootPath === workspaceRoot) {
       messages = next;
     }
+    refreshWorkspaceContextUsage(workspaceRoot, next);
   }
 
   function getMessagesForWorkspaceRoot(workspaceRoot: string): ChatItem[] {
@@ -1035,6 +1247,7 @@
         role: message.role,
         content: message.content,
         createdAt: message.createdAt,
+        tokens: message.tokens,
         attachments: message.attachments,
       }));
 
@@ -1828,6 +2041,23 @@
     setMessagesForWorkspaceRoot(workspaceRoot, next);
   }
 
+  function updateMessageTokensById(
+    workspaceRoot: string,
+    messageId: string,
+    tokens: OpenCodeTokenUsage,
+  ): void {
+    const current = getMessagesForWorkspaceRoot(workspaceRoot);
+    const index = current.findIndex((item) => item.id === messageId);
+    if (index === -1) return;
+
+    const next = [...current];
+    next[index] = {
+      ...next[index],
+      tokens,
+    };
+    setMessagesForWorkspaceRoot(workspaceRoot, next);
+  }
+
   function renameMessageIdInWorkspace(
     workspaceRoot: string,
     previousMessageId: string,
@@ -2092,7 +2322,8 @@
       });
 
       if (catalogResponse.ok && catalogResponse.providers) {
-        const resolvedSelectedModel = resolveSelectedModel(
+        const resolvedSelectedModel = applyWorkspaceContextLimitsFromCatalog(
+          turnWorkspaceRoot,
           catalogResponse.providers,
           persistedSelectedModel,
         );
@@ -2191,6 +2422,17 @@
           setSyncStateForWorkspaceRoot(turnWorkspaceRoot, renamedSyncState);
           assistantMessageId = streamEvent.messageId;
         }
+      }
+
+      if (
+        streamEvent.type === "message_updated" &&
+        streamEvent.tokens !== undefined
+      ) {
+        updateMessageTokensById(
+          turnWorkspaceRoot,
+          streamEvent.messageId,
+          streamEvent.tokens,
+        );
       }
 
       const nextSyncState = applyRuntimeEventToSyncState({
@@ -2549,6 +2791,7 @@
             messages={renderedMessages}
             workspaceTitle={activeWorkspace?.name?.trim() || "Agent Chat"}
             activeWorkspaceRoot={activeWorkspace?.rootPath ?? null}
+            contextUsage={activeWorkspaceContextUsage}
             {chatFontSize}
             bootstrapping={!workspacesBootstrapped}
             historyLoading={activeHistoryLoading}
