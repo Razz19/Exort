@@ -94,6 +94,23 @@ test('strict gating blocks shortcuts in overlays and editables', () => {
   });
   assert.equal(blockedByOverlay.dispatched, false);
 
+  const settingsToggleAllowedInOverlay = dispatchHotkeyKeyboardEvent({
+    event: createEvent({ key: ',', ctrlKey: true }),
+    bindings: DEFAULT_HOTKEY_BINDINGS,
+    handlers: {
+      'app.openSettings': () => undefined
+    },
+    context: {
+      settingsModalOpen: true,
+      navbarOverlayOpen: false,
+      hasActiveWorkspace: true,
+      agentBusy: false,
+      sessionBusy: false
+    },
+    isMac: false
+  });
+  assert.equal(settingsToggleAllowedInOverlay.dispatched, true);
+
   const blockedInEditable = dispatchHotkeyKeyboardEvent({
     event: createEvent({ key: 'o', ctrlKey: true }),
     bindings: DEFAULT_HOTKEY_BINDINGS,
@@ -113,6 +130,42 @@ test('strict gating blocks shortcuts in overlays and editables', () => {
     isMac: false
   });
   assert.equal(blockedInEditable.dispatched, false);
+});
+
+test('shift+tab toggles chat mode when workspace is active', () => {
+  let prevented = false;
+  let called = false;
+
+  const result = dispatchHotkeyKeyboardEvent({
+    event: createEvent({
+      key: 'Tab',
+      shiftKey: true,
+      preventDefault: () => {
+        prevented = true;
+      }
+    }),
+    bindings: DEFAULT_HOTKEY_BINDINGS,
+    handlers: {
+      'chat.toggleAgentMode': () => {
+        called = true;
+      }
+    },
+    context: {
+      settingsModalOpen: false,
+      navbarOverlayOpen: false,
+      hasActiveWorkspace: true,
+      agentBusy: false,
+      sessionBusy: false
+    },
+    isEditableTargetOverride: true,
+    isMac: false
+  });
+
+  assert.equal(result.matched, true);
+  assert.equal(result.dispatched, true);
+  assert.equal(result.command, 'chat.toggleAgentMode');
+  assert.equal(called, true);
+  assert.equal(prevented, true);
 });
 
 test('menu dispatch uses same command gating', () => {

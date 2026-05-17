@@ -595,6 +595,11 @@
     });
   }
 
+  function toggleAgentMode(): void {
+    if (!activeWorkspace) return;
+    handleAgentModeChange(activeAgentMode === "plan" ? "build" : "plan");
+  }
+
   async function ensureWatchedFile(filePath: string): Promise<void> {
     if (watchedFilePaths[filePath]) return;
     watchedFilePaths[filePath] = true;
@@ -946,6 +951,14 @@
 
   function closeSettingsModal(): void {
     settingsModalOpen = false;
+  }
+
+  function toggleSettingsModal(initialTab: unknown = "general"): void {
+    if (settingsModalOpen) {
+      closeSettingsModal();
+      return;
+    }
+    openSettingsModal(initialTab);
   }
 
   function showToast(
@@ -1920,13 +1933,16 @@
         void openFolder();
       },
       "app.openSettings": () => {
-        openSettingsModal("general");
+        toggleSettingsModal("general");
       },
       "editor.saveActiveFile": () => {
         void saveActiveFile();
       },
       "chat.newSession": () => {
         void createNewSession();
+      },
+      "chat.toggleAgentMode": () => {
+        toggleAgentMode();
       },
       "arduino.compile": navbarHotkeyActions
         ? () => {

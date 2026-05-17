@@ -19,6 +19,11 @@ export const DEFAULT_HOTKEY_BINDINGS: HotkeyBinding[] = [
     combo: 'mod+shift+n'
   },
   {
+    command: 'chat.toggleAgentMode',
+    combo: 'shift+tab',
+    allowInEditable: true
+  },
+  {
     command: 'arduino.compile',
     combo: 'mod+shift+b'
   },

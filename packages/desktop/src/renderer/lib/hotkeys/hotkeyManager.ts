@@ -92,11 +92,16 @@ function isEditableElement(target: EventTarget | null): boolean {
 }
 
 function isCommandAllowedInContext(command: HotkeyCommandId, context: HotkeyContext): boolean {
-  if (context.settingsModalOpen || context.navbarOverlayOpen) return false;
+  if (context.navbarOverlayOpen) return false;
+  if (context.settingsModalOpen && command !== 'app.openSettings') return false;
 
   if (command === 'chat.newSession') {
     if (!context.hasActiveWorkspace) return false;
     if (context.agentBusy || context.sessionBusy) return false;
+  }
+
+  if (command === 'chat.toggleAgentMode' && !context.hasActiveWorkspace) {
+    return false;
   }
 
   if ((command === 'arduino.compile' || command === 'arduino.upload') && !context.hasActiveWorkspace) {

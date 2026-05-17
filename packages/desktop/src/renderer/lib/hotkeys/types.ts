@@ -3,6 +3,7 @@ export type HotkeyCommandId =
   | 'app.openSettings'
   | 'editor.saveActiveFile'
   | 'chat.newSession'
+  | 'chat.toggleAgentMode'
   | 'arduino.compile'
   | 'arduino.upload';
 
