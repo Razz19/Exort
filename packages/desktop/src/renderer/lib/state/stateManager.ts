@@ -33,6 +33,9 @@ type AppStatePatch = {
     monacoTheme?: AppState['appearance']['monacoTheme'];
     chatFontSize?: AppState['appearance']['chatFontSize'];
   };
+  agent?: {
+    showReasoning?: AppState['agent']['showReasoning'];
+  };
   providers?: {
     selectedModel?: AppState['providers']['selectedModel'];
   };
@@ -173,6 +176,10 @@ export function patchAppState(
       appearance: {
         ...current.appearance,
         ...(patch.appearance ?? {})
+      },
+      agent: {
+        ...current.agent,
+        ...(patch.agent ?? {})
       },
       providers: {
         ...current.providers,

@@ -37,6 +37,34 @@ function buildAssistantContentParts(parts: AgentSyncPart[]): ChatItem["assistant
   return merged.length > 0 ? merged : undefined;
 }
 
+function buildAssistantParts(parts: AgentSyncPart[]): ChatItem["assistantParts"] {
+  const structuredParts = parts.filter((part) => {
+    if (part.id.endsWith(":live-text")) return false;
+    if (part.type === "tool") return true;
+    if (part.type !== "text" && part.type !== "reasoning") return false;
+    return Boolean(part.text && part.text.length > 0);
+  });
+
+  if (structuredParts.length === 0) return undefined;
+
+  return structuredParts.map((part) => {
+    if (part.type === "tool") {
+      return {
+        id: part.id,
+        type: "tool" as const,
+        toolName: part.toolName,
+        status: normalizeToolStatus(part.status),
+      };
+    }
+
+    return {
+      id: part.id,
+      type: part.type,
+      text: part.text ?? "",
+    };
+  });
+}
+
 function isRenderableRole(role: string | undefined): role is ChatItem["role"] {
   return role === "user" || role === "assistant" || role === "system";
 }
@@ -155,6 +183,7 @@ function buildToolStep(
     status,
     kind: "tool",
     contentStart: existingStep?.contentStart,
+    contentEnd: existingStep?.contentEnd,
     createdAt: message.createdAt,
   };
 }
@@ -265,6 +294,7 @@ export function buildRenderMessagesFromSyncState(params: {
 
     const allParts = syncState.part[message.id] ?? [];
     const assistantContentParts = buildAssistantContentParts(allParts);
+    const assistantParts = buildAssistantParts(allParts);
     const parts = allParts.filter(
       (part) => part.type === "tool",
     );
@@ -389,6 +419,7 @@ export function buildRenderMessagesFromSyncState(params: {
     return {
       ...message,
       assistantContentParts,
+      assistantParts,
       steps: nextSteps,
       role: isRenderableRole(message.role) ? message.role : "assistant",
     };

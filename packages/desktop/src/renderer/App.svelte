@@ -189,6 +189,9 @@
   let chatFontSize = $derived<ChatFontSizePreset>(
     appStateSnapshot.appearance.chatFontSize ?? "default",
   );
+  let showReasoning = $derived(
+    appStateSnapshot.agent.showReasoning ?? false,
+  );
   let fileManagerCollapsed = $derived(
     appStateSnapshot.layout.fileManagerCollapsed ?? false,
   );
@@ -2488,6 +2491,7 @@
               ...existingStep,
               ...step,
               contentStart: existingStep.contentStart ?? step.contentStart,
+              contentEnd: step.contentEnd ?? existingStep.contentEnd,
             };
             return next;
           }
@@ -2645,6 +2649,7 @@
           status,
           kind: "tool",
           contentStart: completion.length,
+          contentEnd: completion.length,
           createdAt: new Date().toISOString(),
         });
         return;
@@ -2908,6 +2913,7 @@
             activeWorkspaceRoot={activeWorkspace?.rootPath ?? null}
             contextUsage={activeWorkspaceContextUsage}
             {chatFontSize}
+            {showReasoning}
             bootstrapping={!workspacesBootstrapped}
             historyLoading={activeHistoryLoading}
             busy={agentBusy}

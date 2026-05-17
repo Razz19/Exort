@@ -26,6 +26,7 @@
     activeWorkspaceRoot,
     contextUsage = null,
     chatFontSize = "default",
+    showReasoning = false,
     bootstrapping = false,
     historyLoading = false,
     busy,
@@ -48,6 +49,7 @@
       activeWorkspaceRoot: string | null;
       contextUsage?: ChatHeaderContextUsage;
       chatFontSize?: ChatFontSizePreset;
+      showReasoning?: boolean;
       bootstrapping?: boolean;
       historyLoading?: boolean;
       busy: boolean;
@@ -82,6 +84,8 @@
     {:else}
       <ChatTimeline
         {messages}
+        {showReasoning}
+        workspaceRoot={activeWorkspaceRoot}
         {busy}
         {sessionStatus}
         {onPermissionReply}

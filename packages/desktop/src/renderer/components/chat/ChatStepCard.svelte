@@ -7,16 +7,19 @@
   import PermissionPromptCard from "./interrupts/PermissionPromptCard.svelte";
   import QuestionPromptCard from "./interrupts/QuestionPromptCard.svelte";
   import MessagePart from "./parts/MessagePart.svelte";
+  import ToolActivityRow from "./parts/ToolActivityRow.svelte";
 
   let {
     step,
     content = "",
+    workspaceRoot = null,
     onPermissionReply,
     onQuestionReply,
     onQuestionReject,
   } = $props<{
     step: AgentStep;
     content?: string;
+    workspaceRoot?: string | null;
     onPermissionReply?: (requestId: string, reply: AgentPermissionReply) => Promise<void> | void;
     onQuestionReply?: (requestId: string, answers: string[][]) => Promise<void> | void;
     onQuestionReject?: (requestId: string) => Promise<void> | void;
@@ -89,7 +92,11 @@
 
 {#if step.kind === "tool"}
   <div class="space-y-2">
-    <MessagePart {step} />
+    {#if step.status === "error"}
+      <MessagePart {step} />
+    {:else}
+      <ToolActivityRow {step} {workspaceRoot} />
+    {/if}
     {#if step.status !== "running" && content.trim().length > 0}
       <div class="chat-markdown px-2.5 pb-1">
         {@html renderMarkdown(content)}

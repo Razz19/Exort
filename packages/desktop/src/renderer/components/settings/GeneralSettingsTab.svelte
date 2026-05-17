@@ -30,6 +30,7 @@
 
   let monacoTheme = $state<MonacoThemeId>("vs-dark");
   let chatFontSize = $state<ChatFontSizePreset>("default");
+  let showReasoning = $state(false);
   let serialBufferSize = $state<number>(SERIAL_BUFFER_SIZE_DEFAULT);
   let serialBufferInput = $state<string>(String(SERIAL_BUFFER_SIZE_DEFAULT));
 
@@ -37,6 +38,7 @@
     const unsubscribe = appStateStore.subscribe((state) => {
       monacoTheme = state.appearance.monacoTheme;
       chatFontSize = state.appearance.chatFontSize ?? "default";
+      showReasoning = state.agent.showReasoning ?? false;
       serialBufferSize = sanitizeSerialBufferSize(state.serial.bufferSize);
       serialBufferInput = String(serialBufferSize);
     });
@@ -105,6 +107,18 @@
       },
     });
   }
+
+  function onShowReasoningToggle(event: Event): void {
+    const target = event.currentTarget as HTMLInputElement | null;
+    const nextValue = target?.checked === true;
+    showReasoning = nextValue;
+
+    patchAppState({
+      agent: {
+        showReasoning: nextValue,
+      },
+    });
+  }
 </script>
 
 <div class="flex min-w-0 flex-col gap-4">
@@ -151,6 +165,32 @@
         Applies to the whole chat panel.
       </span>
     </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-dark-fg3">
+      Agent
+    </h2>
+    <div class="h-px flex-1 bg-dark-border"></div>
+  </div>
+
+  <div class="rounded-lg border border-dark-border bg-dark-bg px-3 py-3">
+    <h3 class="text-sm font-semibold text-dark-fg">Show reasoning</h3>
+    <p class="mt-1 text-xs text-dark-fg4">
+      Show or hide assistant reasoning text in chat. Tool calls and results are
+      always shown.
+    </p>
+
+    <label class="mt-3 inline-flex items-center gap-2 text-xs text-dark-fg3">
+      <input
+        type="checkbox"
+        class="h-4 w-4 accent-primary-600"
+        checked={showReasoning}
+        onchange={onShowReasoningToggle}
+        aria-label="Show reasoning"
+      />
+      Show reasoning
+    </label>
   </div>
 
   <div class="flex items-center gap-2">

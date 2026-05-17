@@ -83,6 +83,7 @@ export type AgentStep = {
     rejected?: boolean;
   };
   contentStart?: number;
+  contentEnd?: number;
   createdAt: string;
 };
 
@@ -98,6 +99,19 @@ export type ChatItem = {
     kind: 'reasoning' | 'text';
     text: string;
   }>;
+  assistantParts?: Array<
+    | {
+        id: string;
+        type: 'text' | 'reasoning';
+        text: string;
+      }
+    | {
+        id: string;
+        type: 'tool';
+        toolName?: string;
+        status?: AgentStep['status'];
+      }
+  >;
   steps?: AgentStep[];
 };
 

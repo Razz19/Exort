@@ -124,6 +124,9 @@ export function createDefaultAppState(): AppState {
       monacoTheme: 'vs-dark',
       chatFontSize: 'default'
     },
+    agent: {
+      showReasoning: false
+    },
     providers: {
       selectedModel: null
     }
@@ -193,6 +196,10 @@ export function sanitizeAppState(input: unknown): AppState {
     candidate.appearance && typeof candidate.appearance === 'object'
       ? (candidate.appearance as Partial<AppState['appearance']>)
       : undefined;
+  const agentCandidate =
+    candidate.agent && typeof candidate.agent === 'object'
+      ? (candidate.agent as Partial<AppState['agent']>)
+      : undefined;
   const selectedModelCandidate = sanitizeSelectedModelRef(providersCandidate?.selectedModel);
   const openAICandidate =
     providersCandidate?.openai && typeof providersCandidate.openai === 'object' ? providersCandidate.openai : undefined;
@@ -215,6 +222,12 @@ export function sanitizeAppState(input: unknown): AppState {
       chatFontSize: sanitizeChatFontSizePreset(
         appearanceCandidate?.chatFontSize ?? defaults.appearance.chatFontSize
       )
+    },
+    agent: {
+      showReasoning:
+        typeof agentCandidate?.showReasoning === 'boolean'
+          ? agentCandidate.showReasoning
+          : defaults.agent.showReasoning
     },
     providers: {
       selectedModel:

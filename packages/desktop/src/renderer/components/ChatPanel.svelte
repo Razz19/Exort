@@ -22,6 +22,7 @@
     activeWorkspaceRoot: string | null;
     contextUsage?: ChatHeaderContextUsage;
     chatFontSize: ChatFontSizePreset;
+    showReasoning?: boolean;
     busy: boolean;
     stopping: boolean;
     sessionStatus: "running" | "idle" | "error";

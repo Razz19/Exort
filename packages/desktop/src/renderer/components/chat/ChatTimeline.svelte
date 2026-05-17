@@ -7,15 +7,19 @@
 
   let {
     messages,
+    showReasoning = false,
+    workspaceRoot = null,
     busy,
     sessionStatus,
     onPermissionReply,
     onQuestionReply,
     onQuestionReject,
   } = $props<{
-    messages: ChatItem[];
-    busy: boolean;
-    sessionStatus: "running" | "idle" | "error";
+      messages: ChatItem[];
+      showReasoning?: boolean;
+      workspaceRoot?: string | null;
+      busy: boolean;
+      sessionStatus: "running" | "idle" | "error";
     onPermissionReply?: (
       requestId: string,
       reply: AgentPermissionReply,
@@ -32,10 +36,7 @@
 
   let visibleMessages = $derived(
     messages.filter(
-      (message) =>
-        message.role !== "assistant" ||
-        message.content.trim().length > 0 ||
-        (message.steps?.length ?? 0) > 0,
+      (message) => message.role !== "assistant" || shouldRenderAssistantMessage(message),
     ),
   );
   let showJumpToLatest = $derived(
@@ -69,6 +70,28 @@
     pinnedToBottom = true;
   }
 
+  function hasVisibleAssistantText(message: ChatItem): boolean {
+    const structuredParts = (message.assistantContentParts ?? []).filter(
+      (part) => part.text.trim().length > 0,
+    );
+    if (structuredParts.length > 0) {
+      return structuredParts.some((part) => {
+        if (showReasoning) return true;
+        return part.kind === "text";
+      });
+    }
+
+    const content = message.content.trim();
+    if (!content) return false;
+    return true;
+  }
+
+  function shouldRenderAssistantMessage(message: ChatItem): boolean {
+    return (
+      hasVisibleAssistantText(message) || (message.steps?.length ?? 0) > 0
+    );
+  }
+
   $effect(() => {
     messages;
     busy;
@@ -94,6 +117,8 @@
     {#each visibleMessages as message (message.id)}
       <SessionTurn
         {message}
+        {showReasoning}
+        {workspaceRoot}
         {onPermissionReply}
         {onQuestionReply}
         {onQuestionReject}

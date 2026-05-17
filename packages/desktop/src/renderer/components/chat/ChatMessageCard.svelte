@@ -10,19 +10,21 @@
 
   import type { AgentPermissionReply, ChatItem } from "../../lib/types";
   import { formatChatTime } from "./chatDate";
-  import {
-    getLeadingAssistantContent,
-    getStepAssistantContent,
-    hasStepOffsets,
-    looksLikeAssistantPlanningContent,
-    splitAssistantPlanningContent,
-  } from "./chatContentSegments";
   import { renderMarkdown } from "./chatMarkdown";
   import ChatStepCard from "./ChatStepCard.svelte";
 
-  let { message, onPermissionReply, onQuestionReply, onQuestionReject } =
+  let {
+    message,
+    showReasoning = false,
+    workspaceRoot = null,
+    onPermissionReply,
+    onQuestionReply,
+    onQuestionReject,
+  } =
     $props<{
       message: ChatItem;
+      showReasoning?: boolean;
+      workspaceRoot?: string | null;
       onPermissionReply?: (
         requestId: string,
         reply: AgentPermissionReply,
@@ -52,111 +54,66 @@
         )
       : [],
   );
-  let structuredBodyAssistantSplit = $derived.by(() => {
+  let orderedAssistantParts = $derived(isAssistant ? (message.assistantParts ?? []) : []);
+  let lastToolPartIndex = $derived.by(() => {
+    for (let index = orderedAssistantParts.length - 1; index >= 0; index -= 1) {
+      if (orderedAssistantParts[index]?.type === "tool") return index;
+    }
+    return -1;
+  });
+  let answerPartCandidate = $derived.by(() => {
+    if (!isAssistant || stepCount === 0 || lastToolPartIndex < 0) return null;
+    const textParts = orderedAssistantParts
+      .slice(lastToolPartIndex + 1)
+      .filter(
+        (part): part is Extract<NonNullable<ChatItem["assistantParts"]>[number], { type: "text" }> =>
+          part.type === "text" && part.text.trim().length > 0,
+    );
+    return textParts[textParts.length - 1] ?? null;
+  });
+  let fallbackAnswerText = $derived.by(() => {
+    if (!isAssistant || stepCount === 0 || answerPartCandidate) return "";
+    const steps = message.steps ?? [];
+    const lastStep = steps[steps.length - 1];
+    if (!lastStep || lastStep.kind !== "tool" || lastStep.status === "running") {
+      return "";
+    }
     if (
-      !isAssistant ||
-      (isAssistant && stepCount > 0 && hasStepOffsets(message))
+      typeof lastStep.contentEnd !== "number" ||
+      !Number.isFinite(lastStep.contentEnd)
     ) {
-      return null;
+      return "";
     }
-    if (structuredAssistantContentParts.length < 2) return null;
-
-    const firstResponseIndex = structuredAssistantContentParts.findIndex(
-      (part) => part.kind === "text",
-    );
-    if (firstResponseIndex <= 0) return null;
-
-    const planningParts = structuredAssistantContentParts.slice(
+    const start = Math.max(
       0,
-      firstResponseIndex,
+      Math.min(message.content.length, Math.trunc(lastStep.contentEnd)),
     );
-    if (!planningParts.some((part) => part.kind === "reasoning")) return null;
-
-    const planning = planningParts.map((part) => part.text).join("");
-    const response = structuredAssistantContentParts
-      .slice(firstResponseIndex)
-      .map((part) => part.text)
-      .join("");
-
-    if (!planning.trim() || !response.trim()) return null;
-    return {
-      planning,
-      response,
-    };
+    return message.content.slice(start).trim();
   });
-  let segmentedAssistantContent = $derived(
-    isAssistant && stepCount > 0 && hasStepOffsets(message),
+  let answerCandidateId = $derived(
+    answerPartCandidate?.id ??
+      (fallbackAnswerText ? `${message.id}:fallback-answer` : null),
   );
-  let leadingAssistantContent = $derived(
-    segmentedAssistantContent ? getLeadingAssistantContent(message) : "",
+  let answerCandidateText = $derived(
+    answerPartCandidate?.text.trim() ?? fallbackAnswerText,
   );
+  let answerPartText = $derived.by(() => {
+    if (!answerCandidateId || !answerCandidateText) return "";
+    return answerCandidateText;
+  });
+  let assistantBodyText = $derived.by(() => {
+    if (!isAssistant || stepCount > 0) return "";
+    if (structuredAssistantContentParts.length > 0) {
+      return structuredAssistantContentParts
+        .filter((part) => showReasoning || part.kind === "text")
+        .map((part) => part.text)
+        .join("")
+        .trim();
+    }
+    return message.content.trim();
+  });
   let shouldRenderBody = $derived(
-    !isAssistant ||
-      (!segmentedAssistantContent && message.content.trim().length > 0),
-  );
-  let leadingAssistantSplit = $derived(
-    isAssistant && leadingAssistantContent.trim().length > 0
-      ? splitAssistantPlanningContent(leadingAssistantContent)
-      : null,
-  );
-  let bodyAssistantSplit = $derived(
-    isAssistant &&
-      !segmentedAssistantContent &&
-      message.content.trim().length > 0
-      ? splitAssistantPlanningContent(message.content)
-      : null,
-  );
-  let leadingAssistantLooksPlanning = $derived(
-    isAssistant && leadingAssistantContent.trim().length > 0
-      ? looksLikeAssistantPlanningContent(leadingAssistantContent)
-      : false,
-  );
-  let bodyAssistantLooksPlanning = $derived(
-    isAssistant &&
-      !segmentedAssistantContent &&
-      message.content.trim().length > 0
-      ? looksLikeAssistantPlanningContent(message.content)
-      : false,
-  );
-  let planningPreviewText = $derived.by(() => {
-    const parts: string[] = [];
-
-    if (structuredBodyAssistantSplit?.planning) {
-      parts.push(structuredBodyAssistantSplit.planning);
-      return parts.join("\n\n").trim();
-    }
-
-    if (leadingAssistantSplit?.planning) {
-      parts.push(leadingAssistantSplit.planning);
-    } else if (
-      leadingAssistantLooksPlanning &&
-      leadingAssistantContent.trim().length > 0
-    ) {
-      parts.push(leadingAssistantContent);
-    }
-
-    if (bodyAssistantSplit?.planning) {
-      parts.push(bodyAssistantSplit.planning);
-    } else if (
-      bodyAssistantLooksPlanning &&
-      !bodyAssistantSplit &&
-      message.content.trim().length > 0
-    ) {
-      parts.push(message.content);
-    }
-
-    return parts.join("\n\n").trim();
-  });
-  let hasPlanningContent = $derived(planningPreviewText.length > 0);
-  let planningIsLong = $derived.by(() => {
-    if (!planningPreviewText) return false;
-    return (
-      planningPreviewText.length > 260 ||
-      (planningPreviewText.match(/\n/g)?.length ?? 0) >= 4
-    );
-  });
-  let collapsePlanning = $derived(
-    hasPlanningContent && planningIsLong && !showPlanningFull,
+    !isAssistant || (stepCount === 0 && assistantBodyText.length > 0),
   );
 
   function isImageAttachment(attachment: { name: string; mime: string }): boolean {
@@ -196,8 +153,9 @@
   });
 
   onDestroy(() => {
-    if (!copyResetTimer) return;
-    window.clearTimeout(copyResetTimer);
+    if (copyResetTimer) {
+      window.clearTimeout(copyResetTimer);
+    }
   });
 
   async function copyMessage(): Promise<void> {
@@ -254,71 +212,13 @@
     </div>
   {/if}
 
-  {#if isAssistant && segmentedAssistantContent && leadingAssistantContent.trim().length > 0}
-    {#if leadingAssistantSplit}
-      <div
-        class={`chat-markdown chat-markdown-planning mb-2 ${collapsePlanning ? "chat-markdown-planning-collapsed" : ""}`}
-      >
-        {@html renderMarkdown(leadingAssistantSplit.planning)}
-      </div>
-      {#if hasPlanningContent && planningIsLong}
-        <button
-          class="mb-2 inline-flex items-center gap-1 px-0 py-0 text-[11px] text-dark-fg4 hover:text-dark-fg2"
-          onclick={() => (showPlanningFull = !showPlanningFull)}
-          title={showPlanningFull
-            ? "Collapse planning notes"
-            : "Expand planning notes"}
-        >
-          {#if showPlanningFull}
-            <ChevronUp class="h-3 w-3" />
-            Hide Reasoning
-          {:else}
-            <ChevronDown class="h-3 w-3" />
-            Show Reasoning
-          {/if}
-        </button>
-      {/if}
-      <div class="chat-markdown mb-2">
-        {@html renderMarkdown(leadingAssistantSplit.response)}
-      </div>
-    {:else if leadingAssistantLooksPlanning}
-      <div
-        class={`chat-markdown chat-markdown-planning mb-2 ${collapsePlanning ? "chat-markdown-planning-collapsed" : ""}`}
-      >
-        {@html renderMarkdown(leadingAssistantContent)}
-      </div>
-      {#if hasPlanningContent && planningIsLong}
-        <button
-          class="mb-2 inline-flex items-center gap-1 px-0 py-0 text-[11px] text-dark-fg4 hover:text-dark-fg2"
-          onclick={() => (showPlanningFull = !showPlanningFull)}
-          title={showPlanningFull
-            ? "Collapse planning notes"
-            : "Expand planning notes"}
-        >
-          {#if showPlanningFull}
-            <ChevronUp class="h-3 w-3" />
-            Hide Reasoning
-          {:else}
-            <ChevronDown class="h-3 w-3" />
-            Show Reasoning
-          {/if}
-        </button>
-      {/if}
-    {:else}
-      <div class="chat-markdown mb-2">
-        {@html renderMarkdown(leadingAssistantContent)}
-      </div>
-    {/if}
-  {/if}
-
   {#if isAssistant && showSteps && stepCount > 0}
     <div class="space-y-2">
-      {#each message.steps as step, index (step.id)}
+      {#each message.steps as step (step.id)}
         <ChatStepCard
           {step}
-          content={segmentedAssistantContent
-            ? getStepAssistantContent(message, index)
-            : ""}
+          content=""
+          {workspaceRoot}
           {onPermissionReply}
           {onQuestionReply}
           {onQuestionReject}
@@ -327,89 +227,31 @@
     </div>
   {/if}
 
-  {#if shouldRenderBody}
-    {#if isAssistant}
-      {#if structuredBodyAssistantSplit}
+  {#if isAssistant && stepCount > 0 && showReasoning}
+    {#each orderedAssistantParts as part (part.id)}
+      {#if part.type !== "tool" && part.text.trim().length > 0}
         <div
-          class={`chat-markdown chat-markdown-planning ${stepCount > 0 ? "mt-2" : ""} ${collapsePlanning ? "chat-markdown-planning-collapsed" : ""}`}
+          class={`chat-markdown mt-2 ${part.type === "reasoning" ? "chat-markdown-planning" : ""}`}
         >
-          {@html renderMarkdown(structuredBodyAssistantSplit.planning)}
+          {@html renderMarkdown(part.text)}
         </div>
-        {#if hasPlanningContent && planningIsLong}
-          <button
-            class="mb-1 inline-flex items-center gap-1 px-0 py-0 text-[11px] text-dark-fg4 hover:text-dark-fg2"
-            onclick={() => (showPlanningFull = !showPlanningFull)}
-            title={showPlanningFull
-              ? "Collapse planning notes"
-              : "Expand planning notes"}
-          >
-            {#if showPlanningFull}
-              <ChevronUp class="h-3 w-3" />
-              Hide Reasoning
-            {:else}
-              <ChevronDown class="h-3 w-3" />
-              Show Reasoning
-            {/if}
-          </button>
-        {/if}
-        <div class={`chat-markdown ${stepCount > 0 ? "mt-2" : "mt-1"}`}>
-          {@html renderMarkdown(structuredBodyAssistantSplit.response)}
-        </div>
-      {:else if bodyAssistantSplit}
-        <div
-          class={`chat-markdown chat-markdown-planning ${stepCount > 0 ? "mt-2" : ""} ${collapsePlanning ? "chat-markdown-planning-collapsed" : ""}`}
-        >
-          {@html renderMarkdown(bodyAssistantSplit.planning)}
-        </div>
-        {#if hasPlanningContent && planningIsLong}
-          <button
-            class="mb-1 inline-flex items-center gap-1 px-0 py-0 text-[11px] text-dark-fg4 hover:text-dark-fg2"
-            onclick={() => (showPlanningFull = !showPlanningFull)}
-            title={showPlanningFull
-              ? "Collapse planning notes"
-              : "Expand planning notes"}
-          >
-            {#if showPlanningFull}
-              <ChevronUp class="h-3 w-3" />
-              Hide Reasoning
-            {:else}
-              <ChevronDown class="h-3 w-3" />
-              Show Reasoning
-            {/if}
-          </button>
-        {/if}
-        <div class={`chat-markdown ${stepCount > 0 ? "mt-2" : "mt-1"}`}>
-          {@html renderMarkdown(bodyAssistantSplit.response)}
-        </div>
-      {:else if bodyAssistantLooksPlanning}
-        <div
-          class={`chat-markdown chat-markdown-planning ${stepCount > 0 ? "mt-2" : ""} ${collapsePlanning ? "chat-markdown-planning-collapsed" : ""}`}
-        >
-          {@html renderMarkdown(message.content)}
-        </div>
-        {#if hasPlanningContent && planningIsLong}
-          <button
-            class="mb-1 inline-flex items-center gap-1 px-0 py-0 text-[11px] text-dark-fg4 hover:text-dark-fg2"
-            onclick={() => (showPlanningFull = !showPlanningFull)}
-            title={showPlanningFull
-              ? "Collapse planning notes"
-              : "Expand planning notes"}
-          >
-            {#if showPlanningFull}
-              <ChevronUp class="h-3 w-3" />
-              Hide Reasoning
-            {:else}
-              <ChevronDown class="h-3 w-3" />
-              Show Reasoning
-            {/if}
-          </button>
-        {/if}
-      {:else}
-        <div class={`chat-markdown ${stepCount > 0 ? "mt-2" : ""}`}>
-          {@html renderMarkdown(message.content)}
-        </div>
-    {/if}
-  {:else}
+      {/if}
+    {/each}
+  {/if}
+
+  {#if isAssistant && stepCount > 0 && !showReasoning && answerPartText}
+    <div class="chat-markdown mt-2">
+      {@html renderMarkdown(answerPartText)}
+    </div>
+  {/if}
+
+  {#if shouldRenderBody && isAssistant}
+    <div class="chat-markdown">
+      {@html renderMarkdown(assistantBodyText)}
+    </div>
+  {/if}
+
+  {#if isUser}
       {#if userAttachments.length > 0}
         <div class="flex max-w-full flex-wrap justify-end gap-2 self-end">
           {#each userAttachments as attachment (attachment.id)}
@@ -442,7 +284,6 @@
       >
         {message.content}
       </p>
-    {/if}
   {/if}
   {#if isUser}
     <button

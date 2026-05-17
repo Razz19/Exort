@@ -340,6 +340,9 @@ type AppState = {
     monacoTheme: MonacoThemeId;
     chatFontSize: ChatFontSizePreset;
   };
+  agent: {
+    showReasoning: boolean;
+  };
   providers: {
     selectedModel: SelectedModelRef | null;
   };
