@@ -83,6 +83,16 @@ type WorkspaceTreeChangedEnvelope = {
   rootPath: string;
   tree: Array<{ path: string; isDirectory: boolean }>;
 };
+type AppMenuCommandId =
+  | 'app.openFolder'
+  | 'app.openSettings'
+  | 'editor.saveActiveFile'
+  | 'chat.newSession'
+  | 'arduino.compile'
+  | 'arduino.upload';
+type AppMenuCommandEnvelope = {
+  command: AppMenuCommandId;
+};
 type AgentHistoryMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -538,6 +548,8 @@ declare global {
       offFileChanged: (listener: (payload: FileChangedEnvelope) => void) => void;
       onWorkspaceTreeChanged: (listener: (payload: WorkspaceTreeChangedEnvelope) => void) => void;
       offWorkspaceTreeChanged: (listener: (payload: WorkspaceTreeChangedEnvelope) => void) => void;
+      onAppMenuCommand: (listener: (payload: AppMenuCommandEnvelope) => void) => void;
+      offAppMenuCommand: (listener: (payload: AppMenuCommandEnvelope) => void) => void;
     };
   }
 }

@@ -116,6 +116,16 @@ type WorkspaceTreeChangedEnvelope = {
   rootPath: string;
   tree: Array<{ path: string; isDirectory: boolean }>;
 };
+type AppMenuCommandId =
+  | 'app.openFolder'
+  | 'app.openSettings'
+  | 'editor.saveActiveFile'
+  | 'chat.newSession'
+  | 'arduino.compile'
+  | 'arduino.upload';
+type AppMenuCommandEnvelope = {
+  command: AppMenuCommandId;
+};
 type AgentHistoryMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -384,6 +394,10 @@ const workspaceTreeListeners = new Map<
 const serialMonitorListeners = new Map<
   (payload: SerialMonitorEvent) => void,
   (event: IpcRendererEvent, payload: SerialMonitorEvent) => void
+>();
+const appMenuCommandListeners = new Map<
+  (payload: AppMenuCommandEnvelope) => void,
+  (event: IpcRendererEvent, payload: AppMenuCommandEnvelope) => void
 >();
 const electronAPI = {
   getStateBootstrap: () => ipcRenderer.invoke('state:get-bootstrap') as Promise<StateBootstrap>,
@@ -693,6 +707,21 @@ const electronAPI = {
 
     ipcRenderer.off('workspace:tree-changed', wrapped);
     workspaceTreeListeners.delete(listener);
+  },
+  onAppMenuCommand: (listener: (payload: AppMenuCommandEnvelope) => void) => {
+    const wrapped = (_event: IpcRendererEvent, payload: AppMenuCommandEnvelope) => {
+      listener(payload);
+    };
+
+    appMenuCommandListeners.set(listener, wrapped);
+    ipcRenderer.on('app:menu-command', wrapped);
+  },
+  offAppMenuCommand: (listener: (payload: AppMenuCommandEnvelope) => void) => {
+    const wrapped = appMenuCommandListeners.get(listener);
+    if (!wrapped) return;
+
+    ipcRenderer.off('app:menu-command', wrapped);
+    appMenuCommandListeners.delete(listener);
   }
 };
 

@@ -52,6 +52,7 @@
     onSaveActiveFile,
     onArduinoOutputEvent = () => {},
     onOverlayOpenChange = () => {},
+    onHotkeyActionsChange = () => {},
     arduinoEnvironmentRefreshKey = 0,
     chatCollapsed = false,
     onToggleChatCollapsed = () => {},
@@ -74,6 +75,9 @@
     onSaveActiveFile: () => Promise<void> | void;
     onArduinoOutputEvent: (event: ArduinoOutputEvent) => void;
     onOverlayOpenChange: (open: boolean) => void;
+    onHotkeyActionsChange?: (
+      actions: { compile: () => void; upload: () => void } | null,
+    ) => void;
     arduinoEnvironmentRefreshKey?: number;
     chatCollapsed?: boolean;
     onToggleChatCollapsed?: () => Promise<void> | void;
@@ -390,6 +394,23 @@
       window.electronAPI.offArduinoCommandOutput(outputListener);
       document.removeEventListener("pointerdown", onDocumentPointerDown);
       document.removeEventListener("keydown", onDocumentKeyDown);
+    };
+  });
+
+  $effect(() => {
+    if (typeof onHotkeyActionsChange !== "function") return;
+
+    onHotkeyActionsChange({
+      compile: () => {
+        void compileActiveSketch();
+      },
+      upload: () => {
+        onUploadButtonClick();
+      },
+    });
+
+    return () => {
+      onHotkeyActionsChange(null);
     };
   });
 

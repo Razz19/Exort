@@ -147,6 +147,13 @@ type ArduinoBoardDetails = {
   boardName: string;
   configOptions: ArduinoBoardConfigOption[];
 };
+type AppMenuCommandId =
+  | 'app.openFolder'
+  | 'app.openSettings'
+  | 'editor.saveActiveFile'
+  | 'chat.newSession'
+  | 'arduino.compile'
+  | 'arduino.upload';
 
 const CHAT_MIN_WIDTH_PCT = 25;
 const CHAT_MAX_WIDTH_PCT = 65;
@@ -161,7 +168,59 @@ const SERIAL_BUFFER_SIZE_MAX = 5000;
 
 app.setName(APP_NAME);
 
+function sendMenuCommandToFocusedWindow(command: AppMenuCommandId): void {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const focusedContents = focusedWindow?.isDestroyed() ? null : focusedWindow?.webContents ?? null;
+  const target = focusedContents ?? webContents.getFocusedWebContents();
+  if (!target || target.isDestroyed()) return;
+
+  target.send('app:menu-command', { command });
+}
+
 function configureApplicationMenu(): void {
+  const fileMenuItems: MenuItemConstructorOptions[] = [
+    {
+      label: 'Open Folder...',
+      accelerator: 'CmdOrCtrl+O',
+      click: () => sendMenuCommandToFocusedWindow('app.openFolder')
+    },
+    {
+      label: 'Save Active File',
+      accelerator: 'CmdOrCtrl+S',
+      click: () => sendMenuCommandToFocusedWindow('editor.saveActiveFile')
+    },
+    {
+      label: 'New Session',
+      accelerator: 'CmdOrCtrl+Shift+N',
+      click: () => sendMenuCommandToFocusedWindow('chat.newSession')
+    },
+    { type: 'separator' },
+    ...(process.platform === 'darwin'
+      ? []
+      : [
+          {
+            label: 'Settings...',
+            accelerator: 'CmdOrCtrl+,',
+            click: () => sendMenuCommandToFocusedWindow('app.openSettings')
+          } as const,
+          { type: 'separator' as const }
+        ]),
+    ...(process.platform === 'darwin' ? [{ role: 'close' as const }] : [{ role: 'quit' as const }])
+  ];
+
+  const actionsMenuItems: MenuItemConstructorOptions[] = [
+    {
+      label: 'Compile Active Sketch',
+      accelerator: 'CmdOrCtrl+Shift+B',
+      click: () => sendMenuCommandToFocusedWindow('arduino.compile')
+    },
+    {
+      label: 'Upload Active Sketch',
+      accelerator: 'CmdOrCtrl+U',
+      click: () => sendMenuCommandToFocusedWindow('arduino.upload')
+    }
+  ];
+
   const template: MenuItemConstructorOptions[] = process.platform === 'darwin'
     ? [
         {
@@ -171,6 +230,12 @@ function configureApplicationMenu(): void {
             { type: 'separator' },
             { role: 'services' },
             { type: 'separator' },
+            {
+              label: 'Settings...',
+              accelerator: 'CmdOrCtrl+,',
+              click: () => sendMenuCommandToFocusedWindow('app.openSettings')
+            },
+            { type: 'separator' },
             { label: `Hide ${APP_NAME}`, role: 'hide' },
             { role: 'hideOthers' },
             { role: 'unhide' },
@@ -178,15 +243,17 @@ function configureApplicationMenu(): void {
             { label: `Quit ${APP_NAME}`, role: 'quit' }
           ]
         },
-        { role: 'fileMenu' },
+        { label: 'File', submenu: fileMenuItems },
         { role: 'editMenu' },
         { role: 'viewMenu' },
+        { label: 'Actions', submenu: actionsMenuItems },
         { role: 'windowMenu' }
       ]
     : [
-        { role: 'fileMenu' },
+        { label: 'File', submenu: fileMenuItems },
         { role: 'editMenu' },
         { role: 'viewMenu' },
+        { label: 'Actions', submenu: actionsMenuItems },
         { role: 'windowMenu' }
       ];
 

@@ -22,6 +22,12 @@
     sameSelectedModel,
   } from "./lib/modelCatalog";
   import {
+    DEFAULT_HOTKEY_BINDINGS,
+    dispatchHotkeyKeyboardEvent,
+    dispatchHotkeyMenuCommand,
+  } from "./lib/hotkeys";
+  import type { HotkeyCommandId, HotkeyHandlers } from "./lib/hotkeys";
+  import {
     applyInterruptStreamEventInMessages,
     upsertPendingPermissionInMessages,
     upsertPendingQuestionInMessages,
@@ -88,6 +94,10 @@
     percentage: number;
     rawPercentage: number;
     lastMessageId?: string;
+  };
+  type NavbarHotkeyActions = {
+    compile: () => void;
+    upload: () => void;
   };
 
   function buildEffectiveBoardFqbn(
@@ -158,6 +168,11 @@
   let workspaceWatchRequestId = 0;
   let requirementsStartupToastChecked = false;
   const toastActions = new Map<string, () => void>();
+  let navbarHotkeyActions = $state<NavbarHotkeyActions | null>(null);
+  let hotkeyKeydownListener: ((event: KeyboardEvent) => void) | null = null;
+  let appMenuCommandListener:
+    | ((payload: { command: HotkeyCommandId }) => void)
+    | null = null;
 
   let activeWorkspace = $derived(
     workspaces.find((item) => item.id === activeWorkspaceId) ?? null,
@@ -661,6 +676,24 @@
 
     window.electronAPI.onFileChanged(fileChangedListener);
     window.electronAPI.onWorkspaceTreeChanged(workspaceTreeChangedListener);
+    hotkeyKeydownListener = (event: KeyboardEvent) => {
+      dispatchHotkeyKeyboardEvent({
+        event,
+        bindings: DEFAULT_HOTKEY_BINDINGS,
+        handlers: getHotkeyHandlers(),
+        context: getHotkeyContext(),
+      });
+    };
+    window.addEventListener("keydown", hotkeyKeydownListener);
+
+    appMenuCommandListener = (payload: { command: HotkeyCommandId }) => {
+      dispatchHotkeyMenuCommand({
+        command: payload.command,
+        handlers: getHotkeyHandlers(),
+        context: getHotkeyContext(),
+      });
+    };
+    window.electronAPI.onAppMenuCommand(appMenuCommandListener);
 
     void initializeApp();
   });
@@ -677,6 +710,14 @@
 
     window.electronAPI.offFileChanged(fileChangedListener);
     window.electronAPI.offWorkspaceTreeChanged(workspaceTreeChangedListener);
+    if (hotkeyKeydownListener) {
+      window.removeEventListener("keydown", hotkeyKeydownListener);
+      hotkeyKeydownListener = null;
+    }
+    if (appMenuCommandListener) {
+      window.electronAPI.offAppMenuCommand(appMenuCommandListener);
+      appMenuCommandListener = null;
+    }
     void window.electronAPI.unwatchAllFiles();
     void window.electronAPI.unwatchAllWorkspaceTrees();
 
@@ -1863,6 +1904,49 @@
     outputExpanded = nextExpanded;
   }
 
+  function getHotkeyContext() {
+    return {
+      settingsModalOpen,
+      navbarOverlayOpen,
+      hasActiveWorkspace: !!activeWorkspace,
+      agentBusy,
+      sessionBusy,
+    };
+  }
+
+  function getHotkeyHandlers(): HotkeyHandlers {
+    return {
+      "app.openFolder": () => {
+        void openFolder();
+      },
+      "app.openSettings": () => {
+        openSettingsModal("general");
+      },
+      "editor.saveActiveFile": () => {
+        void saveActiveFile();
+      },
+      "chat.newSession": () => {
+        void createNewSession();
+      },
+      "arduino.compile": navbarHotkeyActions
+        ? () => {
+            navbarHotkeyActions.compile();
+          }
+        : undefined,
+      "arduino.upload": navbarHotkeyActions
+        ? () => {
+            navbarHotkeyActions.upload();
+          }
+        : undefined,
+    };
+  }
+
+  function handleNavbarHotkeyActionsChange(
+    actions: NavbarHotkeyActions | null,
+  ): void {
+    navbarHotkeyActions = actions;
+  }
+
   function handleNavbarOverlayOpenChange(open: boolean): void {
     navbarOverlayOpen = open;
   }
@@ -2752,6 +2836,7 @@
     onSaveActiveFile={saveActiveFile}
     onArduinoOutputEvent={handleArduinoOutputEvent}
     onOverlayOpenChange={handleNavbarOverlayOpenChange}
+    onHotkeyActionsChange={handleNavbarHotkeyActionsChange}
     {arduinoEnvironmentRefreshKey}
     {chatCollapsed}
     onToggleChatCollapsed={() => handleChatCollapsedChange(!chatCollapsed)}
