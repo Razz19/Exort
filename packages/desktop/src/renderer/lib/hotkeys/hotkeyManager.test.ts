@@ -23,6 +23,7 @@ test('combo normalization is stable', () => {
   assert.equal(getCanonicalComboForTest('mod+shift+n'), 'mod+shift+n');
   assert.equal(getCanonicalComboForTest('shift+mod+n'), 'mod+shift+n');
   assert.equal(getCanonicalComboForTest('mod+,'), 'mod+comma');
+  assert.equal(getCanonicalComboForTest('mod+t'), 'mod+t');
 });
 
 test('event combo uses platform-specific mod key', () => {
@@ -37,6 +38,18 @@ test('event combo uses platform-specific mod key', () => {
     false
   );
   assert.equal(winCombo, 'mod+s');
+
+  const macFormatCombo = getEventComboForTest(
+    createEvent({ key: 't', metaKey: true }),
+    true
+  );
+  assert.equal(macFormatCombo, 'mod+t');
+
+  const winFormatCombo = getEventComboForTest(
+    createEvent({ key: 't', ctrlKey: true }),
+    false
+  );
+  assert.equal(winFormatCombo, 'mod+t');
 });
 
 test('dispatches matched hotkey and prevents default', () => {
@@ -72,6 +85,42 @@ test('dispatches matched hotkey and prevents default', () => {
   assert.equal(result.command, 'editor.saveActiveFile');
   assert.equal(prevented, true);
   assert.deepEqual(calls, ['editor.saveActiveFile']);
+});
+
+test('dispatches format hotkey and prevents default', () => {
+  let prevented = false;
+  let called = false;
+
+  const result = dispatchHotkeyKeyboardEvent({
+    event: createEvent({
+      key: 't',
+      ctrlKey: true,
+      preventDefault: () => {
+        prevented = true;
+      }
+    }),
+    bindings: DEFAULT_HOTKEY_BINDINGS,
+    handlers: {
+      'editor.formatActiveFile': () => {
+        called = true;
+      }
+    },
+    context: {
+      settingsModalOpen: false,
+      navbarOverlayOpen: false,
+      hasActiveWorkspace: true,
+      agentBusy: false,
+      sessionBusy: false
+    },
+    isEditableTargetOverride: true,
+    isMac: false
+  });
+
+  assert.equal(result.matched, true);
+  assert.equal(result.dispatched, true);
+  assert.equal(result.command, 'editor.formatActiveFile');
+  assert.equal(called, true);
+  assert.equal(prevented, true);
 });
 
 test('strict gating blocks shortcuts in overlays and editables', () => {
@@ -130,6 +179,26 @@ test('strict gating blocks shortcuts in overlays and editables', () => {
     isMac: false
   });
   assert.equal(blockedInEditable.dispatched, false);
+
+  const formatBlockedBySettings = dispatchHotkeyKeyboardEvent({
+    event: createEvent({ key: 't', ctrlKey: true }),
+    bindings: DEFAULT_HOTKEY_BINDINGS,
+    handlers: {
+      'editor.formatActiveFile': () => {
+        throw new Error('should not run');
+      }
+    },
+    context: {
+      settingsModalOpen: true,
+      navbarOverlayOpen: false,
+      hasActiveWorkspace: true,
+      agentBusy: false,
+      sessionBusy: false
+    },
+    isEditableTargetOverride: true,
+    isMac: false
+  });
+  assert.equal(formatBlockedBySettings.dispatched, false);
 });
 
 test('shift+tab toggles chat mode when workspace is active', () => {

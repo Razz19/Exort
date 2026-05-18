@@ -7,6 +7,11 @@ export const DEFAULT_HOTKEY_BINDINGS: HotkeyBinding[] = [
     allowInEditable: true
   },
   {
+    command: 'editor.formatActiveFile',
+    combo: 'mod+t',
+    allowInEditable: true
+  },
+  {
     command: 'app.openSettings',
     combo: 'mod+comma'
   },

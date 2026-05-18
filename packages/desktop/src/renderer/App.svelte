@@ -99,6 +99,9 @@
     compile: () => void;
     upload: () => void;
   };
+  type EditorHotkeyActions = {
+    format: () => Promise<void>;
+  };
 
   function buildEffectiveBoardFqbn(
     baseFqbn: string,
@@ -170,6 +173,7 @@
   let startupRequirementsAutoInstallRequested = $state(false);
   const toastActions = new Map<string, () => void>();
   let navbarHotkeyActions = $state<NavbarHotkeyActions | null>(null);
+  let editorHotkeyActions = $state<EditorHotkeyActions | null>(null);
   let hotkeyKeydownListener: ((event: KeyboardEvent) => void) | null = null;
   let appMenuCommandListener:
     | ((payload: { command: HotkeyCommandId }) => void)
@@ -1955,6 +1959,11 @@
       "editor.saveActiveFile": () => {
         void saveActiveFile();
       },
+      "editor.formatActiveFile": editorHotkeyActions
+        ? () => {
+            void editorHotkeyActions.format();
+          }
+        : undefined,
       "chat.newSession": () => {
         void createNewSession();
       },
@@ -1978,6 +1987,12 @@
     actions: NavbarHotkeyActions | null,
   ): void {
     navbarHotkeyActions = actions;
+  }
+
+  function handleEditorHotkeyActionsChange(
+    actions: EditorHotkeyActions | null,
+  ): void {
+    editorHotkeyActions = actions;
   }
 
   function handleNavbarOverlayOpenChange(open: boolean): void {
@@ -2974,6 +2989,7 @@
           onSelectOpenFileTab={selectOpenFileTab}
           onCloseOpenFileTab={closeOpenFileTab}
           onSaveActiveFile={saveActiveFile}
+          onEditorHotkeyActionsChange={handleEditorHotkeyActionsChange}
           onEditActiveFile={editActiveFile}
           onOpenFile={openFile}
           onCreateFileTreeEntry={handleFileTreeCreateEntry}

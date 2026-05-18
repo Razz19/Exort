@@ -2,6 +2,7 @@ export type HotkeyCommandId =
   | 'app.openFolder'
   | 'app.openSettings'
   | 'editor.saveActiveFile'
+  | 'editor.formatActiveFile'
   | 'chat.newSession'
   | 'chat.toggleAgentMode'
   | 'arduino.compile'

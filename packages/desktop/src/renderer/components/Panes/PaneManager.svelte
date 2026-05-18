@@ -36,6 +36,7 @@
     onSelectOpenFileTab = () => {},
     onCloseOpenFileTab = () => {},
     onSaveActiveFile = () => {},
+    onEditorHotkeyActionsChange = () => {},
     onEditActiveFile = () => {},
     onOpenFile = () => {},
     onCreateFileTreeEntry = async () => ({
@@ -69,6 +70,9 @@
     onSelectOpenFileTab: (filePath: string) => void;
     onCloseOpenFileTab: (filePath: string) => Promise<void> | void;
     onSaveActiveFile: () => Promise<void> | void;
+    onEditorHotkeyActionsChange: (
+      actions: { format: () => Promise<void> } | null,
+    ) => void;
     onEditActiveFile: (content: string) => void;
     onOpenFile: (filePath: string) => Promise<void> | void;
     onCreateFileTreeEntry: (params: {
@@ -259,6 +263,7 @@
                 {monacoTheme}
                 onChange={onEditActiveFile}
                 onSave={onSaveActiveFile}
+                onHotkeyActionsChange={onEditorHotkeyActionsChange}
               />
             {:else}
               <div

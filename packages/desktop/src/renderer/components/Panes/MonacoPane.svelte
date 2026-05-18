@@ -9,7 +9,8 @@
     readonly,
     monacoTheme,
     onChange,
-    onSave
+    onSave,
+    onHotkeyActionsChange = () => {}
   } = $props<{
     filePath: string | null;
     value: string;
@@ -17,6 +18,7 @@
     monacoTheme: MonacoThemeId;
     onChange: (content: string) => void;
     onSave: () => void;
+    onHotkeyActionsChange: (actions: { format: () => Promise<void> } | null) => void;
   }>();
 
   let container = $state<HTMLDivElement | null>(null);
@@ -181,7 +183,56 @@
       onSave();
     });
 
+    onHotkeyActionsChange({
+      format: async () => {
+        const activeEditor = editor;
+        if (!activeEditor) return;
+
+        const model = activeEditor.getModel();
+        const languageId = model?.getLanguageId() ?? "unknown";
+        const formatAction = activeEditor.getAction('editor.action.formatDocument');
+        if (!formatAction) return;
+
+        if (!formatAction.isSupported()) {
+          const normalizedPath = filePath?.toLowerCase() ?? "";
+          const canUseInoFallback =
+            normalizedPath.endsWith(".ino") && languageId === "cpp";
+
+          if (canUseInoFallback && model) {
+            try {
+              const result = await window.electronAPI.formatInoFile({
+                filePath: filePath ?? "",
+                content: model.getValue(),
+              });
+
+              if (!result.ok || typeof result.formatted !== "string") return;
+
+              if (result.formatted === model.getValue()) return;
+
+              activeEditor.pushUndoStop();
+              activeEditor.executeEdits("editor.formatInoFallback", [
+                {
+                  range: model.getFullModelRange(),
+                  text: result.formatted,
+                  forceMoveMarkers: true,
+                },
+              ]);
+              activeEditor.pushUndoStop();
+              return;
+            } catch {
+              return;
+            }
+          }
+
+          return;
+        }
+
+        await formatAction.run();
+      }
+    });
+
     return () => {
+      onHotkeyActionsChange(null);
       changeDisposable.dispose();
       editor?.dispose();
     };

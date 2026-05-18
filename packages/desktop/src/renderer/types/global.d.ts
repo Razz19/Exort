@@ -432,6 +432,14 @@ declare global {
         error?: string;
       }>;
       writeFile: (payload: { filePath: string; content: string }) => Promise<{ ok: boolean }>;
+      formatInoFile: (payload: {
+        filePath: string;
+        content: string;
+      }) => Promise<{
+        ok: boolean;
+        formatted?: string;
+        error?: string;
+      }>;
       watchFile: (filePath: string) => Promise<{ ok: boolean }>;
       unwatchFile: (filePath: string) => Promise<{ ok: boolean }>;
       unwatchAllFiles: () => Promise<{ ok: boolean }>;

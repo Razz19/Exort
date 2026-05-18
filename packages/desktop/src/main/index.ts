@@ -10,6 +10,7 @@ import {
   type MenuItemConstructorOptions
 } from 'electron';
 import Store from 'electron-store';
+import { spawn } from 'node:child_process';
 import { existsSync, promises as fs, watch, watchFile, unwatchFile, type FSWatcher } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -578,6 +579,25 @@ function sanitizeWorkspaceManagerState(input: unknown): WorkspaceManagerState {
 const shouldAutoBootstrapRequirementsOnStartup = !existsSync(
   path.join(app.getPath('userData'), 'config.json')
 );
+type ClangFormatCandidate = {
+  command: string;
+  baseArgs?: string[];
+};
+
+const CLANG_FORMAT_CANDIDATES: ClangFormatCandidate[] = [
+  // GUI apps on macOS often miss shell PATH entries; probe common install locations explicitly.
+  { command: '/opt/homebrew/bin/clang-format' },
+  { command: '/usr/local/bin/clang-format' },
+  { command: '/Library/Developer/CommandLineTools/usr/bin/clang-format' },
+  { command: '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-format' },
+  { command: 'clang-format' },
+  { command: 'clang-format-18' },
+  { command: 'clang-format-17' },
+  { command: 'clang-format-16' },
+  { command: 'clang-format-15' },
+  { command: 'clang-format-14' },
+  { command: 'xcrun', baseArgs: ['clang-format'] }
+];
 const store = new Store<StoreSchema>({
   defaults: {
     workspaces: [],
@@ -642,6 +662,99 @@ function safeConsoleWrite(level: 'log' | 'error', message: string): void {
       throw error;
     }
   }
+}
+
+function runStdinFormatter(command: string, args: string[], input: string): Promise<{
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  spawnError: NodeJS.ErrnoException | null;
+}> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { stdio: 'pipe' });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    let spawnError: NodeJS.ErrnoException | null = null;
+
+    child.stdout.on('data', (chunk: Buffer | string) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', (chunk: Buffer | string) => {
+      stderr += chunk.toString();
+    });
+    child.on('error', (error: NodeJS.ErrnoException) => {
+      if (settled) return;
+      spawnError = error;
+    });
+    child.on('close', (exitCode) => {
+      if (settled) return;
+      settled = true;
+      resolve({ stdout, stderr, exitCode, spawnError });
+    });
+
+    child.stdin.end(input);
+  });
+}
+
+async function formatInoContentWithClangFormat(filePath: string, content: string): Promise<{
+  ok: boolean;
+  formatted?: string;
+  formatterCommand?: string;
+  error?: string;
+}> {
+  for (const candidate of CLANG_FORMAT_CANDIDATES) {
+    if (path.isAbsolute(candidate.command) && !existsSync(candidate.command)) {
+      continue;
+    }
+
+    const formatterArgs = [
+      ...(candidate.baseArgs ?? []),
+      '--assume-filename',
+      filePath
+    ];
+
+    const result = await runStdinFormatter(
+      candidate.command,
+      formatterArgs,
+      content
+    );
+
+    if (result.spawnError?.code === 'ENOENT') {
+      continue;
+    }
+
+    if (result.spawnError) {
+      return {
+        ok: false,
+        error: `Failed to run ${candidate.command}: ${result.spawnError.message}`
+      };
+    }
+
+    if (result.exitCode === 0) {
+      return {
+        ok: true,
+        formatted: result.stdout,
+        formatterCommand: candidate.command
+      };
+    }
+
+    const failureMessage =
+      result.stderr.trim() ||
+      result.stdout.trim() ||
+      `${candidate.command} exited with code ${result.exitCode ?? 'unknown'}.`;
+
+    return {
+      ok: false,
+      error: `Failed to format with ${candidate.command}: ${failureMessage}`
+    };
+  }
+
+  return {
+    ok: false,
+    error:
+      'No clang-format binary was found. Install clang-format and ensure it is available to the app (for macOS GUI apps, this often means /opt/homebrew/bin/clang-format).'
+  };
 }
 
 function isPathWithinRoot(rootPath: string, targetPath: string): boolean {
@@ -1166,6 +1279,24 @@ app.whenReady().then(() => {
   ipcMain.handle('file:write', async (_event, payload: { filePath: string; content: string }) => {
     await fs.writeFile(payload.filePath, payload.content, 'utf8');
     return { ok: true };
+  });
+
+  ipcMain.handle('file:format-ino', async (_event, payload: { filePath: string; content: string }) => {
+    const filePath = typeof payload?.filePath === 'string' ? payload.filePath.trim() : '';
+    if (!filePath) {
+      return { ok: false, error: 'filePath is required.' };
+    }
+
+    if (typeof payload?.content !== 'string') {
+      return { ok: false, error: 'content is required.' };
+    }
+
+    const result = await formatInoContentWithClangFormat(filePath, payload.content);
+    if (!result.ok) {
+      return { ok: false, error: result.error ?? 'Failed to format .ino file.' };
+    }
+
+    return { ok: true, formatted: result.formatted };
   });
 
   ipcMain.handle('file:watch', async (event, filePath: string) => {

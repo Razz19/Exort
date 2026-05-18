@@ -467,6 +467,12 @@ const electronAPI = {
     }>,
   writeFile: (payload: { filePath: string; content: string }) =>
     ipcRenderer.invoke('file:write', payload) as Promise<{ ok: boolean }>,
+  formatInoFile: (payload: { filePath: string; content: string }) =>
+    ipcRenderer.invoke('file:format-ino', payload) as Promise<{
+      ok: boolean;
+      formatted?: string;
+      error?: string;
+    }>,
   watchFile: (filePath: string) => ipcRenderer.invoke('file:watch', filePath) as Promise<{ ok: boolean }>,
   unwatchFile: (filePath: string) => ipcRenderer.invoke('file:unwatch', filePath) as Promise<{ ok: boolean }>,
   unwatchAllFiles: () => ipcRenderer.invoke('file:unwatch-all') as Promise<{ ok: boolean }>,
