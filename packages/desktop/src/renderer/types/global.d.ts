@@ -124,6 +124,7 @@ type OpenAIProviderModel = OpenCodeProviderModel;
 type OpenCodeModelCatalogProvider = {
   providerId: string;
   providerName: string;
+  available?: boolean;
   connected: boolean;
   defaultModelId: string | null;
   recommendedModelId: string | null;
@@ -133,34 +134,47 @@ type SelectedModelRef = {
   providerId: string;
   modelId: string;
 };
-type OpenAIProviderAuthMethod = {
+type ProviderAuthMethod = {
   index: number;
   type: 'oauth' | 'api' | 'unknown';
   label: string;
 };
-type OpenAIProviderState = {
-  providerId: 'openai';
+type ProviderState = {
+  providerId: string;
+  providerName: string;
   available: boolean;
   connected: boolean;
   defaultModelId: string | null;
   recommendedModelId: string | null;
-  models: OpenAIProviderModel[];
-  authMethods: OpenAIProviderAuthMethod[];
+  models: OpenCodeProviderModel[];
+  authMethods: ProviderAuthMethod[];
   oauthMethodIndices: number[];
   recommendedOAuthMethodIndex: number | null;
   apiKeyMethodIndex: number | null;
 };
-type OpenAIOAuthStartResult = {
+type OpenAIProviderAuthMethod = ProviderAuthMethod;
+type OpenAIProviderState = ProviderState & {
   providerId: 'openai';
+  models: OpenAIProviderModel[];
+};
+type ProviderOAuthStartResult = {
+  providerId: string;
   methodIndex: number;
   url: string;
   method: 'auto' | 'code';
   instructions: string;
+  userCode?: string;
 };
-type OpenAIOAuthCompleteResult = {
+type OpenAIOAuthStartResult = ProviderOAuthStartResult & {
   providerId: 'openai';
+};
+type ProviderOAuthCompleteResult = {
+  providerId: string;
   methodIndex: number;
   ok: boolean;
+};
+type OpenAIOAuthCompleteResult = ProviderOAuthCompleteResult & {
+  providerId: 'openai';
 };
 type AgentQuestionOption = {
   label: string;
@@ -471,14 +485,44 @@ declare global {
         providers?: OpenCodeModelCatalogProvider[];
         error?: string;
       }>;
+      getProviderStates: (payload?: { workspaceRoot?: string }) => Promise<{
+        ok: boolean;
+        providers?: ProviderState[];
+        error?: string;
+      }>;
+      getProviderState: (payload: { providerId: string; workspaceRoot?: string }) => Promise<{
+        ok: boolean;
+        state?: ProviderState;
+        error?: string;
+      }>;
       getOpenAIProviderState: (payload?: { workspaceRoot?: string }) => Promise<{
         ok: boolean;
         state?: OpenAIProviderState;
         error?: string;
       }>;
+      startProviderOAuth: (payload: {
+        providerId: string;
+        workspaceRoot?: string;
+        methodIndex?: number;
+      }) => Promise<{
+        ok: boolean;
+        result?: ProviderOAuthStartResult;
+        error?: string;
+      }>;
       startOpenAIProviderOAuth: (payload?: { workspaceRoot?: string; methodIndex?: number }) => Promise<{
         ok: boolean;
         result?: OpenAIOAuthStartResult;
+        error?: string;
+      }>;
+      completeProviderOAuth: (payload: {
+        providerId: string;
+        workspaceRoot?: string;
+        methodIndex: number;
+        code?: string;
+      }) => Promise<{
+        ok: boolean;
+        result?: ProviderOAuthCompleteResult;
+        state?: ProviderState;
         error?: string;
       }>;
       completeOpenAIProviderOAuth: (payload: {
@@ -491,9 +535,19 @@ declare global {
         state?: OpenAIProviderState;
         error?: string;
       }>;
+      setProviderApiKey: (payload: { providerId: string; workspaceRoot?: string; apiKey: string }) => Promise<{
+        ok: boolean;
+        state?: ProviderState;
+        error?: string;
+      }>;
       setOpenAIProviderApiKey: (payload: { workspaceRoot?: string; apiKey: string }) => Promise<{
         ok: boolean;
         state?: OpenAIProviderState;
+        error?: string;
+      }>;
+      disconnectProvider: (payload: { providerId: string; workspaceRoot?: string }) => Promise<{
+        ok: boolean;
+        state?: ProviderState;
         error?: string;
       }>;
       disconnectOpenAIProvider: (payload?: { workspaceRoot?: string }) => Promise<{

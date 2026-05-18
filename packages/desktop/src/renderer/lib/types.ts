@@ -153,6 +153,7 @@ export type OpenAIProviderModel = OpenCodeProviderModel;
 export type OpenCodeModelCatalogProvider = {
   providerId: string;
   providerName: string;
+  available?: boolean;
   connected: boolean;
   defaultModelId: string | null;
   recommendedModelId: string | null;
@@ -164,31 +165,50 @@ export type SelectedModelRef = {
   modelId: string;
 };
 
-export type OpenAIProviderAuthMethod = {
+export type ProviderAuthMethod = {
   index: number;
   type: 'oauth' | 'api' | 'unknown';
   label: string;
 };
 
-export type OpenAIProviderState = {
-  providerId: 'openai';
+export type ProviderState = {
+  providerId: string;
+  providerName: string;
   available: boolean;
   connected: boolean;
   defaultModelId: string | null;
   recommendedModelId: string | null;
-  models: OpenAIProviderModel[];
-  authMethods: OpenAIProviderAuthMethod[];
+  models: OpenCodeProviderModel[];
+  authMethods: ProviderAuthMethod[];
   oauthMethodIndices: number[];
   recommendedOAuthMethodIndex: number | null;
   apiKeyMethodIndex: number | null;
 };
 
-export type OpenAIOAuthStartResult = {
+export type OpenAIProviderAuthMethod = ProviderAuthMethod;
+
+export type OpenAIProviderState = ProviderState & {
   providerId: 'openai';
+  models: OpenAIProviderModel[];
+};
+
+export type ProviderOAuthStartResult = {
+  providerId: string;
   methodIndex: number;
   url: string;
   method: 'auto' | 'code';
   instructions: string;
+  userCode?: string;
+};
+
+export type OpenAIOAuthStartResult = ProviderOAuthStartResult & {
+  providerId: 'openai';
+};
+
+export type ProviderOAuthCompleteResult = {
+  providerId: string;
+  methodIndex: number;
+  ok: boolean;
 };
 
 export type TurnResult = {

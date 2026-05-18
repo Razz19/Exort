@@ -151,6 +151,7 @@ export type OpenCodeProviderOAuthStartResult = {
   url: string;
   method: 'auto' | 'code';
   instructions: string;
+  userCode?: string;
 };
 
 export type OpenCodeProviderOAuthCompleteResult = {
@@ -739,6 +740,17 @@ function parseProviderAuthMethodsByProvider(response: unknown, providerId: strin
   return methods;
 }
 
+function parseProviderAuthMethodsCatalog(response: unknown): Record<string, OpenCodeProviderAuthMethod[]> {
+  const payload = asRecord(extractResponseData(response));
+  const result: Record<string, OpenCodeProviderAuthMethod[]> = {};
+
+  for (const providerId of Object.keys(payload)) {
+    result[providerId] = parseProviderAuthMethodsByProvider(response, providerId);
+  }
+
+  return result;
+}
+
 function pickRecommendedOAuthMethodIndex(methods: OpenCodeProviderAuthMethod[]): number | null {
   const oauthMethods = methods.filter((item) => item.type === 'oauth');
   if (oauthMethods.length === 0) return null;
@@ -1142,6 +1154,64 @@ export async function listOpenCodeModelCatalog(params: {
     });
 }
 
+export async function listOpenCodeProviderCatalog(params: {
+  workspaceRoot?: string;
+  onLog?: (line: string) => void;
+}): Promise<OpenCodeModelCatalogProvider[]> {
+  const log = (line: string) => {
+    params.onLog?.(line);
+  };
+
+  const runtime = await getOpenCodeRuntime(log);
+  const listProviders = runtime.client.provider?.list;
+  if (typeof listProviders !== 'function') {
+    throw new Error('OpenCode provider list API is not available in this SDK runtime');
+  }
+
+  const directory = resolveDirectoryFromWorkspaceRoot(params.workspaceRoot);
+  const response = await listProviders({
+    directory
+  });
+  const responseError = getResponseErrorMessage(response);
+  if (responseError) {
+    throw new Error(responseError);
+  }
+
+  const payload = asRecord(extractResponseData(response));
+  const providers = Array.isArray(payload.all) ? payload.all : [];
+  const connected = new Set(
+    (Array.isArray(payload.connected) ? payload.connected : []).filter(
+      (item): item is string => typeof item === 'string' && item.trim().length > 0
+    )
+  );
+  const defaults = asRecord(payload.default);
+  const defaultProviderId = getDefaultOpenCodeProviderId();
+
+  return providers
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((providerRecord) => buildProviderCatalogEntry(providerRecord, connected, defaults))
+    .filter((entry): entry is OpenCodeModelCatalogProvider => entry !== null)
+    .map((entry) =>
+      entry.providerId === defaultProviderId
+        ? {
+            ...entry,
+            connected: true
+          }
+        : entry
+    )
+    .sort((left, right) => {
+      const leftScore = left.connected ? 0 : 1;
+      const rightScore = right.connected ? 0 : 1;
+      if (leftScore !== rightScore) return leftScore - rightScore;
+
+      const leftDefaultScore = left.providerId === defaultProviderId ? 0 : 1;
+      const rightDefaultScore = right.providerId === defaultProviderId ? 0 : 1;
+      if (leftDefaultScore !== rightDefaultScore) return leftDefaultScore - rightDefaultScore;
+
+      return left.providerName.localeCompare(right.providerName);
+    });
+}
+
 export async function getOpenCodeProviderAuthMethods(params: {
   providerId: string;
   workspaceRoot?: string;
@@ -1179,6 +1249,44 @@ export async function getOpenCodeProviderAuthMethods(params: {
   };
 }
 
+export async function listOpenCodeProviderAuthMethods(params: {
+  workspaceRoot?: string;
+  onLog?: (line: string) => void;
+}): Promise<Record<string, OpenCodeProviderAuthMethods>> {
+  const log = (line: string) => {
+    params.onLog?.(line);
+  };
+
+  const runtime = await getOpenCodeRuntime(log);
+  const getAuthMethods = runtime.client.provider?.auth;
+  if (typeof getAuthMethods !== 'function') {
+    throw new Error('OpenCode provider auth API is not available in this SDK runtime');
+  }
+
+  const directory = resolveDirectoryFromWorkspaceRoot(params.workspaceRoot);
+  const response = await getAuthMethods({
+    directory
+  });
+  const responseError = getResponseErrorMessage(response);
+  if (responseError) {
+    throw new Error(responseError);
+  }
+
+  const methodsByProvider = parseProviderAuthMethodsCatalog(response);
+  const result: Record<string, OpenCodeProviderAuthMethods> = {};
+  for (const [providerId, methods] of Object.entries(methodsByProvider)) {
+    result[providerId] = {
+      providerId,
+      methods,
+      oauthMethodIndices: methods.filter((item) => item.type === 'oauth').map((item) => item.index),
+      recommendedOAuthMethodIndex: pickRecommendedOAuthMethodIndex(methods),
+      apiKeyMethodIndex: methods.find((item) => item.type === 'api')?.index ?? null
+    };
+  }
+
+  return result;
+}
+
 export async function startOpenCodeProviderOAuth(params: {
   providerId: string;
   methodIndex: number;
@@ -1211,21 +1319,23 @@ export async function startOpenCodeProviderOAuth(params: {
   }
 
   const payload = asRecord(extractResponseData(response));
-  const url = getFirstNonBlankString(payload.url);
-  const method = getFirstNonBlankString(payload.method);
-  if (!url) {
-    throw new Error('OpenCode OAuth authorize response did not include a URL');
+  const url = getFirstNonBlankString(payload.url, payload.verification_uri_complete, payload.verification_uri);
+  const rawMethod = getFirstNonBlankString(payload.method);
+  const userCode = getFirstNonBlankString(payload.user_code, payload.userCode, payload.code);
+  const instructions = getFirstNonBlankString(payload.instructions, payload.message) ?? '';
+  if (!url && !instructions && !userCode) {
+    throw new Error('OpenCode OAuth authorize response did not include connection details');
   }
-  if (method !== 'auto' && method !== 'code') {
-    throw new Error('OpenCode OAuth authorize response did not include a valid method');
-  }
+
+  const method: OpenCodeProviderOAuthStartResult['method'] = rawMethod === 'auto' && !userCode ? 'auto' : 'code';
 
   return {
     providerId: params.providerId,
     methodIndex: params.methodIndex,
-    url,
+    url: url ?? '',
     method,
-    instructions: getFirstNonBlankString(payload.instructions) ?? ''
+    instructions,
+    userCode: userCode ?? undefined
   };
 }
 
