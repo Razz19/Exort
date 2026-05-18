@@ -654,7 +654,7 @@
                     {#if detail}
                       <div class="mt-3 flex flex-col gap-2">
                         {#if getAuthorizationCode(detail)}
-                          <div class="flex items-center justify-between gap-2">
+                          <div class="inline-flex items-center gap-2">
                             <p class="text-xs font-medium text-dark-fg2">
                               Enter code: <span class="font-mono">{getAuthorizationCode(detail)}</span>
                             </p>
