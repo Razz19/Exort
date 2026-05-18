@@ -285,7 +285,7 @@
 <section
   id="features"
   bind:this={featuresSection}
-  class="mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-24"
+  class="mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:pt-16 lg:pb-20"
 >
   <div bind:this={featuresIntroEl} class="flex w-full justify-start">
     <span class="text-sm uppercase tracking-[0.24em] text-gruvbox-accent-soft">

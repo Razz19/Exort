@@ -6,7 +6,8 @@
   import DownloadSection from "$lib/components/landing/DownloadSection.svelte";
   import RunLocallySection from "$lib/components/landing/RunLocallySection.svelte";
   import SiteNav from "$lib/components/landing/SiteNav.svelte";
-  import { ArrowUpRight } from "lucide-svelte";
+  import { ArrowUpRight, Terminal } from "lucide-svelte";
+  import { EXORT_APP_VERSION, EXORT_GITHUB_LINK } from "$lib/constant";
 
   const features = [
     {
@@ -48,10 +49,10 @@
     { name: "ESP", logo: "/brands/ESP.webp" },
     { name: "Raspberry Pi", logo: "/brands/raspberry.webp" },
     { name: "STM32", logo: "/brands/STM32.webp" },
+    { name: "PJRC", logo: "/brands/pjrc.webp" },
     { name: "Nordic", logo: "/brands/nordic.webp" },
     { name: "RISC-V", logo: "/brands/risc-v.webp" },
     { name: "Atmel", logo: "/brands/atmel.webp" },
-    { name: "PJRC", logo: "/brands/pjrc.webp" },
   ];
 
   const workflowSteps = [
@@ -87,7 +88,6 @@
   let heroActions: HTMLElement | null = null;
   let heroHighlightsWrap: HTMLElement | null = null;
   let heroScreenshotWrap: HTMLElement | null = null;
-  let heroScreenshot: HTMLVideoElement | null = null;
   let workflowSection: HTMLElement | null = null;
 
   let headlineLineEls: HTMLSpanElement[] = [];
@@ -97,7 +97,6 @@
   let mobileHeroHighlightFirst: HTMLParagraphElement | null = null;
   let mobileHeroHighlightSecond: HTMLParagraphElement | null = null;
   let gsapRef: Awaited<typeof import("gsap")>["gsap"] | null = null;
-
   const ensureGsap = async () => {
     if (gsapRef) {
       return gsapRef;
@@ -347,19 +346,34 @@
 <div class="relative isolate">
   <SiteNav />
 
-  <main id="top">
-    <section
-      class="relative mx-auto max-w-7xl overflow-hidden px-6 pb-8 pt-4 sm:px-6 lg:px-8 lg:pt-16"
-    >
-      <div
-        class="relative z-10 grid gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] xl:items-start xl:gap-12"
-      >
-        <div class="relative min-w-0 pt-6 xl:pr-4">
+  <main id="top" class="relative overflow-hidden">
+    <div class="relative z-10">
+      <section class="relative my-10">
+        <div
+          class="relative mx-auto flex w-full max-w-7xl items-start px-4 py-6 md:px-6 lg:items-center lg:px-8 lg:py-10"
+        >
           <div
-            bind:this={heroCopy}
-            class="flex w-full max-w-4xl flex-col items-start text-left lg:max-w-[44rem]"
+            class="relative z-10 grid w-full items-center gap-8 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.52fr)] lg:items-center lg:gap-8"
           >
-            <!-- <h1
+            <div class="relative min-w-0 pt-2 lg:pr-4">
+              <div
+                class="absolute left-0 top-2 z-20 inline-flex items-center gap-3 rounded-full bg-gruvbox-ink px-3.5 py-3 text-sm shadow-soft animate-hero-release-badge motion-reduce:animate-none"
+                aria-label="Current Exort release"
+              >
+                <span
+                  class="h-2.5 w-2.5 shrink-0 bg-gruvbox-green animate-hero-release-indicator motion-reduce:animate-none"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="font-heading whitespace-nowrap text-xs uppercase leading-none tracking-[0.14em] text-gruvbox-text"
+                  >v{EXORT_APP_VERSION} · NOW OPEN SOURCE</span
+                >
+              </div>
+              <div
+                bind:this={heroCopy}
+                class="flex w-full max-w-4xl flex-col items-start pt-12 text-left sm:pt-14 lg:max-w-[44rem]"
+              >
+                <!-- <h1
               class="max-w-full overflow-hidden sm:overflow-visible font-heading font-bold leading-none tracking-[0.04em] text-2xl sm:text-5xl"
             >
               <span
@@ -424,31 +438,210 @@
                 >
               </span>
             </h1> -->
-            <h1
-              class="max-w-full overflow-hidden sm:overflow-visible font-heading font-bold leading-none text-2xl sm:text-4xl"
+                <h1
+                  class="max-w-full overflow-hidden sm:overflow-visible font-heading font-bold leading-lg text-2xl sm:text-4xl"
+                >
+                  Free AI-powered <span class="hero-gruvbox-text-cycle">
+                    coding environment
+                  </span> for Microcontrollers
+                </h1>
+                <p
+                  class="mt-5 max-w-2xl text-md leading-6 lg:leading-6 xl:leading-8 text-gruvbox-muted sm:text-base"
+                >
+                  An <span class="underline underline-offset-4"
+                    >open-source
+                  </span> coding environment for embedded development that helps you
+                  generate, shape, and improve microcontroller code with AI assistance.
+                </p>
+
+                <div
+                  bind:this={heroActions}
+                  class="mt-6 flex w-full flex-wrap justify-start gap-4 lg:flex-nowrap lg:gap-3"
+                >
+                  <a
+                    href="/download"
+                    class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full bg-gruvbox-ink px-3 sm:px-6 py-3 sm:py-3.5 text-sm font-medium backdrop-blur transition motion-reduce:transition-none lg:min-w-0 lg:flex-1 lg:px-4"
+                  >
+                    <span
+                      class="absolute inset-0 translate-x-full bg-gruvbox-green transition-transform duration-300 ease-out group-hover:translate-x-0"
+                      aria-hidden="true"
+                    >
+                    </span>
+                    <span
+                      class="relative flex items-center gap-4 z-10 transition-colors duration-300 group-hover:text-gruvbox-ink"
+                    >
+                      Download Exort <ArrowUpRight class="h-4 w-4 " />
+                    </span>
+                  </a>
+                  <a
+                    href={EXORT_GITHUB_LINK}
+                    class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full bg-gruvbox-ink px-3 sm:px-6 py-3 sm:py-3.5 text-sm font-medium backdrop-blur transition motion-reduce:transition-none lg:min-w-0 lg:flex-1 lg:px-4"
+                  >
+                    <span
+                      class="absolute inset-0 translate-x-full bg-gruvbox-blue transition-transform duration-300 ease-out group-hover:translate-x-0"
+                      aria-hidden="true"
+                    ></span>
+                    <span
+                      class="relative flex items-center gap-4 z-10 transition-colors duration-300 group-hover:text-gruvbox-ink"
+                    >
+                      View on GitHub
+                      <ArrowUpRight class="h-4 w-4 " />
+                    </span>
+                  </a>
+                </div>
+
+                <div
+                  class="mt-6 flex w-full flex-col items-center gap-2 sm:items-start"
+                >
+                  <div
+                    class="flex w-full flex-nowrap items-center justify-center gap-x-1.5 opacity-30 sm:justify-start sm:gap-x-2"
+                  >
+                    {#each supportedBrands as brand}
+                      <div
+                        class="flex min-w-0 flex-1 items-center justify-center"
+                      >
+                        <img
+                          src={brand.logo}
+                          alt={brand.name}
+                          class="h-auto w-full max-w-[3rem] object-contain sm:max-w-[3.4rem] lg:max-w-[2.7rem] xl:max-w-[3.8rem]"
+                          loading="lazy"
+                        />
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+                <!-- <div
+                      class="mt-6 flex items-center gap-3 text-xs font-mono text-gruvbox-muted"
+                    >
+                      <Terminal class="w-4 h-4" />
+                      <span
+                        >Supports: Arduino · ESP32 · STM32 · RP2040 · AVR · PJRC</span
+                      >
+                    </div> -->
+              </div>
+            </div>
+
+            <div
+              bind:this={heroScreenshotWrap}
+              class="relative z-10 min-w-0 w-full lg:justify-self-end"
             >
-              Free AI-powered <span class="hero-gruvbox-text-cycle">
-                coding environment
-              </span> for Microcontrollers
-            </h1>
+              <div class="relative mx-auto w-full max-w-5xl p-2 sm:p-4">
+                <AppFrame
+                  frameClass="w-full min-w-0 bg-transparent"
+                  contentClass="p-2 sm:p-3"
+                >
+                  <div class="relative w-full overflow-hidden">
+                    <video
+                      src="/Exort.mp4?v=20260524-2"
+                      autoplay
+                      muted
+                      loop
+                      playsinline
+                      aria-label="Exort desktop application walkthrough video"
+                      class="relative z-10 block h-auto w-full object-contain object-center [will-change:transform]"
+                      style="border-radius: 10px !important;"
+                    >
+                      <track kind="captions" />
+                    </video>
+                  </div>
+                </AppFrame>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        bind:this={workflowSection}
+        class="mx-auto grid max-w-7xl gap-6 sm:gap-10 px-6 pb-8 pt-16 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] lg:items-start lg:px-8"
+      >
+        <div class="flex flex-col items-start">
+          <span
+            class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-gruvbox-accent-soft sm:text-sm"
+          >
+            What is Exort
+          </span>
+          <h1
+            class="mt-2 max-w-xl text-md uppercase font-extrabold tracking-[0.24em] text-gruvbox-fg1"
+          >
+            One prompt away from idea to microcontroller code.
+          </h1>
+          <p
+            class="mt-5 max-w-2xl leading-7 text-gruvbox-muted sm:text-base sm:leading-[1.45]"
+          >
+            Exort makes hardware coding feel less overwhelming. It’s an
+            open-source desktop app for microcontroller development, powered by
+            an AI agent that helps you write, improve, upload, and debug
+            embedded code.
+          </p>
+        </div>
+
+        <div
+          class="grid max-w-xl grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-3 justify-self-start. md:justify-self-center
+          md:max-w-2xl lg:max-w-3xl lg:grid-cols-3"
+        >
+          {#each workflowSteps as step, index}
+            <article
+              bind:this={workflowCardEls[index]}
+              class="group relative overflow-hidden rounded-3xl p-3 transition-colors duration-300"
+            >
+              <div
+                bind:this={workflowStepEls[index]}
+                class="flex h-full flex-col gap-5 p-4 transition-all bg-gruvbox-ink duration-300"
+              >
+                <span
+                  class={`text-base font-heading font-semibold leading-none ${step.color} sm:text-xl`}
+                >
+                  {step.title}
+                </span>
+
+                <p class=" leading-6 text-gruvbox-fg1 sm:text-[0.9rem]">
+                  {step.description}
+                </p>
+              </div>
+            </article>
+          {/each}
+        </div>
+      </section>
+
+      <FeaturesSection {features} />
+
+      <!-- download section -->
+      <section class="px-6 pb-16 sm:px-6 sm:pb-20 lg:px-8">
+        <div
+          class="mx-auto grid max-w-7xl gap-8 px-0 sm:p-6 lg:grid-cols-3 lg:items-center lg:gap-10 lg:p-8"
+        >
+          <div class="relative h-full min-w-0 w-full text-left">
+            <!-- <div
+            class="absolute inset-y-0 left-0 w-0.5 bg-gruvbox-green"
+            aria-hidden="true"
+          ></div> -->
+
+            <span
+              class="text-xs sm:text-sm uppercase tracking-[0.24em] text-gruvbox-green"
+            >
+              Download Exort
+            </span>
+            <h3 class="mt-2 text-sm font-semibold text-gruvbox-fg1 sm:text-xl">
+              Download Exort and start building
+            </h3>
+
             <p
-              class="mt-5 max-w-2xl text-md leading-6 sm:leading-8 text-gruvbox-muted sm:text-lg"
+              class="mt-5 max-w-md text-sm leading-7 text-gruvbox-muted sm:text-base sm:leading-[1.45]"
             >
-              An <span class="underline">open-source </span> coding environment for
-              embedded development that helps you generate, shape, and improve microcontroller
-              code with AI assistance.
+              Exort is available for Windows, macOS, and Linux. Download the
+              latest version and get started today.
             </p>
 
             <div
               bind:this={heroActions}
-              class="mt-6 flex w-full flex-wrap justify-center sm:justify-start gap-4"
+              class="mt-6 flex w-full flex-wrap justify-start gap-4"
             >
               <a
                 href="/download"
                 class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full bg-gruvbox-ink px-3 sm:px-6 py-3 sm:py-3.5 text-sm font-medium backdrop-blur transition motion-reduce:transition-none"
               >
                 <span
-                  class="absolute inset-0 translate-x-full bg-gruvbox-orange transition-transform duration-300 ease-out group-hover:translate-x-0"
+                  class="absolute inset-0 translate-x-full bg-gruvbox-green transition-transform duration-300 ease-out group-hover:translate-x-0"
                   aria-hidden="true"
                 >
                 </span>
@@ -458,192 +651,76 @@
                   Download Exort <ArrowUpRight class="h-4 w-4 " />
                 </span>
               </a>
-              <a
-                href="https://github.com/Razz19/Exort"
-                class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full bg-gruvbox-ink px-3 sm:px-6 py-3 sm:py-3.5 text-sm font-medium backdrop-blur transition motion-reduce:transition-none"
-              >
-                <span
-                  class="absolute inset-0 translate-x-full bg-gruvbox-blue transition-transform duration-300 ease-out group-hover:translate-x-0"
-                  aria-hidden="true"
-                ></span>
-                <span
-                  class="relative flex items-center gap-4 z-10 transition-colors duration-300 group-hover:text-gruvbox-ink"
-                >
-                  View on GitHub
-                  <ArrowUpRight class="h-4 w-4 " />
-                </span>
-              </a>
-            </div>
-
-            <div
-              class="mt-6 flex w-full flex-col items-center gap-2 sm:items-start"
-            >
-              <div
-                class="flex w-full flex-wrap items-center justify-center sm:justify-start gap-x-4 opacity-30 sm:gap-x-5"
-              >
-                {#each supportedBrands as brand}
-                  <img
-                    src={brand.logo}
-                    alt={brand.name}
-                    class="h-4 w-auto object-contain sm:h-6"
-                    loading="lazy"
-                  />
-                {/each}
-              </div>
             </div>
           </div>
-        </div>
-
-        <div
-          bind:this={heroScreenshotWrap}
-          class="relative z-10 min-w-0 w-full xl:justify-self-end"
-        >
-          <div
-            class="relative mx-auto w-full max-w-4xl bg-gruvbox-bg p-1.5 sm:p-3"
-          >
-            <AppFrame frameClass="w-full min-w-0" contentClass="p-2 sm:p-3">
-              <div
-                class="relative aspect-[16/10] w-full overflow-hidden bg-gruvbox-ink-strong"
-                style="border-radius: 10px !important;"
-              >
-                <video
-                  bind:this={heroScreenshot}
-                  src="/Exort.mp4"
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  aria-label="Exort desktop application walkthrough video"
-                  class="relative z-10 block h-full w-full object-contain object-top [will-change:transform]"
-                  style="border-radius: 10px !important;"
-                >
-                  <track kind="captions" />
-                </video>
-              </div>
-            </AppFrame>
+          <div class="min-w-0 w-full col-span-2">
+            <RunLocallySection embedded={true} />
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section
-      bind:this={workflowSection}
-      class="mx-auto grid max-w-7xl gap-6 sm:gap-10 px-6 pb-8 pt-16 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] lg:items-start lg:px-8"
-    >
-      <div class="flex flex-col items-start">
-        <span
-          class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-gruvbox-accent-soft sm:text-sm"
-        >
-          What is Exort
-        </span>
-        <h1
-          class="mt-2 max-w-xl text-md uppercase font-extrabold tracking-[0.24em] text-gruvbox-fg1"
-        >
-          One prompt away from idea to microcontroller code.
-        </h1>
-        <!-- <p
-          class="mt-5 max-w-2xl text-sm leading-7 text-gruvbox-muted sm:text-base sm:leading-[1.45]"
-        >
-          Exort is a desktop coding environment for Arduino and compatible board
-          platforms, designed to make embedded development faster and more
-          approachable. It combines AI-assisted coding with the workflows
-          hardware projects actually need, so you can go from an idea to real
-          firmware without jumping between disconnected tools. From early
-          prototyping to refining behavior on-device, Exort helps keep the
-          entire process in one focused workspace.
-        </p> -->
-      </div>
-
-      <div
-        class="grid max-w-xl grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-3 justify-self-start. md:justify-self-center
-        md:max-w-2xl lg:max-w-3xl lg:grid-cols-3"
-      >
-        {#each workflowSteps as step, index}
-          <article
-            bind:this={workflowCardEls[index]}
-            class="group relative overflow-hidden rounded-3xl p-3 transition-colors duration-300"
-          >
-            <div
-              bind:this={workflowStepEls[index]}
-              class="flex h-full flex-col gap-5 p-4 transition-all bg-gruvbox-ink duration-300"
-            >
-              <span
-                class={`text-base font-heading font-semibold leading-none ${step.color} sm:text-xl`}
-              >
-                {step.title}
-              </span>
-
-              <p class=" leading-6 text-gruvbox-fg1 sm:text-[0.9rem]">
-                {step.description}
-              </p>
-            </div>
-          </article>
-        {/each}
-      </div>
-    </section>
-
-    <FeaturesSection {features} />
-
-    <!-- download section -->
-    <section class="px-6 pb-16 sm:px-6 sm:pb-20 lg:px-8">
-      <div
-        class="mx-auto grid max-w-7xl gap-8 px-0 sm:p-6 lg:grid-cols-3 lg:items-center lg:gap-10 lg:p-8"
-      >
-        <div class="relative h-full min-w-0 w-full text-left">
-          <!-- <div
-            class="absolute inset-y-0 left-0 w-0.5 bg-gruvbox-green"
-            aria-hidden="true"
-          ></div> -->
-
-          <span
-            class="text-xs sm:text-sm uppercase tracking-[0.24em] text-gruvbox-green"
-          >
-            Download Exort
-          </span>
-          <h3 class="mt-2 text-sm font-semibold text-gruvbox-fg1 sm:text-xl">
-            Download Exort and start building
-          </h3>
-
-          <p
-            class="mt-5 max-w-md text-sm leading-7 text-gruvbox-muted sm:text-base sm:leading-[1.45]"
-          >
-            Exort is available for Windows, macOS, and Linux. Download the
-            latest version and get started today.
-          </p>
-
-          <div
-            bind:this={heroActions}
-            class="mt-6 flex w-full flex-wrap justify-start gap-4"
-          >
-            <a
-              href="/download"
-              class="group relative inline-flex min-w-[9rem] items-center justify-center overflow-hidden rounded-full bg-gruvbox-ink px-3 sm:px-6 py-3 sm:py-3.5 text-sm font-medium backdrop-blur transition motion-reduce:transition-none"
-            >
-              <span
-                class="absolute inset-0 translate-x-full bg-gruvbox-green transition-transform duration-300 ease-out group-hover:translate-x-0"
-                aria-hidden="true"
-              >
-              </span>
-              <span
-                class="relative flex items-center gap-4 z-10 transition-colors duration-300 group-hover:text-gruvbox-ink"
-              >
-                Download Exort <ArrowUpRight class="h-4 w-4 " />
-              </span>
-            </a>
-          </div>
-        </div>
-        <div class="min-w-0 w-full col-span-2">
-          <RunLocallySection embedded={true} />
-        </div>
-      </div>
-    </section>
-
-    <!-- <DownloadSection showInstallationGuide={false} />
-     -->
+      <!-- <DownloadSection showInstallationGuide={false} />
+       -->
+    </div>
   </main>
 </div>
 
 <style>
+  .animate-hero-release-badge {
+    animation: hero-release-slide-in 0.72s cubic-bezier(0.21, 1.01, 0.31, 1)
+      both;
+  }
+
+  .animate-hero-release-indicator {
+    animation:
+      hero-release-breathe 2.1s ease-in-out infinite,
+      hero-release-color-cycle 4.8s ease-in-out infinite;
+  }
+
+  @keyframes hero-release-slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(-34px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes hero-release-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.85;
+    }
+
+    50% {
+      transform: scale(1.22);
+      opacity: 1;
+    }
+  }
+
+  @keyframes hero-release-color-cycle {
+    0%,
+    100% {
+      background: #98971a;
+    }
+
+    25% {
+      background: #fabd2f;
+    }
+
+    50% {
+      background: #fe8019;
+    }
+
+    75% {
+      background: #458588;
+    }
+  }
+
   .hero-gruvbox-text-cycle {
     color: #fe8019;
     animation: hero-gruvbox-text-cycle 6s ease-in-out infinite;

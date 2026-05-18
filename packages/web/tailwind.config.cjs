@@ -34,7 +34,7 @@ module.exports = {
           'sans-serif'
         ],
         heading: [
-          'Michroma',
+          '"Orbitron"',
           'SF Pro Display',
           'Segoe UI',
           'Helvetica Neue',

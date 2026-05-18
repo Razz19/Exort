@@ -3,57 +3,12 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Michroma';
+  font-family: 'Orbitron';
   font-style: normal;
   font-weight: 400;
   font-display: block;
-  src: url('/fonts/michroma-latin-ext-400.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA,
-    U+02BD-02C5,
-    U+02C7-02CC,
-    U+02CE-02D7,
-    U+02DD-02FF,
-    U+0304,
-    U+0308,
-    U+0329,
-    U+1D00-1DBF,
-    U+1E00-1E9F,
-    U+1EF2-1EFF,
-    U+2020,
-    U+20A0-20AB,
-    U+20AD-20C0,
-    U+2113,
-    U+2C60-2C7F,
-    U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'Michroma';
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url('/fonts/michroma-latin-400.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF,
-    U+0131,
-    U+0152-0153,
-    U+02BB-02BC,
-    U+02C6,
-    U+02DA,
-    U+02DC,
-    U+0304,
-    U+0308,
-    U+0329,
-    U+2000-206F,
-    U+20AC,
-    U+2122,
-    U+2191,
-    U+2193,
-    U+2212,
-    U+2215,
-    U+FEFF,
-    U+FFFD;
+  src: url('/fonts/Orbitron/Orbitron-VariableFont_wght.ttf')
+    format('truetype-variations');
 }
 
 @font-face {
@@ -124,7 +79,7 @@
     @apply bg-gruvbox-bg font-sans text-gruvbox-text;
     margin: 0;
     background:
-      radial-gradient(circle at top center, rgba(251, 241, 199, 0.04), transparent 34rem),
+      /* radial-gradient(circle at top center, rgba(251, 241, 199, 0.04), transparent 34rem), */
       linear-gradient(180deg, rgba(251, 241, 199, 0.015), transparent 18rem),
       #282828;
   }
@@ -165,5 +120,97 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+.hero-perspective-grid {
+  position: absolute;
+  inset: 0;
+  --hero-grid-edge-fade-x: clamp(140px, 17vw, 360px);
+  --hero-grid-edge-fade-y: clamp(110px, 18vh, 280px);
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.44;
+  isolation: isolate;
+}
+
+.hero-perspective-grid::before {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: '';
+  background:
+    linear-gradient(
+      90deg,
+      rgba(40, 40, 40, 0.7) 0%,
+      rgba(40, 40, 40, 0.06) var(--hero-grid-edge-fade-x),
+      rgba(40, 40, 40, 0.06) calc(100% - var(--hero-grid-edge-fade-x)),
+      rgba(40, 40, 40, 0.7) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(40, 40, 40, 0.58) 0%,
+      rgba(40, 40, 40, 0.08) var(--hero-grid-edge-fade-y),
+      rgba(40, 40, 40, 0.12) calc(100% - var(--hero-grid-edge-fade-y)),
+      rgba(40, 40, 40, 0.58) 100%
+    );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  mask-image: radial-gradient(
+    ellipse 116% 108% at 50% 50%,
+    rgba(0, 0, 0, 0.92) 56%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 116% 108% at 50% 50%,
+    rgba(0, 0, 0, 0.92) 56%,
+    rgba(0, 0, 0, 1) 100%
+  );
+}
+
+.hero-perspective-grid::after {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  content: '';
+  background:
+    /* radial-gradient(circle at 50% 42%, rgba(40, 40, 40, 0.16), transparent 34rem), */
+    linear-gradient(180deg, rgba(40, 40, 40, 0.24), transparent 22rem);
+}
+
+.hero-perspective-grid__svg {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-perspective-grid__faces polygon {
+  fill: rgba(251, 241, 199, 0.018);
+}
+
+.hero-perspective-grid__line,
+.hero-perspective-grid__line--soft {
+  fill: none;
+  stroke: rgba(251, 241, 199, 0.18);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-perspective-grid__line--soft {
+  stroke: rgba(251, 241, 199, 0.125);
+  stroke-width: 1;
+}
+
+@media (max-width: 639px) {
+  .hero-perspective-grid {
+    opacity: 0.32;
+  }
+
+  .hero-perspective-grid__line,
+  .hero-perspective-grid__line--soft {
+    stroke-width: 1.3;
   }
 }

@@ -14,7 +14,7 @@
 
 <div class="relative isolate">
   <SiteNav />
-  <main class="flex w-full flex-col items-stretch pt-8 sm:pt-12">
+  <main class="flex w-full flex-col items-stretch">
     <DownloadSection />
     <div class="mx-auto mt-16 w-full max-w-7xl">
       <p
