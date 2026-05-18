@@ -32,7 +32,6 @@
   let apiKeyInputs = $state<Record<string, string>>({});
   let providerQuery = $state("");
   let errorMessage = $state<string | null>(null);
-  let statusMessage = $state<string | null>(null);
   let requestId = 0;
 
   let selectedProvider = $derived.by(() =>
@@ -162,7 +161,6 @@
     const busyKey = `api:${providerId}`;
     authBusyKey = busyKey;
     errorMessage = null;
-    statusMessage = null;
 
     try {
       const response = await window.electronAPI.setProviderApiKey({
@@ -179,7 +177,6 @@
       }
 
       apiKeyInputs = { ...apiKeyInputs, [providerId]: "" };
-      statusMessage = `${getProviderLabel(response.state)} API key saved.`;
       upsertProviderState(response.state);
       selectedProviderId = providerId;
     } catch (error) {
@@ -201,7 +198,6 @@
     const busyKey = `oauth:${providerId}:${methodIndex}`;
     authBusyKey = busyKey;
     errorMessage = null;
-    statusMessage = null;
 
     try {
       const start = await window.electronAPI.startProviderOAuth({
@@ -251,12 +247,11 @@
           return;
         }
 
-        statusMessage = `${getProviderLabel(complete.state)} connected.`;
         pendingOAuth = null;
         upsertProviderState(complete.state);
         selectedProviderId = providerId;
       } else {
-        statusMessage = "OAuth started. Complete the browser flow, then finish here.";
+        // keep silent on successful OAuth start per settings UX
       }
     } catch (error) {
       oauthWaitingKey = null;
@@ -280,7 +275,6 @@
     const busyKey = `oauth-complete:${providerId}:${methodIndex}`;
     authBusyKey = busyKey;
     errorMessage = null;
-    statusMessage = null;
 
     try {
       const complete = await window.electronAPI.completeProviderOAuth({
@@ -299,7 +293,6 @@
 
       oauthCodes = { ...oauthCodes, [detailKey]: "" };
       pendingOAuth = null;
-      statusMessage = `${getProviderLabel(complete.state)} connected.`;
       upsertProviderState(complete.state);
       selectedProviderId = providerId;
     } catch (error) {
@@ -318,7 +311,6 @@
     const busyKey = `disconnect:${providerId}`;
     authBusyKey = busyKey;
     errorMessage = null;
-    statusMessage = null;
 
     try {
       const response = await window.electronAPI.disconnectProvider({
@@ -333,7 +325,6 @@
         return;
       }
 
-      statusMessage = `${getProviderLabel(response.state)} disconnected.`;
       upsertProviderState(response.state);
       selectedProviderId = providerId;
     } catch (error) {
@@ -387,7 +378,7 @@
         </div>
       </div>
 
-      <div class="min-h-0 flex-1 overflow-y-auto p-2">
+      <div class="chat-timeline-scroll min-h-0 flex-1 overflow-y-auto p-2">
         {#if loading && providers.length === 0}
           <div class="flex items-center gap-2 px-2 py-2 text-xs text-dark-fg3">
             <Loader class="h-3.5 w-3.5 animate-spin" />
@@ -434,43 +425,45 @@
         <div class="flex flex-col gap-4 p-4">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
-              <h3 class="truncate text-sm font-semibold text-dark-fg">
-                {getProviderLabel(selectedProvider)}
-              </h3>
+              <div class="flex min-w-0 items-center gap-2">
+                <h3 class="truncate text-sm font-semibold text-dark-fg">
+                  {getProviderLabel(selectedProvider)}
+                </h3>
+                {#if selectedProvider.connected}
+                  <span class="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-dark-green/40 bg-dark-green/10 px-2 text-xs font-medium text-dark-green">
+                    <CheckCircle2 class="h-3.5 w-3.5" />
+                    Connected
+                  </span>
+                {:else}
+                  <span class="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-dark-yellow/40 bg-dark-yellow/10 px-2 text-xs font-medium text-dark-yellow">
+                    <AlertTriangle class="h-3.5 w-3.5" />
+                    Not connected
+                  </span>
+                {/if}
+              </div>
               <p class="mt-1 truncate font-mono text-xs text-dark-fg4">
                 {selectedProvider.providerId}
               </p>
             </div>
 
-            <div class="inline-flex items-center gap-2 text-xs">
-              {#if selectedProvider.connected}
-                <CheckCircle2 class="h-4 w-4 text-dark-green" />
-                <span class="text-dark-green">Connected</span>
-              {:else}
-                <AlertTriangle class="h-4 w-4 text-dark-yellow" />
-                <span class="text-dark-yellow">Not connected</span>
-              {/if}
-            </div>
+            {#if selectedProvider.connected}
+              <button
+                class="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-dark-red/50 bg-transparent px-3 py-0 text-xs font-medium text-dark-red transition-colors hover:bg-dark-red/10 disabled:cursor-not-allowed disabled:opacity-60"
+                onclick={() => void disconnectProvider(selectedProvider)}
+                disabled={authBusyKey === `disconnect:${selectedProvider.providerId}`}
+              >
+                {#if authBusyKey === `disconnect:${selectedProvider.providerId}`}
+                  <Loader class="h-3.5 w-3.5 animate-spin" />
+                {:else}
+                  <Unplug class="h-3.5 w-3.5" />
+                {/if}
+                Disconnect
+              </button>
+            {/if}
           </div>
 
           <div class="rounded-lg border border-dark-border bg-dark-surface px-3 py-3">
-            <div class="flex items-center justify-between gap-3">
-              <h4 class="text-sm font-semibold text-dark-fg">Authentication</h4>
-              {#if selectedProvider.connected}
-                <button
-                  class="btn-secondary inline-flex h-8 items-center justify-center gap-2 px-3 py-0 text-xs"
-                  onclick={() => void disconnectProvider(selectedProvider)}
-                  disabled={authBusyKey === `disconnect:${selectedProvider.providerId}`}
-                >
-                  {#if authBusyKey === `disconnect:${selectedProvider.providerId}`}
-                    <Loader class="h-3.5 w-3.5 animate-spin" />
-                  {:else}
-                    <Unplug class="h-3.5 w-3.5" />
-                  {/if}
-                  Disconnect
-                </button>
-              {/if}
-            </div>
+            <h4 class="text-sm font-semibold text-dark-fg">Authentication</h4>
 
             {#if hasApiKeyAuth(selectedProvider)}
               <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -672,13 +665,6 @@
       class="rounded-md border border-dark-red/40 bg-dark-red/10 px-3 py-2 text-xs text-dark-red"
     >
       {errorMessage}
-    </div>
-  {/if}
-  {#if statusMessage}
-    <div
-      class="rounded-md border border-dark-green/40 bg-dark-green/10 px-3 py-2 text-xs text-dark-green"
-    >
-      {statusMessage}
     </div>
   {/if}
 </div>
