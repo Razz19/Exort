@@ -1,5 +1,7 @@
 <script lang="ts">
   import {
+    Copy,
+    CopyCheck,
     AlertTriangle,
     CheckCircle2,
     Eye,
@@ -39,6 +41,7 @@
   let errorMessage = $state<string | null>(null);
   let requestId = 0;
   let hiddenModels = $state<SelectedModelRef[]>([]);
+  let copiedCode = $state<string | null>(null);
 
   let selectedProvider = $derived.by(() =>
     providers.find((provider) => provider.providerId === selectedProviderId) ??
@@ -69,6 +72,30 @@
 
   function getProviderLabel(provider: ProviderState): string {
     return provider.providerName || provider.providerId;
+  }
+
+  function extractCodeFromInstructions(instructions?: string): string | null {
+    if (!instructions) return null;
+    const match = instructions.match(/enter code:\s*([a-z0-9-]+)/i);
+    return match?.[1]?.trim() ?? null;
+  }
+
+  function getAuthorizationCode(detail: ProviderOAuthStartResult): string | null {
+    return detail.userCode ?? extractCodeFromInstructions(detail.instructions);
+  }
+
+  async function copyText(value: string): Promise<void> {
+    const text = value.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      copiedCode = text;
+      window.setTimeout(() => {
+        if (copiedCode === text) copiedCode = null;
+      }, 1200);
+    } catch (error) {
+      console.error("[ProvidersSettingsTab] failed to copy text", error);
+    }
   }
 
   function getOAuthMethods(provider: ProviderState): ProviderState["authMethods"] {
@@ -271,6 +298,12 @@
     methodIndex: number,
   ): Promise<void> {
     const providerId = provider.providerId;
+    if (
+      pendingOAuth?.providerId === providerId &&
+      pendingOAuth?.methodIndex === methodIndex
+    ) {
+      return;
+    }
     const busyKey = `oauth:${providerId}:${methodIndex}`;
     authBusyKey = busyKey;
     errorMessage = null;
@@ -486,8 +519,6 @@
                 </span>
                 {#if provider.connected}
                   <CheckCircle2 class="h-3.5 w-3.5 shrink-0 text-dark-green" />
-                {:else}
-                  <AlertTriangle class="h-3.5 w-3.5 shrink-0 text-dark-yellow" />
                 {/if}
               </button>
             {/each}
@@ -536,8 +567,9 @@
             {/if}
           </div>
 
-          <div class="rounded-lg border border-dark-border bg-dark-surface px-3 py-3">
-            <h4 class="text-sm font-semibold text-dark-fg">Authentication</h4>
+          {#if !selectedProvider.connected}
+            <div class="rounded-lg border border-dark-border bg-dark-surface px-3 py-3">
+              <h4 class="text-sm font-semibold text-dark-fg">Authentication</h4>
 
             {#if hasApiKeyAuth(selectedProvider)}
               <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -595,7 +627,11 @@
                       <button
                         class="btn-primary inline-flex h-8 items-center justify-center gap-2 px-3 py-0 text-xs"
                         onclick={() => void startOAuth(selectedProvider, method.index)}
-                        disabled={authBusyKey === `oauth:${selectedProvider.providerId}:${method.index}`}
+                        disabled={
+                          authBusyKey === `oauth:${selectedProvider.providerId}:${method.index}` ||
+                          isPending ||
+                          oauthWaitingKey === detailKey
+                        }
                       >
                         {#if authBusyKey === `oauth:${selectedProvider.providerId}:${method.index}`}
                           <Loader class="h-3.5 w-3.5 animate-spin" />
@@ -617,15 +653,28 @@
 
                     {#if detail}
                       <div class="mt-3 flex flex-col gap-2">
-                        {#if detail.instructions}
-                          <p class="text-xs text-dark-fg3">{detail.instructions}</p>
+                        {#if getAuthorizationCode(detail)}
+                          <div class="flex items-center justify-between gap-2">
+                            <p class="text-xs font-medium text-dark-fg2">
+                              Enter code: <span class="font-mono">{getAuthorizationCode(detail)}</span>
+                            </p>
+                            <button
+                              type="button"
+                              class="inline-flex h-6 w-6 items-center justify-center rounded text-dark-fg3 transition-colors hover:text-dark-fg"
+                              onclick={() => void copyText(getAuthorizationCode(detail) ?? "")}
+                              aria-label="Copy authorization code"
+                              title="Copy code"
+                            >
+                              {#if copiedCode === getAuthorizationCode(detail)}
+                                <CopyCheck class="h-3.5 w-3.5" />
+                              {:else}
+                                <Copy class="h-3.5 w-3.5" />
+                              {/if}
+                            </button>
+                          </div>
                         {/if}
-                        {#if detail.userCode}
-                          <input
-                            class="input-field h-8 w-full max-w-sm rounded-md py-1 text-center font-mono text-xs"
-                            value={detail.userCode}
-                            readonly
-                          />
+                        {#if detail.instructions && !getAuthorizationCode(detail)}
+                          <p class="text-xs text-dark-fg3">{detail.instructions}</p>
                         {/if}
                         {#if detail.url}
                           <div class="flex flex-wrap items-center gap-2">
@@ -682,7 +731,8 @@
                 {/each}
               </div>
             {/if}
-          </div>
+            </div>
+          {/if}
 
           {#if selectedProvider.connected}
             <div class="rounded-lg border border-dark-border bg-dark-surface px-3 py-3">
@@ -692,7 +742,7 @@
                   {@const shouldShowAll = allModelsHidden(selectedProvider)}
                   <button
                     type="button"
-                    class="btn-secondary h-7 px-2.5 py-0 text-[11px]"
+                    class="btn-secondary inline-flex h-7 items-center justify-center px-2.5 py-0 text-[11px] leading-none"
                     onclick={() =>
                       setAllModelVisibility(selectedProvider, !shouldShowAll)}
                   >
