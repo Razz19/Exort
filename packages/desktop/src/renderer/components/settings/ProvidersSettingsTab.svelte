@@ -2,6 +2,8 @@
   import {
     AlertTriangle,
     CheckCircle2,
+    Eye,
+    EyeOff,
     ExternalLink,
     KeyRound,
     Link2,
@@ -10,8 +12,11 @@
     Search,
     Unplug,
   } from "lucide-svelte";
+  import { isHiddenModel } from "../../lib/modelCatalog";
+  import { appStateStore, patchAppState } from "../../lib/state/stateManager";
   import type {
     ProviderOAuthStartResult,
+    SelectedModelRef,
     ProviderState,
   } from "../../lib/types";
 
@@ -33,6 +38,7 @@
   let providerQuery = $state("");
   let errorMessage = $state<string | null>(null);
   let requestId = 0;
+  let hiddenModels = $state<SelectedModelRef[]>([]);
 
   let selectedProvider = $derived.by(() =>
     providers.find((provider) => provider.providerId === selectedProviderId) ??
@@ -70,6 +76,66 @@
       .filter((method) => method.type === "oauth")
       .slice()
       .sort((left, right) => left.index - right.index);
+  }
+
+  function modelIsHidden(providerId: string, modelId: string): boolean {
+    return isHiddenModel(hiddenModels, providerId, modelId);
+  }
+
+  function toggleModelVisibility(providerId: string, modelId: string): void {
+    patchAppState((current) => {
+      const alreadyHidden = isHiddenModel(current.providers.hiddenModels, providerId, modelId);
+      return {
+        providers: {
+          hiddenModels: alreadyHidden
+            ? current.providers.hiddenModels.filter(
+                (item) => !(item.providerId === providerId && item.modelId === modelId),
+              )
+            : [...current.providers.hiddenModels, { providerId, modelId }],
+        },
+      };
+    });
+  }
+
+  function allModelsHidden(provider: ProviderState): boolean {
+    return (
+      provider.models.length > 0 &&
+      provider.models.every((model) =>
+        isHiddenModel(hiddenModels, provider.providerId, model.id),
+      )
+    );
+  }
+
+  function setAllModelVisibility(provider: ProviderState, hide: boolean): void {
+    patchAppState((current) => {
+      if (!hide) {
+        return {
+          providers: {
+            hiddenModels: current.providers.hiddenModels.filter(
+              (item) => item.providerId !== provider.providerId,
+            ),
+          },
+        };
+      }
+
+      const merged = [...current.providers.hiddenModels];
+      for (const model of provider.models) {
+        if (
+          !merged.some(
+            (item) =>
+              item.providerId === provider.providerId && item.modelId === model.id,
+          )
+        ) {
+          merged.push({ providerId: provider.providerId, modelId: model.id });
+        }
+      }
+
+      return {
+        providers: {
+          hiddenModels: merged,
+        },
+      };
+    });
   }
 
   function hasApiKeyAuth(provider: ProviderState): boolean {
@@ -148,6 +214,16 @@
   $effect(() => {
     activeWorkspaceRoot;
     void refreshProviders();
+  });
+
+  $effect(() => {
+    const unsubscribe = appStateStore.subscribe((state) => {
+      hiddenModels = state.providers.hiddenModels;
+    });
+
+    return () => {
+      unsubscribe();
+    };
   });
 
   async function saveApiKey(provider: ProviderState): Promise<void> {
@@ -420,22 +496,20 @@
       </div>
     </aside>
 
-    <section class="min-h-0 overflow-y-auto rounded-lg border border-dark-border bg-dark-bg">
+    <section class="chat-timeline-scroll min-h-0 overflow-y-auto rounded-lg border border-dark-border bg-dark-bg">
       {#if selectedProvider}
         <div class="flex flex-col gap-4 p-4">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
               <div class="flex min-w-0 items-center gap-2">
-                <h3 class="truncate text-sm font-semibold text-dark-fg">
-                  {getProviderLabel(selectedProvider)}
-                </h3>
+                <h3 class="truncate text-sm font-semibold text-dark-fg">{getProviderLabel(selectedProvider)}</h3>
                 {#if selectedProvider.connected}
-                  <span class="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-dark-green/40 bg-dark-green/10 px-2 text-xs font-medium text-dark-green">
+                  <span class="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-dark-green">
                     <CheckCircle2 class="h-3.5 w-3.5" />
                     Connected
                   </span>
                 {:else}
-                  <span class="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-dark-yellow/40 bg-dark-yellow/10 px-2 text-xs font-medium text-dark-yellow">
+                  <span class="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-dark-yellow">
                     <AlertTriangle class="h-3.5 w-3.5" />
                     Not connected
                   </span>
@@ -610,47 +684,54 @@
             {/if}
           </div>
 
-          <div class="rounded-lg border border-dark-border bg-dark-surface px-3 py-3">
-            <h4 class="text-sm font-semibold text-dark-fg">Models</h4>
-            <div class="mt-3 grid gap-2 sm:grid-cols-3">
-              <div class="rounded-md border border-dark-border bg-dark-bg px-2.5 py-2">
-                <div class="text-[11px] uppercase tracking-wide text-dark-fg4">
-                  Recommended
-                </div>
-                <div class="mt-1 truncate font-mono text-xs text-dark-fg">
-                  {selectedProvider.recommendedModelId ?? "None"}
-                </div>
-              </div>
-              <div class="rounded-md border border-dark-border bg-dark-bg px-2.5 py-2">
-                <div class="text-[11px] uppercase tracking-wide text-dark-fg4">
-                  Default
-                </div>
-                <div class="mt-1 truncate font-mono text-xs text-dark-fg">
-                  {selectedProvider.defaultModelId ?? "None"}
-                </div>
-              </div>
-              <div class="rounded-md border border-dark-border bg-dark-bg px-2.5 py-2">
-                <div class="text-[11px] uppercase tracking-wide text-dark-fg4">
-                  Available
-                </div>
-                <div class="mt-1 text-xs text-dark-fg">
-                  {selectedProvider.models.length}
-                </div>
-              </div>
-            </div>
-
-            {#if selectedProvider.models.length > 0}
-              <div class="mt-3 flex flex-wrap gap-2">
-                {#each selectedProvider.models.slice(0, 10) as model (model.id)}
-                  <span
-                    class="max-w-full truncate rounded-md border border-dark-border bg-dark-bg px-2 py-1 font-mono text-[11px] text-dark-fg3"
+          {#if selectedProvider.connected}
+            <div class="rounded-lg border border-dark-border bg-dark-surface px-3 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-sm font-semibold text-dark-fg">Models</h4>
+                {#if selectedProvider.models.length > 0}
+                  {@const shouldShowAll = allModelsHidden(selectedProvider)}
+                  <button
+                    type="button"
+                    class="btn-secondary h-7 px-2.5 py-0 text-[11px]"
+                    onclick={() =>
+                      setAllModelVisibility(selectedProvider, !shouldShowAll)}
                   >
-                    {model.id}
-                  </span>
-                {/each}
+                    {shouldShowAll ? "Show all" : "Hide all"}
+                  </button>
+                {/if}
               </div>
-            {/if}
-          </div>
+              {#if selectedProvider.models.length === 0}
+                <p class="mt-3 text-xs text-dark-fg4">No models available.</p>
+              {:else}
+                <div class="mt-3 p-2">
+                  <div class="flex flex-col gap-2">
+                    {#each selectedProvider.models as model (model.id)}
+                      {@const hidden = modelIsHidden(selectedProvider.providerId, model.id)}
+                      <div class="flex items-center justify-between gap-3 rounded-md border border-dark-border bg-dark-bg px-2.5 py-2">
+                        <div class="min-w-0">
+                          <p class="truncate text-xs font-medium text-dark-fg">{model.name}</p>
+                          <p class="truncate font-mono text-[11px] text-dark-fg4">{model.id}</p>
+                        </div>
+                        <button
+                          class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-dark-border text-dark-fg3 transition-colors hover:bg-dark-bg1 hover:text-dark-fg"
+                          type="button"
+                          aria-label={hidden ? `Show ${model.name}` : `Hide ${model.name}`}
+                          title={hidden ? "Show model" : "Hide model"}
+                          onclick={() => toggleModelVisibility(selectedProvider.providerId, model.id)}
+                        >
+                          {#if hidden}
+                            <EyeOff class="h-3.5 w-3.5" />
+                          {:else}
+                            <Eye class="h-3.5 w-3.5" />
+                          {/if}
+                        </button>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {/if}
         </div>
       {:else}
         <div class="flex min-h-48 items-center justify-center px-4 text-xs text-dark-fg4">

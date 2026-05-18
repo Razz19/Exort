@@ -38,6 +38,7 @@ type AppStatePatch = {
   };
   providers?: {
     selectedModel?: AppState['providers']['selectedModel'];
+    hiddenModels?: AppState['providers']['hiddenModels'];
   };
 };
 

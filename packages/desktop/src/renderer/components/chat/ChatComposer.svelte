@@ -7,6 +7,7 @@
   import Square from "lucide-svelte/icons/square";
   import X from "lucide-svelte/icons/x";
   import {
+    filterVisibleModels,
     findSelectedModel,
     resolveSelectedModel,
     sameSelectedModel,
@@ -58,6 +59,7 @@
   let providerLoading = $state(false);
   let providerError = $state<string | null>(null);
   let selectedModel = $state<SelectedModelRef | null>(null);
+  let hiddenModels = $state<SelectedModelRef[]>([]);
   let providerRequestId = 0;
   let dragDepth = 0;
 
@@ -284,11 +286,9 @@
         return;
       }
 
-      catalogProviders = response.providers;
-      const resolvedModel = resolveSelectedModel(
-        response.providers,
-        selectedModel,
-      );
+      const visibleProviders = filterVisibleModels(response.providers, hiddenModels);
+      catalogProviders = visibleProviders;
+      const resolvedModel = resolveSelectedModel(visibleProviders, selectedModel);
       if (!sameSelectedModel(resolvedModel, selectedModel)) {
         patchAppState({
           providers: {
@@ -370,6 +370,7 @@
   onMount(() => {
     const unsubscribe = appStateStore.subscribe((state) => {
       selectedModel = state.providers.selectedModel;
+      hiddenModels = state.providers.hiddenModels;
     });
 
     return () => {
@@ -383,6 +384,11 @@
 
   $effect(() => {
     activeWorkspaceRoot;
+    void refreshOpenCodeModelCatalog();
+  });
+
+  $effect(() => {
+    hiddenModels;
     void refreshOpenCodeModelCatalog();
   });
 </script>

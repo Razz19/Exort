@@ -61,3 +61,23 @@ export function findSelectedModel(
 
   return { provider, model };
 }
+
+export function isHiddenModel(
+  hiddenModels: SelectedModelRef[],
+  providerId: string,
+  modelId: string
+): boolean {
+  return hiddenModels.some((item) => item.providerId === providerId && item.modelId === modelId);
+}
+
+export function filterVisibleModels(
+  providers: OpenCodeModelCatalogProvider[],
+  hiddenModels: SelectedModelRef[]
+): OpenCodeModelCatalogProvider[] {
+  return providers
+    .map((provider) => ({
+      ...provider,
+      models: provider.models.filter((model) => !isHiddenModel(hiddenModels, provider.providerId, model.id))
+    }))
+    .filter((provider) => provider.models.length > 0);
+}

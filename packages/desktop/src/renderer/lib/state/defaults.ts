@@ -46,6 +46,24 @@ function sanitizeSelectedModelRef(value: unknown): SelectedModelRef | null {
   };
 }
 
+function sanitizeHiddenModelRefs(value: unknown): SelectedModelRef[] {
+  if (!Array.isArray(value)) return [];
+
+  const dedupe = new Set<string>();
+  const next: SelectedModelRef[] = [];
+  for (const item of value) {
+    const ref = sanitizeSelectedModelRef(item);
+    if (!ref) continue;
+
+    const key = `${ref.providerId}\u0000${ref.modelId}`;
+    if (dedupe.has(key)) continue;
+    dedupe.add(key);
+    next.push(ref);
+  }
+
+  return next;
+}
+
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.map((item) => (typeof item === 'string' ? item : '')).filter(Boolean);
@@ -128,7 +146,8 @@ export function createDefaultAppState(): AppState {
       showReasoning: false
     },
     providers: {
-      selectedModel: null
+      selectedModel: null,
+      hiddenModels: []
     }
   };
 }
@@ -230,6 +249,7 @@ export function sanitizeAppState(input: unknown): AppState {
           : defaults.agent.showReasoning
     },
     providers: {
+      hiddenModels: sanitizeHiddenModelRefs(providersCandidate?.hiddenModels),
       selectedModel:
         selectedModelCandidate ??
         (legacyOpenAIModelId

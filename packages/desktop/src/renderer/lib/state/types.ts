@@ -61,6 +61,7 @@ export type AppState = {
   };
   providers: {
     selectedModel: SelectedModelRef | null;
+    hiddenModels: SelectedModelRef[];
   };
 };
 

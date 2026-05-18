@@ -90,6 +90,7 @@ type AppState = {
   };
   providers: {
     selectedModel: SelectedModelRef | null;
+    hiddenModels: SelectedModelRef[];
   };
 };
 
@@ -310,6 +311,24 @@ function sanitizeSelectedModelRef(value: unknown): SelectedModelRef | null {
   };
 }
 
+function sanitizeHiddenModelRefs(value: unknown): SelectedModelRef[] {
+  if (!Array.isArray(value)) return [];
+
+  const dedupe = new Set<string>();
+  const next: SelectedModelRef[] = [];
+  for (const item of value) {
+    const ref = sanitizeSelectedModelRef(item);
+    if (!ref) continue;
+
+    const key = `${ref.providerId}\u0000${ref.modelId}`;
+    if (dedupe.has(key)) continue;
+    dedupe.add(key);
+    next.push(ref);
+  }
+
+  return next;
+}
+
 function isValidCoreId(value: string): boolean {
   return /^[^:@\s]+:[^:@\s]+$/.test(value);
 }
@@ -381,7 +400,8 @@ function createDefaultAppState(): AppState {
       showReasoning: false
     },
     providers: {
-      selectedModel: null
+      selectedModel: null,
+      hiddenModels: []
     }
   };
 }
@@ -483,6 +503,7 @@ function sanitizeAppState(input: unknown): AppState {
           : defaults.agent.showReasoning
     },
     providers: {
+      hiddenModels: sanitizeHiddenModelRefs(providersCandidate?.hiddenModels),
       selectedModel:
         selectedModelCandidate ??
         (legacyOpenAIModelId

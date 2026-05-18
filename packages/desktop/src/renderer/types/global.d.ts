@@ -359,6 +359,7 @@ type AppState = {
   };
   providers: {
     selectedModel: SelectedModelRef | null;
+    hiddenModels: SelectedModelRef[];
   };
 };
 type PaneTab = 'code' | 'monitor';
