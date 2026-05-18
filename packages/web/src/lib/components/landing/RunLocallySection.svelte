@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Copy, CopyCheck } from "lucide-svelte";
+  import { EXORT_GITHUB_LINK } from "$lib/constant";
   let {
     embedded = false,
     className = "",
@@ -12,7 +13,7 @@
   const localSetupCommands = [
     {
       key: "clone",
-      command: "git clone https://github.com/Razz19/Exort.git",
+      command: `git clone ${EXORT_GITHUB_LINK}.git`,
     },
     {
       key: "cd",

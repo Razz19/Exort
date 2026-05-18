@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import { page } from '$app/state';
   import SiteFooter from '$lib/components/landing/SiteFooter.svelte';
 
   let { children } = $props();
@@ -17,5 +18,7 @@
   <div class="flex-1">
     {@render children()}
   </div>
-  <SiteFooter />
+  {#if !page.url.pathname.startsWith('/docs')}
+    <SiteFooter />
+  {/if}
 </div>
