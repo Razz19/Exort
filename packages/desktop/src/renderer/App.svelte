@@ -122,6 +122,11 @@
     return `${normalizedBase}:${optionSuffix}`;
   }
 
+  function selectedModelKey(selectedModel: SelectedModelRef | null): string {
+    if (!selectedModel) return "default";
+    return `${selectedModel.providerId}\u0000${selectedModel.modelId}`;
+  }
+
   let agentBusy = $state(false);
   let stoppingAgentTurn = $state(false);
   let activeAgentRequestId = $state<string | null>(null);
@@ -165,10 +170,13 @@
   let arduinoEnvironmentRefreshKey = $state(0);
   let outputRun = $state<ArduinoOutputRun | null>(null);
   let draggingSplitter = $state<"outer" | "inner" | null>(null);
+  let transientChatWidthPct = $state<number | null>(null);
+  let transientEditorWidthPct = $state<number | null>(null);
   let outerSplitContainerEl = $state<HTMLDivElement | null>(null);
   let innerSplitContainerEl = $state<HTMLDivElement | null>(null);
   let watchedWorkspaceRoot: string | null = null;
   let workspaceWatchRequestId = 0;
+  let contextLimitRefreshKey: string | null = null;
   let requirementsStartupToastChecked = false;
   let startupRequirementsAutoInstallRequested = $state(false);
   const toastActions = new Map<string, () => void>();
@@ -190,6 +198,12 @@
   let chatWidthPct = $derived(appStateSnapshot.layout.chatWidthPct);
   let chatCollapsed = $derived(appStateSnapshot.layout.chatCollapsed ?? false);
   let editorWidthPct = $derived(appStateSnapshot.layout.editorWidthPct);
+  let effectiveChatWidthPct = $derived(
+    transientChatWidthPct ?? chatWidthPct,
+  );
+  let effectiveEditorWidthPct = $derived(
+    transientEditorWidthPct ?? editorWidthPct,
+  );
   let chatFontSize = $derived<ChatFontSizePreset>(
     appStateSnapshot.appearance.chatFontSize ?? "default",
   );
@@ -470,8 +484,14 @@
   }
 
   $effect(() => {
-    if (!activeWorkspace) return;
-    void refreshWorkspaceContextLimits(activeWorkspace.rootPath);
+    const workspaceRoot = activeWorkspace?.rootPath ?? null;
+    const persistedSelectedModel = appStateSnapshot.providers.selectedModel;
+    const nextRefreshKey = `${workspaceRoot ?? "none"}\u0000${selectedModelKey(persistedSelectedModel)}`;
+
+    if (!workspaceRoot || nextRefreshKey === contextLimitRefreshKey) return;
+
+    contextLimitRefreshKey = nextRefreshKey;
+    void refreshWorkspaceContextLimits(workspaceRoot, persistedSelectedModel);
   });
 
   const watchedFilePaths: Record<string, true> = {};
@@ -771,15 +791,11 @@
         const bounds = container.getBoundingClientRect();
         if (!bounds.width) return;
         const nextWidth = ((event.clientX - bounds.left) / bounds.width) * 100;
-        patchAppState({
-          layout: {
-            chatWidthPct: clamp(
-              nextWidth,
-              CHAT_MIN_WIDTH_PCT,
-              CHAT_MAX_WIDTH_PCT,
-            ),
-          },
-        });
+        transientChatWidthPct = clamp(
+          nextWidth,
+          CHAT_MIN_WIDTH_PCT,
+          CHAT_MAX_WIDTH_PCT,
+        );
         return;
       }
 
@@ -788,18 +804,31 @@
       const bounds = container.getBoundingClientRect();
       if (!bounds.width) return;
       const nextWidth = ((event.clientX - bounds.left) / bounds.width) * 100;
-      patchAppState({
-        layout: {
-          editorWidthPct: clamp(
-            nextWidth,
-            EDITOR_MIN_WIDTH_PCT,
-            EDITOR_MAX_WIDTH_PCT,
-          ),
-        },
-      });
+      transientEditorWidthPct = clamp(
+        nextWidth,
+        EDITOR_MIN_WIDTH_PCT,
+        EDITOR_MAX_WIDTH_PCT,
+      );
     };
 
     const handlePointerUp = () => {
+      const completedSplitter = draggingSplitter;
+      if (completedSplitter === "outer" && transientChatWidthPct !== null) {
+        patchAppState({
+          layout: {
+            chatWidthPct: transientChatWidthPct,
+          },
+        });
+      }
+      if (completedSplitter === "inner" && transientEditorWidthPct !== null) {
+        patchAppState({
+          layout: {
+            editorWidthPct: transientEditorWidthPct,
+          },
+        });
+      }
+      transientChatWidthPct = null;
+      transientEditorWidthPct = null;
       draggingSplitter = null;
     };
 
@@ -2918,7 +2947,7 @@
       class={`flex border-r border-dark-border ${
         chatCollapsed ? "shrink-0" : "min-w-0"
       }`}
-      style={chatCollapsed ? undefined : `width: ${chatWidthPct}%`}
+      style={chatCollapsed ? undefined : `width: ${effectiveChatWidthPct}%`}
     >
       <div class="w-14 shrink-0 border-r border-dark-border bg-dark-surface">
             <WorkspaceBar
@@ -2978,7 +3007,7 @@
 
     <div
       class={`flex min-w-0 flex-col overflow-hidden ${chatCollapsed ? "flex-1" : ""}`}
-      style={chatCollapsed ? undefined : `width: ${100 - chatWidthPct}%`}
+      style={chatCollapsed ? undefined : `width: ${100 - effectiveChatWidthPct}%`}
     >
       <div
         class={`min-h-0 overflow-hidden ${outputExpanded ? "shrink-0" : "flex-1"}`}
@@ -2989,7 +3018,7 @@
         <PaneManager
           {activePaneTab}
           onPaneTabChange={handlePaneTabChange}
-          {editorWidthPct}
+          editorWidthPct={effectiveEditorWidthPct}
           fileManagerCollapsed={effectiveFileManagerCollapsed}
           {monacoTheme}
           {activeWorkspace}

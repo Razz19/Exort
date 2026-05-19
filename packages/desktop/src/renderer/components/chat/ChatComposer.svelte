@@ -58,6 +58,20 @@
     { value: "high", label: "High" },
   ];
 
+  function selectedModelListKey(models: SelectedModelRef[]): string {
+    return models
+      .map((model) => `${model.providerId}\u0000${model.modelId}`)
+      .sort()
+      .join("\u0001");
+  }
+
+  function sameSelectedModelList(
+    left: SelectedModelRef[],
+    right: SelectedModelRef[],
+  ): boolean {
+    return selectedModelListKey(left) === selectedModelListKey(right);
+  }
+
   let prompt = $state("");
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
   let fileInputEl = $state<HTMLInputElement | null>(null);
@@ -76,6 +90,7 @@
   let hiddenModels = $state<SelectedModelRef[]>([]);
   let thinkingLevel = $state<ThinkingLevel>("default");
   let providerRequestId = 0;
+  let lastCatalogEffectKey: string | null = null;
   let dragDepth = 0;
 
   let canSend = $derived(
@@ -425,9 +440,16 @@
 
   onMount(() => {
     const unsubscribe = appStateStore.subscribe((state) => {
-      selectedModel = state.providers.selectedModel;
-      hiddenModels = state.providers.hiddenModels;
-      thinkingLevel = state.agent.thinkingLevel ?? "default";
+      if (!sameSelectedModel(state.providers.selectedModel, selectedModel)) {
+        selectedModel = state.providers.selectedModel;
+      }
+      if (!sameSelectedModelList(state.providers.hiddenModels, hiddenModels)) {
+        hiddenModels = state.providers.hiddenModels;
+      }
+      const nextThinkingLevel = state.agent.thinkingLevel ?? "default";
+      if (nextThinkingLevel !== thinkingLevel) {
+        thinkingLevel = nextThinkingLevel;
+      }
     });
 
     return () => {
@@ -440,12 +462,11 @@
   });
 
   $effect(() => {
-    activeWorkspaceRoot;
-    void refreshOpenCodeModelCatalog();
-  });
+    const nextCatalogEffectKey = `${activeWorkspaceRoot ?? "none"}\u0000${selectedModelListKey(hiddenModels)}`;
 
-  $effect(() => {
-    hiddenModels;
+    if (nextCatalogEffectKey === lastCatalogEffectKey) return;
+
+    lastCatalogEffectKey = nextCatalogEffectKey;
     void refreshOpenCodeModelCatalog();
   });
 </script>
