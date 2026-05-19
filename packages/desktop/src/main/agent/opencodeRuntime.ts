@@ -112,6 +112,7 @@ export type OpenCodeProviderModel = {
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+  variants?: string[];
   limit?: {
     context?: number;
     output?: number;
@@ -191,6 +192,7 @@ type RunOpenCodeTurnParams = {
   attachments?: OpenCodePromptAttachment[];
   sessionId?: string;
   agent?: string;
+  variant?: string;
   model?: {
     providerID: string;
     modelID: string;
@@ -596,6 +598,18 @@ function parseProviderModels(modelsValue: unknown): OpenCodeProviderModel[] {
       model.max_output_tokens,
       model.maxOutputTokens
     );
+    const variantRecord = asRecord(model.variants);
+    const variants = Array.from(
+      new Set(
+        Object.entries(variantRecord)
+          .filter(([, variantValue]) => {
+            const variantConfig = asRecord(variantValue);
+            return variantConfig.disabled !== true;
+          })
+          .map(([variantKey]) => variantKey.trim().toLowerCase())
+          .filter((variantKey) => variantKey.length > 0)
+      )
+    ).sort((left, right) => left.localeCompare(right));
 
     parsed.push({
       id,
@@ -604,6 +618,7 @@ function parseProviderModels(modelsValue: unknown): OpenCodeProviderModel[] {
       status: parseProviderModelStatus(getFirstNonBlankString(model.status)),
       reasoning: model.reasoning === true || capabilities.reasoning === true,
       toolCall: model.tool_call === true || model.toolCall === true || capabilities.tool_call === true,
+      variants: variants.length > 0 ? variants : undefined,
       limit:
         contextLimit != null || outputLimit != null
           ? {
@@ -2939,6 +2954,9 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     if (requestedAgent) {
       log(`prompt:agent name=${requestedAgent}`);
     }
+    if (params.variant) {
+      log(`prompt:variant name=${params.variant}`);
+    }
     let response: unknown;
     let usedPromptAsync = false;
     const sendPromptAttempt = async (agentName: string | null): Promise<{
@@ -2957,6 +2975,9 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
       }
       if (agentName) {
         promptBody.agent = agentName;
+      }
+      if (params.variant) {
+        promptBody.variant = params.variant;
       }
 
       const promptPayload = {

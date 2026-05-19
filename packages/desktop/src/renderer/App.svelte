@@ -2433,12 +2433,14 @@
     );
     const syncSessionId = getHistoryCacheSessionKey(turnSessionId);
     agentBusy = true;
+    const thinkingLevel = appStateSnapshot.agent.thinkingLevel ?? "default";
     let turnModelOverride:
       | {
           providerID: string;
           modelID: string;
         }
       | undefined = undefined;
+    let turnVariant: string | undefined = undefined;
     pushMessage("user", prompt, turnWorkspaceRoot, undefined, attachments);
     let assistantMessageId = pushMessage(
       "assistant",
@@ -2475,6 +2477,18 @@
             providerID: resolvedSelectedModel.providerId,
             modelID: resolvedSelectedModel.modelId,
           };
+
+          if (thinkingLevel !== "default") {
+            const provider = catalogResponse.providers.find(
+              (item) => item.providerId === resolvedSelectedModel.providerId,
+            );
+            const model = provider?.models.find(
+              (item) => item.id === resolvedSelectedModel.modelId,
+            );
+            if (model?.variants?.includes(thinkingLevel)) {
+              turnVariant = thinkingLevel;
+            }
+          }
         }
       }
     } catch (error) {
@@ -2783,6 +2797,7 @@
         attachments,
         sessionId: turnSessionId ?? undefined,
         agent: turnAgent,
+        variant: turnVariant,
         model: turnModelOverride,
       });
 

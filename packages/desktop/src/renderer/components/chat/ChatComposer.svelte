@@ -6,6 +6,7 @@
   import LoaderCircle from "lucide-svelte/icons/loader-circle";
   import Square from "lucide-svelte/icons/square";
   import X from "lucide-svelte/icons/x";
+  import Check from "lucide-svelte/icons/check";
   import {
     filterVisibleModels,
     findSelectedModel,
@@ -13,6 +14,7 @@
     sameSelectedModel,
   } from "../../lib/modelCatalog";
   import { appStateStore, patchAppState } from "../../lib/state/stateManager";
+  import type { ThinkingLevel } from "../../lib/state/types";
   import type {
     ChatAttachment,
     ChatSendPayload,
@@ -20,7 +22,7 @@
     SelectedModelRef,
   } from "../../lib/types";
   import { OPEN_CODE_MODEL } from "../../../shared/openCodeModel.js";
-  import { Blend, Bot, Brain } from "lucide-svelte";
+  import { Bot, Brain } from "lucide-svelte";
 
   type ComposerAttachment = ChatAttachment & {
     previewUrl?: string;
@@ -46,6 +48,15 @@
 
   const MAX_PROMPT_CHARS = 12000;
   const ATTACHMENT_ONLY_PROMPT = "Please review the attached file.";
+  const THINKING_LEVEL_OPTIONS: Array<{
+    value: ThinkingLevel;
+    label: string;
+  }> = [
+    { value: "default", label: "Default" },
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+  ];
 
   let prompt = $state("");
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
@@ -55,21 +66,36 @@
   let modelOpen = $state(false);
   let modelButtonEl = $state<HTMLButtonElement | null>(null);
   let modelPopoverEl = $state<HTMLDivElement | null>(null);
+  let thinkingOpen = $state(false);
+  let thinkingButtonEl = $state<HTMLButtonElement | null>(null);
+  let thinkingPopoverEl = $state<HTMLDivElement | null>(null);
   let catalogProviders = $state<OpenCodeModelCatalogProvider[]>([]);
   let providerLoading = $state(false);
   let providerError = $state<string | null>(null);
   let selectedModel = $state<SelectedModelRef | null>(null);
   let hiddenModels = $state<SelectedModelRef[]>([]);
+  let thinkingLevel = $state<ThinkingLevel>("default");
   let providerRequestId = 0;
   let dragDepth = 0;
 
   let canSend = $derived(
     !busy && (prompt.trim().length > 0 || attachments.length > 0),
   );
+  let selectedModelEntry = $derived.by(() =>
+    findSelectedModel(catalogProviders, selectedModel),
+  );
   let selectedModelLabel = $derived.by(() => {
-    const selectedEntry = findSelectedModel(catalogProviders, selectedModel);
     return (
-      selectedEntry?.model.name ?? selectedModel?.modelId ?? OPEN_CODE_MODEL
+      selectedModelEntry?.model.name ?? selectedModel?.modelId ?? OPEN_CODE_MODEL
+    );
+  });
+  let selectedModelVariants = $derived.by(() => {
+    return new Set(selectedModelEntry?.model.variants ?? []);
+  });
+  let thinkingLevelLabel = $derived.by(() => {
+    return (
+      THINKING_LEVEL_OPTIONS.find((option) => option.value === thinkingLevel)
+        ?.label ?? "Default"
     );
   });
 
@@ -311,10 +337,32 @@
   }
 
   function toggleModelPopover(): void {
+    thinkingOpen = false;
     modelOpen = !modelOpen;
     if (modelOpen) {
       void refreshOpenCodeModelCatalog();
     }
+  }
+
+  function isThinkingLevelSupported(value: ThinkingLevel): boolean {
+    if (value === "default") return true;
+    return selectedModelVariants.has(value);
+  }
+
+  function toggleThinkingPopover(): void {
+    modelOpen = false;
+    thinkingOpen = !thinkingOpen;
+  }
+
+  function selectThinkingLevel(nextLevel: ThinkingLevel): void {
+    if (!isThinkingLevelSupported(nextLevel)) return;
+
+    patchAppState({
+      agent: {
+        thinkingLevel: nextLevel,
+      },
+    });
+    thinkingOpen = false;
   }
 
   function selectModel(providerId: string, modelId: string): void {
@@ -341,20 +389,28 @@
   }
 
   $effect(() => {
-    if (!modelOpen) return;
+    if (!modelOpen && !thinkingOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
 
-      if (modelButtonEl?.contains(target)) return;
-      if (modelPopoverEl?.contains(target)) return;
+      if (
+        modelButtonEl?.contains(target) ||
+        modelPopoverEl?.contains(target) ||
+        thinkingButtonEl?.contains(target) ||
+        thinkingPopoverEl?.contains(target)
+      ) {
+        return;
+      }
       modelOpen = false;
+      thinkingOpen = false;
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         modelOpen = false;
+        thinkingOpen = false;
       }
     };
 
@@ -371,6 +427,7 @@
     const unsubscribe = appStateStore.subscribe((state) => {
       selectedModel = state.providers.selectedModel;
       hiddenModels = state.providers.hiddenModels;
+      thinkingLevel = state.agent.thinkingLevel ?? "default";
     });
 
     return () => {
@@ -569,6 +626,59 @@
                     {/if}
                   </div>
                 {/if}
+              </div>
+            </div>
+          {/if}
+        </div>
+
+        <div class="relative">
+          <button
+            class="inline-flex h-8 max-w-[140px] items-center gap-1.5 px-2 text-dark-fg3 transition-colors duration-150 hover:text-dark-fg1"
+            bind:this={thinkingButtonEl}
+            aria-haspopup="dialog"
+            aria-expanded={thinkingOpen}
+            aria-label="Show thinking selector"
+            title={`Thinking: ${thinkingLevelLabel}`}
+            onclick={toggleThinkingPopover}
+            type="button"
+          >
+            <Brain class="h-3.5 w-3.5 shrink-0" />
+            <span class="truncate text-xs">{thinkingLevelLabel}</span>
+          </button>
+
+          {#if thinkingOpen}
+            <div
+              class="absolute bottom-full left-0 z-20 mb-2 w-52 rounded-lg border border-dark-border bg-dark-surface p-2 shadow-lg shadow-dark-bg/40"
+              bind:this={thinkingPopoverEl}
+              role="dialog"
+              aria-label="Thinking selector"
+            >
+              <div class="px-1 pb-1 text-[11px] font-medium text-dark-fg1">
+                Thinking
+              </div>
+              <div class="space-y-1">
+                {#each THINKING_LEVEL_OPTIONS as option (option.value)}
+                  {@const disabled =
+                    option.value !== "default" &&
+                    !isThinkingLevelSupported(option.value)}
+                  <button
+                    class={`flex w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
+                      option.value === thinkingLevel
+                        ? "border-primary-500 bg-dark-bg1 text-dark-fg1"
+                        : "border-dark-border bg-dark-bg text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
+                    } ${disabled ? "cursor-not-allowed opacity-45 hover:bg-dark-bg hover:text-dark-fg3" : ""}`}
+                    type="button"
+                    disabled={disabled}
+                    onclick={() => selectThinkingLevel(option.value)}
+                    title={option.label}
+                    aria-disabled={disabled}
+                  >
+                    <span>{option.label}</span>
+                    {#if option.value === thinkingLevel}
+                      <Check class="h-3.5 w-3.5 shrink-0 text-dark-aqua2" />
+                    {/if}
+                  </button>
+                {/each}
               </div>
             </div>
           {/if}

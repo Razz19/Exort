@@ -35,6 +35,7 @@ type AppStatePatch = {
   };
   agent?: {
     showReasoning?: AppState['agent']['showReasoning'];
+    thinkingLevel?: AppState['agent']['thinkingLevel'];
   };
   providers?: {
     selectedModel?: AppState['providers']['selectedModel'];

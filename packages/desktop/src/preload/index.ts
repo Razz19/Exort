@@ -148,6 +148,7 @@ type OpenCodeProviderModel = {
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+  variants?: string[];
   limit?: {
     context?: number;
     output?: number;
@@ -342,6 +343,7 @@ type PersistedTreeItem = {
 };
 type MonacoThemeId = 'vs-dark' | 'arduino-dark' | 'vs' | 'hc-black' | 'hc-light' | 'gruvbox-dark';
 type ChatFontSizePreset = 'small' | 'default' | 'large';
+type ThinkingLevel = 'default' | 'low' | 'medium' | 'high';
 type AppState = {
   version: 1;
   activeWorkspaceRoot: string | null;
@@ -360,6 +362,7 @@ type AppState = {
   };
   agent: {
     showReasoning: boolean;
+    thinkingLevel: ThinkingLevel;
   };
   providers: {
     selectedModel: SelectedModelRef | null;
@@ -677,6 +680,7 @@ const electronAPI = {
     attachments?: ChatAttachment[];
     sessionId?: string;
     agent?: string;
+    variant?: string;
     model?: {
       providerID: string;
       modelID: string;

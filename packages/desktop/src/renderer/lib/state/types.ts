@@ -15,6 +15,7 @@ export type MonacoThemeId =
   | "gruvbox-dark";
 
 export type ChatFontSizePreset = "small" | "default" | "large";
+export type ThinkingLevel = "default" | "low" | "medium" | "high";
 
 export type SelectedModelRef = {
   providerId: string;
@@ -58,6 +59,7 @@ export type AppState = {
   };
   agent: {
     showReasoning: boolean;
+    thinkingLevel: ThinkingLevel;
   };
   providers: {
     selectedModel: SelectedModelRef | null;

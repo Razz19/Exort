@@ -65,6 +65,7 @@ type PersistedTreeItem = {
 
 type MonacoThemeId = 'vs-dark' | 'arduino-dark' | 'vs' | 'hc-black' | 'hc-light' | 'gruvbox-dark';
 type ChatFontSizePreset = 'small' | 'default' | 'large';
+type ThinkingLevel = 'default' | 'low' | 'medium' | 'high';
 type SelectedModelRef = {
   providerId: string;
   modelId: string;
@@ -88,6 +89,7 @@ type AppState = {
   };
   agent: {
     showReasoning: boolean;
+    thinkingLevel: ThinkingLevel;
   };
   providers: {
     selectedModel: SelectedModelRef | null;
@@ -292,6 +294,13 @@ function sanitizeChatFontSizePreset(value: unknown): ChatFontSizePreset {
   return 'default';
 }
 
+function sanitizeThinkingLevel(value: unknown): ThinkingLevel {
+  if (value === 'low') return 'low';
+  if (value === 'medium') return 'medium';
+  if (value === 'high') return 'high';
+  return 'default';
+}
+
 function asNonBlankString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -398,7 +407,8 @@ function createDefaultAppState(): AppState {
       chatFontSize: 'default'
     },
     agent: {
-      showReasoning: false
+      showReasoning: false,
+      thinkingLevel: 'default'
     },
     providers: {
       selectedModel: null,
@@ -501,7 +511,8 @@ function sanitizeAppState(input: unknown): AppState {
       showReasoning:
         typeof agentCandidate?.showReasoning === 'boolean'
           ? agentCandidate.showReasoning
-          : defaults.agent.showReasoning
+          : defaults.agent.showReasoning,
+      thinkingLevel: sanitizeThinkingLevel(agentCandidate?.thinkingLevel)
     },
     providers: {
       hiddenModels: sanitizeHiddenModelRefs(providersCandidate?.hiddenModels),
@@ -1806,6 +1817,7 @@ app.whenReady().then(() => {
         attachments?: OpenCodePromptAttachment[];
         sessionId?: string;
         agent?: string;
+        variant?: string;
         model?: {
           providerID: string;
           modelID: string;
@@ -1840,6 +1852,7 @@ app.whenReady().then(() => {
           attachments: payload.attachments,
           sessionId: payload.sessionId,
           agent: payload.agent,
+          variant: asNonBlankString(payload.variant) ?? undefined,
           model: payload.model,
           signal: abortController.signal,
           onEvent: sendEvent,

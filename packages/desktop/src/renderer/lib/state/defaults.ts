@@ -7,6 +7,7 @@ import {
   type MonacoThemeId,
   type PaneTab,
   type PersistedTreeItem,
+  type ThinkingLevel,
   type WorkspaceManagerState,
   type WorkspaceState
 } from './types';
@@ -108,6 +109,13 @@ function sanitizeChatFontSizePreset(value: unknown): ChatFontSizePreset {
   return 'default';
 }
 
+function sanitizeThinkingLevel(value: unknown): ThinkingLevel {
+  if (value === 'low') return 'low';
+  if (value === 'medium') return 'medium';
+  if (value === 'high') return 'high';
+  return 'default';
+}
+
 export function sanitizeTree(items: unknown): PersistedTreeItem[] {
   if (!Array.isArray(items)) return [];
 
@@ -143,7 +151,8 @@ export function createDefaultAppState(): AppState {
       chatFontSize: 'default'
     },
     agent: {
-      showReasoning: false
+      showReasoning: false,
+      thinkingLevel: 'default'
     },
     providers: {
       selectedModel: null,
@@ -246,7 +255,8 @@ export function sanitizeAppState(input: unknown): AppState {
       showReasoning:
         typeof agentCandidate?.showReasoning === 'boolean'
           ? agentCandidate.showReasoning
-          : defaults.agent.showReasoning
+          : defaults.agent.showReasoning,
+      thinkingLevel: sanitizeThinkingLevel(agentCandidate?.thinkingLevel)
     },
     providers: {
       hiddenModels: sanitizeHiddenModelRefs(providersCandidate?.hiddenModels),

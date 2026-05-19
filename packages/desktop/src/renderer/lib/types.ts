@@ -142,6 +142,7 @@ export type OpenCodeProviderModel = {
   status: 'active' | 'beta' | 'alpha' | 'deprecated' | null;
   reasoning: boolean;
   toolCall: boolean;
+  variants?: string[];
   limit?: {
     context?: number;
     output?: number;
