@@ -18,6 +18,8 @@
     message,
     showReasoning = false,
     workspaceRoot = null,
+    busy = false,
+    onUndoChangedFiles,
     onPermissionReply,
     onQuestionReply,
     onQuestionReject,
@@ -26,6 +28,8 @@
       message: ChatItem;
       showReasoning?: boolean;
       workspaceRoot?: string | null;
+      busy?: boolean;
+      onUndoChangedFiles?: (files: string[], messageId: string) => Promise<void> | void;
       onPermissionReply?: (
         requestId: string,
         reply: AgentPermissionReply,
@@ -523,7 +527,16 @@
 
   {#if isAssistant && changedFilesSummary}
     <div class="mt-3">
-      <ChangedFilesCard summary={changedFilesSummary} {workspaceRoot} />
+      <ChangedFilesCard
+        summary={changedFilesSummary}
+        {workspaceRoot}
+        {busy}
+        onUndoAll={
+          onUndoChangedFiles
+            ? (files) => onUndoChangedFiles(files, message.id)
+            : undefined
+        }
+      />
     </div>
   {/if}
 

@@ -36,6 +36,7 @@
     agentMode = "build",
     onAgentModeChange,
     onStop,
+    onUndoChangedFiles,
     onNewSession,
     onOpenWorkspace,
     newSessionDisabled,
@@ -59,6 +60,7 @@
       agentMode?: "build" | "plan";
       onAgentModeChange: (mode: "build" | "plan") => void;
       onStop: () => Promise<void> | void;
+      onUndoChangedFiles?: (files: string[], messageId: string) => Promise<void> | void;
       onNewSession: () => void;
       onOpenWorkspace: () => Promise<void> | void;
       newSessionDisabled: boolean;
@@ -88,6 +90,7 @@
         workspaceRoot={activeWorkspaceRoot}
         {busy}
         {sessionStatus}
+        {onUndoChangedFiles}
         {onPermissionReply}
         {onQuestionReply}
         {onQuestionReject}

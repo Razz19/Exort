@@ -11,6 +11,7 @@
     workspaceRoot = null,
     busy,
     sessionStatus,
+    onUndoChangedFiles,
     onPermissionReply,
     onQuestionReply,
     onQuestionReject,
@@ -20,6 +21,7 @@
       workspaceRoot?: string | null;
       busy: boolean;
       sessionStatus: "running" | "idle" | "error";
+    onUndoChangedFiles?: (files: string[], messageId: string) => Promise<void> | void;
     onPermissionReply?: (
       requestId: string,
       reply: AgentPermissionReply,
@@ -119,6 +121,8 @@
         {message}
         {showReasoning}
         {workspaceRoot}
+        {busy}
+        {onUndoChangedFiles}
         {onPermissionReply}
         {onQuestionReply}
         {onQuestionReject}

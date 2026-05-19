@@ -2442,6 +2442,34 @@
     return null;
   }
 
+  async function handleUndoChangedFiles(
+    files: string[],
+    _messageId: string,
+  ): Promise<void> {
+    if (agentBusy) return;
+    if (!activeWorkspace) return;
+
+    const uniqueFiles = [
+      ...new Set(
+        files.map((file) => file.trim()).filter((file) => file.length > 0),
+      ),
+    ];
+    if (uniqueFiles.length === 0) return;
+
+    const fileList = uniqueFiles.map((file) => `- ${file}`).join("\n");
+    const prompt =
+      `Undo all recent edits for the listed files.\n` +
+      `Revert them to their previous content before the last edit operation.\n` +
+      `Only touch these files:\n${fileList}\n` +
+      `Do not make any additional refactors or formatting-only changes.`;
+
+    await sendPrompt({
+      prompt,
+      attachments: [],
+      mode: "build",
+    });
+  }
+
   async function sendPrompt(payload: ChatSendPayload): Promise<void> {
     if (agentBusy) return;
     if (!activeWorkspace) {
@@ -2982,6 +3010,7 @@
             onSend={sendPrompt}
             onAgentModeChange={handleAgentModeChange}
             onStop={stopAgentTurn}
+            onUndoChangedFiles={handleUndoChangedFiles}
             onNewSession={createNewSession}
             onOpenWorkspace={openFolder}
             newSessionDisabled={sessionBusy ||

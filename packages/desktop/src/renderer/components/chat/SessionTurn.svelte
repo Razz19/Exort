@@ -6,6 +6,8 @@
     message,
     showReasoning = false,
     workspaceRoot = null,
+    busy = false,
+    onUndoChangedFiles,
     onPermissionReply,
     onQuestionReply,
     onQuestionReject,
@@ -13,6 +15,8 @@
     message: ChatItem;
     showReasoning?: boolean;
     workspaceRoot?: string | null;
+    busy?: boolean;
+    onUndoChangedFiles?: (files: string[], messageId: string) => Promise<void> | void;
     onPermissionReply?: (requestId: string, reply: AgentPermissionReply) => Promise<void> | void;
     onQuestionReply?: (requestId: string, answers: string[][]) => Promise<void> | void;
     onQuestionReject?: (requestId: string) => Promise<void> | void;
@@ -24,6 +28,8 @@
     {message}
     {showReasoning}
     {workspaceRoot}
+    {busy}
+    {onUndoChangedFiles}
     {onPermissionReply}
     {onQuestionReply}
     {onQuestionReject}
