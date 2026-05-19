@@ -16,7 +16,7 @@ import {
   sanitizeSerialBufferSize
 } from '../serial/bufferSettings';
 
-export const CHAT_MIN_WIDTH_PCT = 25;
+export const CHAT_MIN_WIDTH_PCT = 30;
 export const CHAT_MAX_WIDTH_PCT = 65;
 export const EDITOR_MIN_WIDTH_PCT = 45;
 export const EDITOR_MAX_WIDTH_PCT = 85;

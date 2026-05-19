@@ -553,8 +553,8 @@
       }}
     ></textarea>
 
-    <div class="mt-1.5 flex items-center justify-between">
-      <div class="flex items-center gap-1">
+    <div class="mt-1.5 flex min-w-0 items-center justify-between gap-2">
+      <div class="flex min-w-0 flex-1 items-center gap-1">
         <button
           type="button"
           class="inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-fg3 transition-colors duration-150 hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
@@ -566,9 +566,9 @@
           <Plus class="h-4 w-4" />
         </button>
 
-        <div class="relative">
+        <div class="relative min-w-0 flex-1">
           <button
-            class="inline-flex h-8 max-w-[180px] items-center gap-1.5 px-2 text-dark-fg3 transition-colors duration-150 hover:text-dark-fg1"
+            class="inline-flex h-8 w-full max-w-[180px] min-w-0 items-center gap-1.5 overflow-hidden px-2 text-dark-fg3 transition-colors duration-150 hover:text-dark-fg1"
             bind:this={modelButtonEl}
             aria-haspopup="dialog"
             aria-expanded={modelOpen}
@@ -581,7 +581,7 @@
             >
               AI
             </span>
-            <span class="truncate text-xs">{selectedModelLabel}</span>
+            <span class="min-w-0 truncate text-xs">{selectedModelLabel}</span>
           </button>
 
           {#if modelOpen}
@@ -706,7 +706,7 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex shrink-0 items-center gap-2">
         <div
           class="inline-flex items-center rounded-md px-2 py-1"
           role="group"
