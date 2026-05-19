@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, Files, Redo2 } from "lucide-svelte";
+  import {
+    ChevronDown,
+    ChevronUp,
+    FileDiff,
+    Files,
+    Redo2,
+  } from "lucide-svelte";
   let {
     summary,
     workspaceRoot = null,
@@ -105,7 +111,7 @@
         <div
           class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-dark-bg1 text-dark-fg2"
         >
-          <Files class="h-4 w-4" />
+          <FileDiff class="h-4 w-4" />
         </div>
         <div class="min-w-0">
           <div class="truncate text-sm font-medium text-dark-fg1">
@@ -160,7 +166,9 @@
                   >
                     {#each file.lines
                       .slice(0, visible)
-                      .filter((line) => !line.text.trimStart().startsWith("@@")) as line, lineIndex (`${key}:${lineIndex}`)}
+                      .filter((line) => !line.text
+                            .trimStart()
+                            .startsWith("@@")) as line, lineIndex (`${key}:${lineIndex}`)}
                       <div class={lineClass(line.kind)}>{line.text}</div>
                     {/each}
                   </div>
