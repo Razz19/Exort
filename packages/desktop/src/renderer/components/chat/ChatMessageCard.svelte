@@ -1,14 +1,12 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import {
-    ChevronDown,
-    ChevronUp,
-    Copy,
-    CopyCheck,
-    FileText,
-  } from "lucide-svelte";
+  import { Copy, CopyCheck, FileText } from "lucide-svelte";
 
-  import type { AgentPermissionReply, AgentStep, ChatItem } from "../../lib/types";
+  import type {
+    AgentPermissionReply,
+    AgentStep,
+    ChatItem,
+  } from "../../lib/types";
   import { formatChatTime } from "./chatDate";
   import { renderMarkdown } from "./chatMarkdown";
   import ChatStepCard from "./ChatStepCard.svelte";
@@ -23,25 +21,26 @@
     onPermissionReply,
     onQuestionReply,
     onQuestionReject,
-  } =
-    $props<{
-      message: ChatItem;
-      showReasoning?: boolean;
-      workspaceRoot?: string | null;
-      busy?: boolean;
-      onUndoChangedFiles?: (files: string[], messageId: string) => Promise<void> | void;
-      onPermissionReply?: (
-        requestId: string,
-        reply: AgentPermissionReply,
-      ) => Promise<void> | void;
-      onQuestionReply?: (
-        requestId: string,
-        answers: string[][],
-      ) => Promise<void> | void;
-      onQuestionReject?: (requestId: string) => Promise<void> | void;
-    }>();
+  } = $props<{
+    message: ChatItem;
+    showReasoning?: boolean;
+    workspaceRoot?: string | null;
+    busy?: boolean;
+    onUndoChangedFiles?: (
+      files: string[],
+      messageId: string,
+    ) => Promise<void> | void;
+    onPermissionReply?: (
+      requestId: string,
+      reply: AgentPermissionReply,
+    ) => Promise<void> | void;
+    onQuestionReply?: (
+      requestId: string,
+      answers: string[][],
+    ) => Promise<void> | void;
+    onQuestionReject?: (requestId: string) => Promise<void> | void;
+  }>();
 
-  let showSteps = $state(true);
   let showPlanningFull = $state(false);
   let copied = $state(false);
   let copyResetTimer = $state<number | null>(null);
@@ -51,10 +50,21 @@
   let isAssistant = $derived(message.role === "assistant");
   let createdAtLabel = $derived(formatChatTime(message.createdAt));
   let activitySteps = $derived(
-    (message.steps ?? []).filter((step) => step.kind === "tool" || step.kind === "task" || step.kind === "status" || step.kind === "error" || step.kind === "permission" || step.kind === "question"),
+    (message.steps ?? []).filter(
+      (step) =>
+        step.kind === "tool" ||
+        step.kind === "task" ||
+        step.kind === "status" ||
+        step.kind === "error" ||
+        step.kind === "permission" ||
+        step.kind === "question",
+    ),
   );
   let stepCount = $derived(activitySteps.length);
-  type ChangedFileLine = { kind: "meta" | "context" | "add" | "remove"; text: string };
+  type ChangedFileLine = {
+    kind: "meta" | "context" | "add" | "remove";
+    text: string;
+  };
   type ChangedFile = {
     file: string;
     additions: number;
@@ -72,7 +82,11 @@
     if (!value) return {};
     try {
       const parsed = JSON.parse(value);
-      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        !Array.isArray(parsed)
+      ) {
         return parsed as Record<string, unknown>;
       }
     } catch {
@@ -88,7 +102,12 @@
   }
 
   function classifyLine(line: string): ChangedFileLine["kind"] {
-    if (line.startsWith("@@ ") || line.startsWith("--- ") || line.startsWith("+++ ")) return "meta";
+    if (
+      line.startsWith("@@ ") ||
+      line.startsWith("--- ") ||
+      line.startsWith("+++ ")
+    )
+      return "meta";
     if (line.startsWith("+")) return "add";
     if (line.startsWith("-")) return "remove";
     return "context";
@@ -109,7 +128,9 @@
 
     for (const raw of lines) {
       const line = raw ?? "";
-      const updateMatch = line.match(/^\*\*\* (?:Update|Add|Delete) File:\s+(.+)$/);
+      const updateMatch = line.match(
+        /^\*\*\* (?:Update|Add|Delete) File:\s+(.+)$/,
+      );
       if (updateMatch?.[1]) {
         flushCurrent();
         current = {
@@ -148,7 +169,11 @@
 
       if (!current) continue;
       if (!line) continue;
-      if (line.startsWith("*** Begin Patch") || line.startsWith("*** End Patch")) continue;
+      if (
+        line.startsWith("*** Begin Patch") ||
+        line.startsWith("*** End Patch")
+      )
+        continue;
       if (line.startsWith("*** End of File")) continue;
 
       const kind = classifyLine(line);
@@ -161,7 +186,10 @@
     return result;
   }
 
-  function parsePatchTextForKnownFile(patchText: string, filePath: string): ChangedFile | null {
+  function parsePatchTextForKnownFile(
+    patchText: string,
+    filePath: string,
+  ): ChangedFile | null {
     const normalized = patchText.replace(/\r\n/g, "\n");
     const lines = normalized.split("\n");
     const parsedLines: ChangedFileLine[] = [];
@@ -171,10 +199,27 @@
     for (const raw of lines) {
       const line = raw ?? "";
       if (!line) continue;
-      if (line.startsWith("*** Begin Patch") || line.startsWith("*** End Patch")) continue;
-      if (line.startsWith("*** Update File:") || line.startsWith("*** Add File:") || line.startsWith("*** Delete File:")) continue;
+      if (
+        line.startsWith("*** Begin Patch") ||
+        line.startsWith("*** End Patch")
+      )
+        continue;
+      if (
+        line.startsWith("*** Update File:") ||
+        line.startsWith("*** Add File:") ||
+        line.startsWith("*** Delete File:")
+      )
+        continue;
       if (line.startsWith("*** End of File")) continue;
-      if (line.startsWith("@@") || line.startsWith("diff --git") || line.startsWith("--- ") || line.startsWith("+++ ") || line.startsWith("+") || line.startsWith("-") || line.startsWith(" ")) {
+      if (
+        line.startsWith("@@") ||
+        line.startsWith("diff --git") ||
+        line.startsWith("--- ") ||
+        line.startsWith("+++ ") ||
+        line.startsWith("+") ||
+        line.startsWith("-") ||
+        line.startsWith(" ")
+      ) {
         const kind = classifyLine(line);
         parsedLines.push({ kind, text: line });
         if (kind === "add") additions += 1;
@@ -211,12 +256,13 @@
   }
 
   function extractPatchCandidates(values: string[]): string[] {
-    return values.filter((value) =>
-      value.includes("*** Begin Patch") ||
-      value.includes("\n@@ ") ||
-      value.includes("diff --git a/") ||
-      value.includes("\n+++ b/") ||
-      value.includes("\n--- a/"),
+    return values.filter(
+      (value) =>
+        value.includes("*** Begin Patch") ||
+        value.includes("\n@@ ") ||
+        value.includes("diff --git a/") ||
+        value.includes("\n+++ b/") ||
+        value.includes("\n--- a/"),
     );
   }
 
@@ -230,7 +276,10 @@
     return [...files];
   }
 
-  function buildChangedFilesSummary(steps: AgentStep[], assistantText: string): ChangedFilesSummary {
+  function buildChangedFilesSummary(
+    steps: AgentStep[],
+    assistantText: string,
+  ): ChangedFilesSummary {
     const byFile = new Map<string, ChangedFile>();
     let sawMutatingTool = false;
 
@@ -258,7 +307,12 @@
     for (const step of steps) {
       if (step.kind !== "tool") continue;
       const toolName = step.toolName?.trim().toLowerCase() ?? "";
-      if (toolName !== "apply_patch" && toolName !== "edit" && toolName !== "write") continue;
+      if (
+        toolName !== "apply_patch" &&
+        toolName !== "edit" &&
+        toolName !== "write"
+      )
+        continue;
       sawMutatingTool = true;
 
       const rawInput = step.toolInput ?? "";
@@ -318,7 +372,9 @@
   }
 
   let changedFilesSummary = $derived.by(() =>
-    isAssistant ? buildChangedFilesSummary(activitySteps, message.content) : null,
+    isAssistant
+      ? buildChangedFilesSummary(activitySteps, message.content)
+      : null,
   );
   let userAttachments = $derived(isUser ? (message.attachments ?? []) : []);
   let structuredAssistantContentParts = $derived(
@@ -328,7 +384,9 @@
         )
       : [],
   );
-  let orderedAssistantParts = $derived(isAssistant ? (message.assistantParts ?? []) : []);
+  let orderedAssistantParts = $derived(
+    isAssistant ? (message.assistantParts ?? []) : [],
+  );
   let lastToolPartIndex = $derived.by(() => {
     for (let index = orderedAssistantParts.length - 1; index >= 0; index -= 1) {
       if (orderedAssistantParts[index]?.type === "tool") return index;
@@ -340,16 +398,24 @@
     const textParts = orderedAssistantParts
       .slice(lastToolPartIndex + 1)
       .filter(
-        (part): part is Extract<NonNullable<ChatItem["assistantParts"]>[number], { type: "text" }> =>
-          part.type === "text" && part.text.trim().length > 0,
-    );
+        (
+          part,
+        ): part is Extract<
+          NonNullable<ChatItem["assistantParts"]>[number],
+          { type: "text" }
+        > => part.type === "text" && part.text.trim().length > 0,
+      );
     return textParts[textParts.length - 1] ?? null;
   });
   let fallbackAnswerText = $derived.by(() => {
     if (!isAssistant || stepCount === 0 || answerPartCandidate) return "";
     const steps = activitySteps;
     const lastStep = steps[steps.length - 1];
-    if (!lastStep || lastStep.kind !== "tool" || lastStep.status === "running") {
+    if (
+      !lastStep ||
+      lastStep.kind !== "tool" ||
+      lastStep.status === "running"
+    ) {
       return "";
     }
     if (
@@ -390,7 +456,10 @@
     !isAssistant || (stepCount === 0 && assistantBodyText.length > 0),
   );
 
-  function isImageAttachment(attachment: { name: string; mime: string }): boolean {
+  function isImageAttachment(attachment: {
+    name: string;
+    mime: string;
+  }): boolean {
     if (attachment.mime.startsWith("image/")) return true;
     return /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(attachment.name);
   }
@@ -411,8 +480,14 @@
     return `file://${encodedPath}`;
   }
 
-  function attachmentPreviewUrl(attachment: { path: string; url?: string }): string {
-    if (attachment.url?.startsWith("data:") || attachment.url?.startsWith("blob:")) {
+  function attachmentPreviewUrl(attachment: {
+    path: string;
+    url?: string;
+  }): string {
+    if (
+      attachment.url?.startsWith("data:") ||
+      attachment.url?.startsWith("blob:")
+    ) {
       return attachment.url;
     }
     return fileUrl(attachment.path);
@@ -421,7 +496,6 @@
   $effect(() => {
     if (lastMessageId === message.id) return;
     lastMessageId = message.id;
-    showSteps = true;
     showPlanningFull = false;
     copied = false;
   });
@@ -467,26 +541,12 @@
       </div>
 
       {#if isAssistant}
-        <div class="flex items-center gap-1">
-          {#if stepCount > 0}
-            <button
-              class="inline-flex items-center gap-1 rounded border border-dark-border px-1.5 py-0.5 text-[11px] text-dark-fg2 hover:border-primary-500 hover:text-primary-300"
-              onclick={() => (showSteps = !showSteps)}
-            >
-              {#if showSteps}
-                <ChevronUp class="h-3.5 w-3.5" />
-              {:else}
-                <ChevronDown class="h-3.5 w-3.5" />
-              {/if}
-              Steps {stepCount}
-            </button>
-          {/if}
-        </div>
+        <div class="flex items-center gap-1"></div>
       {/if}
     </div>
   {/if}
 
-  {#if isAssistant && showSteps && stepCount > 0}
+  {#if isAssistant && stepCount > 0}
     <div class="space-y-2">
       {#each activitySteps as step (step.id)}
         <ChatStepCard
@@ -505,7 +565,7 @@
     {#each orderedAssistantParts as part (part.id)}
       {#if part.type !== "tool" && part.text.trim().length > 0}
         <div
-          class={`chat-markdown mt-2 ${part.type === "reasoning" ? "chat-markdown-planning" : ""}`}
+          class={`chat-markdown mt-2 font-thin ${part.type === "reasoning" ? "chat-markdown-planning" : ""}`}
         >
           {@html renderMarkdown(part.text)}
         </div>
@@ -514,13 +574,13 @@
   {/if}
 
   {#if isAssistant && stepCount > 0 && !showReasoning && answerPartText}
-    <div class="chat-markdown mt-2">
+    <div class="chat-markdown mt-2 font-thin">
       {@html renderMarkdown(answerPartText)}
     </div>
   {/if}
 
   {#if shouldRenderBody && isAssistant}
-    <div class="chat-markdown">
+    <div class="chat-markdown font-thin">
       {@html renderMarkdown(assistantBodyText)}
     </div>
   {/if}
@@ -531,48 +591,46 @@
         summary={changedFilesSummary}
         {workspaceRoot}
         {busy}
-        onUndoAll={
-          onUndoChangedFiles
-            ? (files) => onUndoChangedFiles(files, message.id)
-            : undefined
-        }
+        onUndoAll={onUndoChangedFiles
+          ? (files) => onUndoChangedFiles(files, message.id)
+          : undefined}
       />
     </div>
   {/if}
 
   {#if isUser}
-      {#if userAttachments.length > 0}
-        <div class="flex max-w-full flex-wrap justify-end gap-2 self-end">
-          {#each userAttachments as attachment (attachment.id)}
-            <div
-              class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3"
-              title={attachment.name}
-              aria-label={attachment.name}
-            >
-              {#if isImageAttachment(attachment)}
-                <img
-                  class="h-7 w-7 rounded object-cover"
-                  src={attachmentPreviewUrl(attachment)}
-                  alt={attachment.name}
-                />
-              {:else}
-                <span
-                  class="inline-flex h-7 w-7 items-center justify-center rounded bg-dark-bg1"
-                  aria-hidden="true"
-                >
-                  <FileText class="h-4 w-4" />
-                </span>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      {/if}
+    {#if userAttachments.length > 0}
+      <div class="flex max-w-full flex-wrap justify-end gap-2 self-end">
+        {#each userAttachments as attachment (attachment.id)}
+          <div
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3"
+            title={attachment.name}
+            aria-label={attachment.name}
+          >
+            {#if isImageAttachment(attachment)}
+              <img
+                class="h-7 w-7 rounded object-cover"
+                src={attachmentPreviewUrl(attachment)}
+                alt={attachment.name}
+              />
+            {:else}
+              <span
+                class="inline-flex h-7 w-7 items-center justify-center rounded bg-dark-bg1"
+                aria-hidden="true"
+              >
+                <FileText class="h-4 w-4" />
+              </span>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    {/if}
 
-      <p
-        class="whitespace-pre-wrap rounded-2xl border border-dark-bg3/50 bg-dark-bg1 px-3 py-2 text-sm leading-relaxed text-dark-fg0"
-      >
-        {message.content}
-      </p>
+    <p
+      class="whitespace-pre-wrap rounded-2xl bg-dark-bg1 px-4 py-2 text-sm font-thin leading-1 text-dark-fg0"
+    >
+      {message.content}
+    </p>
   {/if}
   {#if isUser}
     <button

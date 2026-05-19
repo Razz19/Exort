@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import ArrowUp from "lucide-svelte/icons/arrow-up";
-  import FileText from "lucide-svelte/icons/file-text";
-  import Plus from "lucide-svelte/icons/plus";
-  import LoaderCircle from "lucide-svelte/icons/loader-circle";
-  import Square from "lucide-svelte/icons/square";
-  import X from "lucide-svelte/icons/x";
-  import Check from "lucide-svelte/icons/check";
+  import {
+    ArrowUp,
+    FileText,
+    Plus,
+    LoaderCircle,
+    Square,
+    X,
+    Check,
+  } from "lucide-svelte";
   import {
     filterVisibleModels,
     findSelectedModel,
@@ -101,7 +103,9 @@
   );
   let selectedModelLabel = $derived.by(() => {
     return (
-      selectedModelEntry?.model.name ?? selectedModel?.modelId ?? OPEN_CODE_MODEL
+      selectedModelEntry?.model.name ??
+      selectedModel?.modelId ??
+      OPEN_CODE_MODEL
     );
   });
   let selectedModelVariants = $derived.by(() => {
@@ -327,9 +331,15 @@
         return;
       }
 
-      const visibleProviders = filterVisibleModels(response.providers, hiddenModels);
+      const visibleProviders = filterVisibleModels(
+        response.providers,
+        hiddenModels,
+      );
       catalogProviders = visibleProviders;
-      const resolvedModel = resolveSelectedModel(visibleProviders, selectedModel);
+      const resolvedModel = resolveSelectedModel(
+        visibleProviders,
+        selectedModel,
+      );
       if (!sameSelectedModel(resolvedModel, selectedModel)) {
         patchAppState({
           providers: {
@@ -689,7 +699,7 @@
                         : "border-dark-border bg-dark-bg text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
                     } ${disabled ? "cursor-not-allowed opacity-45 hover:bg-dark-bg hover:text-dark-fg3" : ""}`}
                     type="button"
-                    disabled={disabled}
+                    {disabled}
                     onclick={() => selectThinkingLevel(option.value)}
                     title={option.label}
                     aria-disabled={disabled}
