@@ -479,6 +479,17 @@
     lastCatalogEffectKey = nextCatalogEffectKey;
     void refreshOpenCodeModelCatalog();
   });
+
+  $effect(() => {
+    if (thinkingLevel === "default") return;
+    if (isThinkingLevelSupported(thinkingLevel)) return;
+
+    patchAppState({
+      agent: {
+        thinkingLevel: "default",
+      },
+    });
+  });
 </script>
 
 <div class="chat-composer-root p-3">
@@ -624,10 +635,14 @@
                       >
                         {#each catalogProviders as provider (provider.providerId)}
                           <div class="space-y-1">
-                            <div
-                              class="px-1 text-[11px] font-semibold text-dark-fg2"
-                            >
-                              {provider.providerName}
+                            <div class="flex items-center gap-2 px-1 py-0.5">
+                              <span class="h-px flex-1 bg-dark-border"></span>
+                              <span
+                                class="shrink-0 text-[11px] font-semibold text-dark-fg2"
+                              >
+                                {provider.providerName}
+                              </span>
+                              <span class="h-px flex-1 bg-dark-border"></span>
                             </div>
                             {#each provider.models as model (model.id)}
                               <button
@@ -653,12 +668,12 @@
                                       class="h-3.5 w-3.5 text-primary-300"
                                     />
                                   {/if}
-                                  {#if model.id === provider.defaultModelId}
+                                  <!-- {#if model.id === provider.defaultModelId}
                                     <span
                                       class="shrink-0 text-[10px] text-dark-fg4"
                                       >default</span
                                     >
-                                  {/if}
+                                  {/if} -->
                                 </span>
                               </button>
                             {/each}
