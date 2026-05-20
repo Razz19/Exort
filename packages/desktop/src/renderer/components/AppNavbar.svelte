@@ -187,13 +187,13 @@
 
   // "inline-flex h-8 w-8 items-center justify-center rounded-md border border-dark-fg3 bg-dark-fg3 text-dark-bgS transition-colors duration-150 hover:bg-dark-fg1  disabled:cursor-not-allowed disabled:opacity-50";
   const cancelIconButtonClass =
-    "inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-red transition-colors duration-150 hover:text-dark-fg0 hover:bg-dark-fg4/20  disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-red transition-colors duration-150 hover:text-dark-red hover:bg-dark-fg4/20  disabled:cursor-not-allowed disabled:opacity-50";
   const dropdownTriggerClass =
-    "input-field inline-flex h-8 w-full items-center justify-between gap-2 rounded-md py-2 text-left text-dark-fg focus:ring-0 [-webkit-app-region:no-drag]";
+    "inline-flex h-8 w-full items-center justify-between gap-1.5 rounded-md border border-dark-bg4 bg-dark-surface px-2 text-left text-dark-fg3 transition-colors duration-150 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 [-webkit-app-region:no-drag]";
   const dropdownPanelClass =
-    "absolute right-0 top-full z-30 mt-1 max-h-72 overflow-x-hidden overflow-y-auto rounded-md border border-dark-border bg-dark-surface p-1 shadow-lg shadow-dark-bg/40 [-webkit-app-region:no-drag]";
+    "absolute right-0 top-full z-30 mt-1.5 max-h-72 overflow-x-hidden overflow-y-auto rounded-lg border border-dark-border bg-dark-surface p-2 shadow-lg shadow-dark-bg/40 [-webkit-app-region:no-drag]";
   const dropdownItemClass =
-    "w-full rounded-md px-2 py-1.5 text-left text-sm text-dark-fg2 transition-colors duration-150 hover:bg-dark-bgH hover:text-dark-fg0  ";
+    "w-full rounded-md px-2.5 py-1.5 text-left text-xs text-dark-fg3 transition-colors duration-150 hover:bg-dark-bg1 hover:text-dark-fg1";
   const isMac =
     typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
   let selectedPortLabel = $derived.by(() => {
@@ -878,7 +878,7 @@
             aria-label="Select serial port"
             aria-expanded={portsDropdownOpen}
           >
-            <span class="truncate text-dark-fg0">{selectedPortLabel}</span>
+            <span class="truncate text-xs">{selectedPortLabel}</span>
             <ChevronDown
               class={`h-4 w-4 text-dark-fg3 transition-transform ${portsDropdownOpen ? "rotate-180" : ""}`}
             />
@@ -887,7 +887,7 @@
           {#if portsDropdownOpen}
             <div class={`${dropdownPanelClass} w-full`}>
               <button
-                class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2 border border-dark-border`}
+                class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2`}
                 onclick={() => void refreshPorts()}
                 disabled={portsBusy || uploadBusy}
                 aria-label="Refresh connected serial ports"
@@ -901,13 +901,17 @@
               </button>
 
               {#if ports.length === 0}
-                <div class="px-2 py-1.5 text-sm text-dark-fg3">
+                <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
                   {portsBusy ? "Loading ports..." : "No serial ports found"}
                 </div>
               {:else}
                 {#each ports as port (port.address)}
                   <button
-                    class={`${dropdownItemClass} ${port.address === selectedPort ? "bg-dark-bgH text-primary-300" : ""}`}
+                    class={`${dropdownItemClass} ${
+                      port.address === selectedPort
+                        ? "bg-dark-bg1 text-primary-300"
+                        : ""
+                    }`}
                     onclick={() => handlePortSelection(port.address)}
                     title={port.address}
                     aria-label={`Select ${port.label}`}
@@ -936,7 +940,7 @@
             aria-label="Select board"
             aria-expanded={boardsDropdownOpen}
           >
-            <span class="truncate text-dark-fg0">{selectedBoardLabel}</span>
+            <span class="truncate text-xs">{selectedBoardLabel}</span>
             <ChevronDown
               class={`h-4 w-4 text-dark-fg3 transition-transform ${boardsDropdownOpen ? "rotate-180" : ""}`}
             />
@@ -944,11 +948,11 @@
 
           {#if boardsDropdownOpen}
             <div
-              class={`${dropdownPanelClass} flex w-full max-h-[28rem] flex-col overflow-hidden p-0`}
+              class={`${dropdownPanelClass} flex w-full max-h-[28rem] flex-col overflow-hidden !p-0`}
             >
-              <div class="p-1">
+              <div class="px-0 py-1">
                 <div
-                  class="input-field flex h-8 items-center gap-2 rounded-md px-2 py-1"
+                  class="input-field mx-0 flex h-8 items-center gap-2 rounded-md px-2 py-1"
                 >
                   <Search class="h-4 w-4 shrink-0 text-dark-fg4" />
                   <input
@@ -960,7 +964,7 @@
               </div>
 
               <div
-                class="chat-timeline-scroll min-h-0 flex-1 overflow-y-auto px-1 pb-1"
+                class="navbar-dropdown-scroll min-h-0 flex-1 overflow-y-auto px-0 pb-2"
               >
                 <!-- <button
                 class={`${dropdownItemClass} ${!selectedBoardFqbn ? "bg-dark-bgH text-primary-300" : ""}`}
@@ -977,10 +981,18 @@
                   </div>
                   {#each filteredFavoriteBoards as board (board.fqbn)}
                     <div
-                      class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${board.fqbn === selectedBoardFqbn ? "bg-dark-bgH" : "hover:bg-dark-bgH"}`}
+                      class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${
+                        board.fqbn === selectedBoardFqbn
+                          ? "bg-dark-bg1"
+                          : "hover:bg-dark-bg1"
+                      }`}
                     >
                       <button
-                        class={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150  ${board.fqbn === selectedBoardFqbn ? "text-primary-300" : "text-dark-fg2 hover:text-dark-fg0"}`}
+                        class={`min-w-0 flex-1 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
+                          board.fqbn === selectedBoardFqbn
+                            ? "text-primary-300"
+                            : "text-dark-fg3 hover:text-dark-fg1"
+                        }`}
                         onclick={() => handleBoardSelection(board.fqbn)}
                         aria-label={`Select ${board.name}`}
                       >
@@ -1011,10 +1023,18 @@
                   {/if}
                   {#each filteredRegularBoards as board (board.fqbn)}
                     <div
-                      class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${board.fqbn === selectedBoardFqbn ? "bg-dark-bgH" : "hover:bg-dark-bgH"}`}
+                      class={`mb-0.5 flex items-center gap-1 rounded-md pr-1 ${
+                        board.fqbn === selectedBoardFqbn
+                          ? "bg-dark-bg1"
+                          : "hover:bg-dark-bg1"
+                      }`}
                     >
                       <button
-                        class={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150  ${board.fqbn === selectedBoardFqbn ? "text-primary-300" : "text-dark-fg2 hover:text-dark-fg0"}`}
+                        class={`min-w-0 flex-1 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
+                          board.fqbn === selectedBoardFqbn
+                            ? "text-primary-300"
+                            : "text-dark-fg3 hover:text-dark-fg1"
+                        }`}
                         onclick={() => handleBoardSelection(board.fqbn)}
                         aria-label={`Select ${board.name}`}
                       >
@@ -1040,7 +1060,7 @@
                 {/if}
 
                 {#if filteredFavoriteBoards.length === 0 && filteredRegularBoards.length === 0}
-                  <div class="px-2 py-1.5 text-sm text-dark-fg3">
+                  <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
                     {boardsBusy
                       ? "Loading boards..."
                       : boardSearch.trim()
@@ -1052,7 +1072,7 @@
 
               <div class="border-t border-dark-border p-1">
                 <button
-                  class={`${dropdownItemClass} inline-flex items-center gap-2 border border-dark-border`}
+                  class={`${dropdownItemClass} inline-flex items-center gap-2`}
                   onclick={handleOpenBoardsManager}
                   aria-label="Open boards manager"
                 >
@@ -1081,9 +1101,7 @@
             aria-label="Configure board settings"
             aria-expanded={boardSettingsDropdownOpen}
           >
-            <span class="truncate text-dark-fg0"
-              >{boardSettingsButtonLabel}</span
-            >
+            <span class="truncate text-xs">{boardSettingsButtonLabel}</span>
             <ChevronDown
               class={`h-4 w-4 text-dark-fg3 transition-transform ${boardSettingsDropdownOpen ? "rotate-180" : ""}`}
             />
@@ -1104,16 +1122,16 @@
               </div>
 
               {#if boardSettingsBusy && !boardCurrentDetails}
-                <div class="px-1 py-2 text-sm text-dark-fg3">
+                <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
                   Loading board settings...
                 </div>
               {:else if boardSettingsError}
-                <div class="px-1 py-2 text-sm text-dark-red">
+                <div class="px-2.5 py-1.5 text-xs text-dark-red">
                   {boardSettingsError}
                 </div>
               {:else if boardCurrentDetails}
                 {#if boardCurrentDetails.configOptions.length === 0}
-                  <div class="px-1 py-2 text-sm text-dark-fg3">
+                  <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
                     This board has no configurable board settings.
                   </div>
                 {:else}
@@ -1121,17 +1139,17 @@
                     {#each boardCurrentDetails.configOptions as option (option.id)}
                       <section>
                         <div
-                          class="mb-1 px-1 text-xs font-medium uppercase tracking-wide text-dark-fg4"
+                          class="mb-1 px-1 text-[12px] font-medium uppercase tracking-wide text-dark-fg4"
                         >
                           {option.label}
                         </div>
                         <div class="space-y-1">
                           {#each option.values as value (value.id)}
                             <button
-                              class={`w-full rounded-md border px-2 py-1.5 text-left text-sm transition-colors duration-150 ${
+                              class={`w-full rounded-md px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
                                 isBoardOptionValueSelected(option.id, value.id)
-                                  ? "border-primary-500 bg-dark-bgH text-primary-300"
-                                  : "border-dark-border bg-dark-bg text-dark-fg2 hover:bg-dark-bgH hover:text-dark-fg0"
+                                  ? "text-primary-300"
+                                  : "text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
                               }`}
                               onclick={() =>
                                 handleBoardOptionSelection(option.id, value.id)}
@@ -1147,7 +1165,7 @@
                   </div>
                 {/if}
               {:else}
-                <div class="px-1 py-2 text-sm text-dark-fg3">
+                <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
                   Board settings unavailable.
                 </div>
               {/if}

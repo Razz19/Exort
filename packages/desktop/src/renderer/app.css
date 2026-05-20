@@ -312,3 +312,33 @@ body,
   @apply rounded-full bg-dark-fg4;
   border: none;
 }
+
+.navbar-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.navbar-dropdown-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.navbar-dropdown-scroll::-webkit-scrollbar-track {
+  @apply bg-dark-bg;
+  border: none;
+}
+
+.navbar-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: none;
+}
+
+.navbar-dropdown-scroll:hover,
+.navbar-dropdown-scroll:focus-within {
+  scrollbar-color: theme("colors.dark.bg4") theme("colors.dark.bg");
+}
+
+.navbar-dropdown-scroll:hover::-webkit-scrollbar-thumb,
+.navbar-dropdown-scroll:focus-within::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-dark-fg4;
+  border: none;
+}
