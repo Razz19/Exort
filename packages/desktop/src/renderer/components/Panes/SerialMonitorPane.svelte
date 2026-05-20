@@ -2,6 +2,7 @@
   import { Download, ChartLine, ClockFading, Plug, Send, Trash2, Tv } from "lucide-svelte";
   import { onMount } from "svelte";
   import SerialPlotterView from "../SerialPlotterView.svelte";
+  import SelectDropdown from "../SelectDropdown.svelte";
   import {
     appStateStore,
     upsertWorkspaceState,
@@ -31,6 +32,10 @@
     300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400,
     250000, 500000, 1000000, 2000000,
   ];
+  const BAUD_DROPDOWN_OPTIONS = BAUD_OPTIONS.map((option) => ({
+    value: String(option),
+    label: String(option),
+  }));
 
   let { selectedPort = "", activeWorkspaceRoot = null } = $props<{
     selectedPort: string;
@@ -363,10 +368,8 @@
     void sendToSerial();
   }
 
-  function onBaudRateChange(event: Event): void {
-    const target = event.currentTarget as HTMLSelectElement | null;
-    if (!target) return;
-    const nextBaudRate = Number(target.value);
+  function onBaudRateChange(nextValue: string): void {
+    const nextBaudRate = Number(nextValue);
     if (!Number.isFinite(nextBaudRate) || nextBaudRate <= 0) return;
     baudRate = nextBaudRate;
     if (!activeWorkspaceRoot) return;
@@ -475,18 +478,16 @@
 
     <div class="ml-auto flex min-w-0 items-center gap-2">
       <div class="flex items-center gap-2">
-        <!-- <span class="text-xs text-dark-fg3">Baud</span> -->
-        <select
-          class="input-field h-8 rounded-md py-1 text-sm"
-          value={baudRate}
-          onchange={onBaudRateChange}
-          disabled={isConnected || isBusy}
-          aria-label="Select serial baud rate"
-        >
-          {#each BAUD_OPTIONS as option (option)}
-            <option value={option}>{option}</option>
-          {/each}
-        </select>
+        <div class="w-28 min-w-0">
+          <SelectDropdown
+            options={BAUD_DROPDOWN_OPTIONS}
+            value={String(baudRate)}
+            onChange={onBaudRateChange}
+            ariaLabel="Select serial baud rate"
+            placeholder="Baud rate"
+            disabled={isConnected || isBusy}
+          />
+        </div>
       </div>
 
       <button
