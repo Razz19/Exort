@@ -49,15 +49,34 @@
   let isUser = $derived(message.role === "user");
   let isAssistant = $derived(message.role === "assistant");
   let createdAtLabel = $derived(formatChatTime(message.createdAt));
+  const HIDDEN_TOOL_NAMES = new Set(["search", "glob", "grep"]);
+
+  function parseHiddenToolName(step: AgentStep): string | null {
+    if (step.kind !== "tool") return null;
+    const raw = step.toolName?.trim().toLowerCase();
+    if (!raw) return null;
+    if (HIDDEN_TOOL_NAMES.has(raw)) return raw;
+
+    const parts = raw.split(/[.:/]/g);
+    const suffix = parts[parts.length - 1];
+    if (suffix && HIDDEN_TOOL_NAMES.has(suffix)) return suffix;
+    return null;
+  }
+
+  function shouldHideToolStep(step: AgentStep): boolean {
+    return parseHiddenToolName(step) !== null;
+  }
+
   let activitySteps = $derived(
     (message.steps ?? []).filter(
       (step) =>
-        step.kind === "tool" ||
-        step.kind === "task" ||
-        step.kind === "status" ||
-        step.kind === "error" ||
-        step.kind === "permission" ||
-        step.kind === "question",
+        !shouldHideToolStep(step) &&
+        (step.kind === "tool" ||
+          step.kind === "task" ||
+          step.kind === "status" ||
+          step.kind === "error" ||
+          step.kind === "permission" ||
+          step.kind === "question"),
     ),
   );
   let stepCount = $derived(activitySteps.length);
