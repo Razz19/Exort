@@ -3071,7 +3071,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     if (!usedPromptAsync && !streamFinished && !streamedAnyContent && finalResponseParts.length === 0) {
       const emptyMessage = usingExplicitProviderModel
         ? 'Agent returned no response. Check Settings > Providers and reconnect your selected provider.'
-        : 'Agent returned no response from ExortAI default model (big-pickle). Retry once, then restart the app if it persists.';
+        : 'Agent returned no response from the default provider model. Retry once, then restart the app if it persists.';
       handleEvent({ type: 'error', error: emptyMessage });
       log(`prompt:response:empty ${serializeForLog(emptyMessage, 1000)}`);
       streamFinished = true;

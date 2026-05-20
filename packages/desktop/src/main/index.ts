@@ -1266,31 +1266,54 @@ app.whenReady().then(() => {
       _event,
       payload: { path: string }
     ): Promise<{ ok: boolean; error?: string }> => {
+      console.log('[FileReveal] request received', {
+        rawPath: payload?.path ?? null
+      });
       try {
         const targetPath = asNonBlankString(payload?.path);
         if (!targetPath) {
+          console.warn('[FileReveal] rejected: missing path');
           return { ok: false, error: 'path is required.' };
         }
 
         const resolvedPath = path.resolve(targetPath);
+        console.log('[FileReveal] resolved path', { resolvedPath });
         const stat = await fs.stat(resolvedPath);
         if (stat.isDirectory()) {
+          console.log('[FileReveal] opening directory', { resolvedPath });
           const result = await shell.openPath(resolvedPath);
           if (result) {
+            console.warn('[FileReveal] shell.openPath returned error', {
+              resolvedPath,
+              error: result
+            });
             return { ok: false, error: result };
           }
+          console.log('[FileReveal] directory opened', { resolvedPath });
           return { ok: true };
         }
 
+        console.log('[FileReveal] revealing file in folder', { resolvedPath });
         shell.showItemInFolder(resolvedPath);
+        console.log('[FileReveal] reveal dispatched', { resolvedPath });
         return { ok: true };
       } catch (error) {
+        const formatted = formatWorkspaceFsError(
+          error,
+          'Failed to reveal item in file manager.'
+        );
+        console.error('[FileReveal] reveal failed', {
+          error:
+            error instanceof Error
+              ? {
+                  message: error.message,
+                  stack: error.stack ?? null
+                }
+              : String(error)
+        });
         return {
           ok: false,
-          error: formatWorkspaceFsError(
-            error,
-            'Failed to reveal item in file manager.'
-          )
+          error: formatted
         };
       }
     }

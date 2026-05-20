@@ -10,29 +10,35 @@ export function resolveSelectedModel(
   providers: OpenCodeModelCatalogProvider[],
   persisted: SelectedModelRef | null
 ): SelectedModelRef | null {
-  if (!persisted) {
+  const pickFirstAvailableModel = (): SelectedModelRef | null => {
+    for (const provider of providers) {
+      const firstModelId = provider.models[0]?.id;
+      if (!firstModelId) continue;
+      return {
+        providerId: provider.providerId,
+        modelId: firstModelId
+      };
+    }
+
     return null;
+  };
+
+  if (!persisted) {
+    return pickFirstAvailableModel();
   }
 
   const provider = providers.find((item) => item.providerId === persisted.providerId);
   if (!provider || provider.models.length === 0) {
-    return null;
+    return pickFirstAvailableModel();
   }
 
   if (provider.models.some((item) => item.id === persisted.modelId)) {
     return persisted;
   }
 
-  if (provider.defaultModelId && provider.models.some((item) => item.id === provider.defaultModelId)) {
-    return {
-      providerId: provider.providerId,
-      modelId: provider.defaultModelId
-    };
-  }
-
   const firstModelId = provider.models[0]?.id;
   if (!firstModelId) {
-    return null;
+    return pickFirstAvailableModel();
   }
 
   return {

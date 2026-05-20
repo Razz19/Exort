@@ -23,7 +23,6 @@
     OpenCodeModelCatalogProvider,
     SelectedModelRef,
   } from "../../lib/types";
-  import { OPEN_CODE_MODEL } from "../../../shared/openCodeModel.js";
   import { Bot, Brain } from "lucide-svelte";
 
   type ComposerAttachment = ChatAttachment & {
@@ -102,11 +101,7 @@
     findSelectedModel(catalogProviders, selectedModel),
   );
   let selectedModelLabel = $derived.by(() => {
-    return (
-      selectedModelEntry?.model.name ??
-      selectedModel?.modelId ??
-      OPEN_CODE_MODEL
-    );
+    return selectedModelEntry?.model.name ?? selectedModel?.modelId ?? "No model selected";
   });
   let selectedModelVariants = $derived.by(() => {
     return new Set(selectedModelEntry?.model.variants ?? []);

@@ -152,9 +152,35 @@ function markChatFileLinks(content: string): string {
 }
 
 export function filePathFromChatClickTarget(target: EventTarget | null): string | null {
-  if (!(target instanceof Element)) return null;
-  const anchor = target.closest("a[data-exort-file-path]");
-  return anchor?.getAttribute("data-exort-file-path")?.trim() ?? null;
+  const element =
+    target instanceof Element
+      ? target
+      : target instanceof Node
+        ? target.parentElement
+        : null;
+  if (!element) {
+    console.debug("[ChatFileLink] click target is not an element/node", {
+      targetType: typeof target,
+    });
+    return null;
+  }
+  const anchor = element.closest("a[data-exort-file-path]");
+  if (!anchor) {
+    const plainAnchor = element.closest("a");
+    if (plainAnchor) {
+      console.debug("[ChatFileLink] clicked anchor without data-exort-file-path", {
+        href: plainAnchor.getAttribute("href"),
+        text: plainAnchor.textContent?.trim() ?? "",
+      });
+    }
+    return null;
+  }
+  const taggedPath = anchor.getAttribute("data-exort-file-path")?.trim() ?? null;
+  console.debug("[ChatFileLink] extracted tagged path", {
+    taggedPath,
+    text: anchor.textContent?.trim() ?? "",
+  });
+  return taggedPath;
 }
 
 function isAbsolutePath(value: string): boolean {

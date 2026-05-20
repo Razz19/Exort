@@ -75,20 +75,143 @@
       onOpenFile?: (filePath: string) => Promise<void> | void;
     }>();
 
+  function normalizePathSeparators(value: string): string {
+    return value.replace(/\\/g, "/").replace(/\/+/g, "/");
+  }
+
+  function basename(value: string): string {
+    const normalized = normalizePathSeparators(value).replace(/\/+$/, "");
+    const segments = normalized.split("/");
+    return segments[segments.length - 1] ?? normalized;
+  }
+
+  function trimRelativePrefix(value: string): string {
+    return normalizePathSeparators(value)
+      .replace(/^\.\/+/, "")
+      .replace(/^\/+/, "");
+  }
+
+  async function resolveExistingEditorPath(
+    taggedPath: string,
+    workspaceRoot: string | null,
+  ): Promise<string | null> {
+    const directCandidate = resolveChatFilePath(taggedPath, workspaceRoot);
+    if (directCandidate) {
+      const direct = await window.electronAPI.readFileIfExists(directCandidate);
+      if (direct.ok && !direct.missing) {
+        console.debug("[ChatFileLink] direct path exists", { directCandidate });
+        return directCandidate;
+      }
+      console.debug("[ChatFileLink] direct path missing", {
+        directCandidate,
+        error: direct.error ?? null,
+      });
+    }
+
+    if (!workspaceRoot) return null;
+
+    const hint = trimRelativePrefix(taggedPath);
+    const hintBase = basename(hint);
+    if (!hintBase) return null;
+
+    const tree = await window.electronAPI.getWorkspaceTree(workspaceRoot);
+    const filePaths = tree.filter((entry) => !entry.isDirectory).map((entry) => entry.path);
+    const ranked = filePaths
+      .map((filePath) => {
+        const normalizedFile = normalizePathSeparators(filePath);
+        const normalizedHint = normalizePathSeparators(hint);
+        const fileBase = basename(normalizedFile);
+
+        let rank = Number.POSITIVE_INFINITY;
+        if (normalizedFile === normalizedHint) rank = 0;
+        else if (normalizedFile.endsWith(`/${normalizedHint}`)) rank = 1;
+        else if (fileBase === hintBase) rank = 2;
+
+        return { filePath, rank };
+      })
+      .filter((candidate) => Number.isFinite(candidate.rank))
+      .sort((a, b) => a.rank - b.rank || a.filePath.length - b.filePath.length);
+
+    const resolved = ranked[0]?.filePath ?? null;
+    console.debug("[ChatFileLink] workspace lookup", {
+      taggedPath,
+      hint,
+      hintBase,
+      candidates: ranked.slice(0, 3),
+      selected: resolved,
+    });
+    return resolved;
+  }
+
   async function handleChatPanelClick(event: MouseEvent): Promise<void> {
+    const targetElement =
+      event.target instanceof Element
+        ? event.target
+        : event.target instanceof Node
+          ? event.target.parentElement
+          : null;
+    const clickedAnchor = targetElement?.closest("a");
+
     const taggedPath = filePathFromChatClickTarget(event.target);
-    if (!taggedPath) return;
+    if (!taggedPath) {
+      if (clickedAnchor) {
+        console.debug("[ChatFileLink] click ignored: no tagged path", {
+          href: clickedAnchor.getAttribute("href"),
+          text: clickedAnchor.textContent?.trim() ?? "",
+          className: clickedAnchor.className,
+        });
+      }
+      return;
+    }
 
     event.preventDefault();
     event.stopPropagation();
 
     const resolvedPath = resolveChatFilePath(taggedPath, activeWorkspaceRoot);
-    if (!resolvedPath) return;
-    if (onOpenFile) {
-      await onOpenFile(resolvedPath);
+    if (!resolvedPath) {
+      console.warn("[ChatFileLink] could not resolve path", {
+        taggedPath,
+        activeWorkspaceRoot,
+      });
       return;
     }
-    await window.electronAPI.revealPathInFileManager({ path: resolvedPath });
+
+    console.debug("[ChatFileLink] attempting editor open", {
+      taggedPath,
+      resolvedPath,
+    });
+
+    try {
+      const existingPath = await resolveExistingEditorPath(
+        taggedPath,
+        activeWorkspaceRoot,
+      );
+      if (!existingPath) {
+        console.warn("[ChatFileLink] no existing file found to open", {
+          taggedPath,
+          resolvedPath,
+        });
+        return;
+      }
+
+      if (!onOpenFile) {
+        console.warn("[ChatFileLink] onOpenFile is not available", {
+          existingPath,
+        });
+        return;
+      }
+
+      await onOpenFile(existingPath);
+      console.debug("[ChatFileLink] opened in editor", {
+        existingPath,
+      });
+    } catch (error) {
+      console.error("[ChatFileLink] editor open failed", {
+        taggedPath,
+        resolvedPath,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 </script>
 
