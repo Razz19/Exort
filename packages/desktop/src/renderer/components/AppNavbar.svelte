@@ -3,9 +3,8 @@
   import { SvelteSet } from "svelte/reactivity";
   import {
     ChevronDown,
-    CircleCheckBig,
-    Hammer,
     Loader,
+    OctagonX,
     PanelLeftClose,
     PanelRightClose,
     RefreshCw,
@@ -14,7 +13,6 @@
     SquareCheckBig,
     Star,
     Upload,
-    X,
   } from "lucide-svelte";
   import type {
     ArduinoBoardDetails,
@@ -850,7 +848,8 @@
     <div class="flex min-h-[1rem] flex-1 items-start gap-2 pt-0.5 text-xs">
       <button
         type="button"
-        class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 [-webkit-app-region:no-drag]"
+        class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors
+         hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 [-webkit-app-region:no-drag]"
         onclick={() => void onToggleChatCollapsed()}
         aria-label={chatCollapsed ? "Expand chat" : "Collapse chat"}
         title={chatCollapsed ? "Expand chat" : "Collapse chat"}
@@ -887,7 +886,7 @@
           {#if portsDropdownOpen}
             <div class={`${dropdownPanelClass} w-full`}>
               <button
-                class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2`}
+                class={`${dropdownItemClass} mb-1 inline-flex items-center gap-2 bg-dark-bg`}
                 onclick={() => void refreshPorts()}
                 disabled={portsBusy || uploadBusy}
                 aria-label="Refresh connected serial ports"
@@ -917,9 +916,9 @@
                     aria-label={`Select ${port.label}`}
                   >
                     <span class="block truncate">{port.label}</span>
-                    <span class="block truncate text-xs text-dark-fg4">
+                    <!-- <span class="block truncate text-xs text-dark-fg4">
                       {port.address}
-                    </span>
+                    </span> -->
                   </button>
                 {/each}
               {/if}
@@ -950,7 +949,7 @@
             <div
               class={`${dropdownPanelClass} flex w-full max-h-[28rem] flex-col overflow-hidden !p-0`}
             >
-              <div class="px-0 py-1">
+              <div class="px-0 py-0">
                 <div
                   class="input-field mx-0 flex h-8 items-center gap-2 rounded-md px-2 py-1"
                 >
@@ -1111,16 +1110,6 @@
             <div
               class={`${dropdownPanelClass} chat-timeline-scroll max-h-[28rem] w-[18rem] overflow-y-auto p-2`}
             >
-              <div class="mb-2 border-b border-dark-border pb-2">
-                <div class="flex items-center gap-2 text-sm text-dark-fg1">
-                  <Settings2 class="h-4 w-4 shrink-0" />
-                  <span class="truncate">Board settings</span>
-                </div>
-                <div class="mt-1 text-xs text-dark-fg4">
-                  {boardCurrentDetails?.boardName ?? selectedBoardLabel}
-                </div>
-              </div>
-
               {#if boardSettingsBusy && !boardCurrentDetails}
                 <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
                   Loading board settings...
@@ -1139,16 +1128,16 @@
                     {#each boardCurrentDetails.configOptions as option (option.id)}
                       <section>
                         <div
-                          class="mb-1 px-1 text-[12px] font-medium uppercase tracking-wide text-dark-fg4"
+                          class="mb-1 px-1 text-[12px] font-medium uppercase tracking-wide text-dark-fg"
                         >
                           {option.label}
                         </div>
-                        <div class="space-y-1">
+                        <div class="">
                           {#each option.values as value (value.id)}
                             <button
                               class={`w-full rounded-md px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
                                 isBoardOptionValueSelected(option.id, value.id)
-                                  ? "text-primary-300"
+                                  ? "text-primary-300 bg-dark-bg1"
                                   : "text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
                               }`}
                               onclick={() =>
@@ -1200,7 +1189,7 @@
           {#if uploadCancelBusy}
             <Loader class="h-5 w-5 animate-spin" />
           {:else}
-            <X class="h-5 w-5" />
+            <OctagonX class="h-5 w-5" />
           {/if}
         {:else}
           <Upload class="h-5 w-5" />

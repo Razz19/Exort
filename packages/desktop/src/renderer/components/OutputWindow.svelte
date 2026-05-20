@@ -161,24 +161,30 @@
         >
           {run.message ?? "Waiting for compile/upload output..."}
         </div> -->
-
+        <!-- 
         {#if run.command && run.command.length > 0}
           <div
             class="border-b border-dark-border px-3 py-1.5 font-mono text-[11px] text-dark-fg3"
           >
             {run.command.join(" ")}
           </div>
-        {/if}
+        {/if} -->
 
         <div
-          class="min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-xs bg-dark-bg"
+          class="allow-text-selection min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-xs bg-dark-bg cursor-text"
+          data-allow-text-selection="true"
+          style="-webkit-user-select: text; user-select: text;"
           bind:this={outputContainerEl}
         >
           {#if run.logs.length === 0}
             <div class="text-dark-fg3">Waiting for command output...</div>
           {:else}
             {#each run.logs as entry (entry.id)}
-              <div class="whitespace-pre-wrap break-words">
+              <div
+                class="allow-text-selection whitespace-pre-wrap break-words"
+                data-allow-text-selection="true"
+                style="-webkit-user-select: text; user-select: text;"
+              >
                 <span
                   class={entry.stream === "stderr"
                     ? "text-dark-red2"
