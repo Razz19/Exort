@@ -627,7 +627,7 @@
     {/if}
 
     <p
-      class="whitespace-pre-wrap rounded-2xl bg-dark-bg1 px-4 py-2 text-sm font-thin leading-1 text-dark-fg0"
+      class="max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl bg-dark-bg1 px-4 py-2 text-sm font-thin leading-1 text-dark-fg0"
     >
       {message.content}
     </p>
