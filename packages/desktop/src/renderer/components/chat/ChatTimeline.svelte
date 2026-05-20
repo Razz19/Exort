@@ -2,6 +2,9 @@
   import { ChevronDown } from "lucide-svelte";
   import type { AgentPermissionReply, ChatItem } from "../../lib/types";
   import SessionTurn from "./SessionTurn.svelte";
+  import HistoryLoading from "./HistoryLoading.svelte";
+
+  import emptyChatBackground from "../../../../resources/chat-bg.png";
 
   const AUTO_SCROLL_THRESHOLD_PX = 80;
 
@@ -11,6 +14,7 @@
     workspaceRoot = null,
     busy,
     sessionStatus,
+    historyLoading = false,
     onUndoChangedFiles,
     onPermissionReply,
     onQuestionReply,
@@ -21,6 +25,7 @@
     workspaceRoot?: string | null;
     busy: boolean;
     sessionStatus: "running" | "idle" | "error";
+    historyLoading?: boolean;
     onUndoChangedFiles?: (
       files: string[],
       messageId: string,
@@ -108,13 +113,30 @@
 <div class="relative min-h-0 flex-1">
   <div
     class="chat-timeline-scroll h-full space-y-3 overflow-y-auto p-4"
-    data-allow-text-selection="true"
+    data-allow-text-selection="false"
     bind:this={scrollEl}
     onscroll={updatePinnedState}
   >
     {#if visibleMessages.length === 0}
-      <div class="card p-4 text-sm text-dark-fg3">
-        Start by asking Agent to inspect your workspace.
+      <div
+        class="flex min-h-full w-full items-center select-none justify-center py-8"
+      >
+        <div class="flex flex-col items-center justify-center">
+          <div class="flex h-52 w-52 items-center justify-center mt-40">
+            <img
+              src={emptyChatBackground}
+              alt=""
+              aria-hidden="true"
+              class="pointer-events-none h-full w-full object-contain select-none opacity-20"
+            />
+          </div>
+          <p class="opacity-30 text-dark-fg3">Start a new chat</p>
+          <div class="flex h-12 items-center justify-center">
+            {#if historyLoading}
+              <HistoryLoading compact={true} />
+            {/if}
+          </div>
+        </div>
       </div>
     {/if}
 

@@ -98,21 +98,18 @@
     {newSessionDisabled}
   />
   {#if activeWorkspaceRoot}
-    {#if historyLoading}
-      <HistoryLoading />
-    {:else}
-      <ChatTimeline
-        {messages}
-        {showReasoning}
-        workspaceRoot={activeWorkspaceRoot}
-        {busy}
-        {sessionStatus}
-        {onUndoChangedFiles}
-        {onPermissionReply}
-        {onQuestionReply}
-        {onQuestionReject}
-      />
-    {/if}
+    <ChatTimeline
+      {messages}
+      {showReasoning}
+      workspaceRoot={activeWorkspaceRoot}
+      {busy}
+      {sessionStatus}
+      {historyLoading}
+      {onUndoChangedFiles}
+      {onPermissionReply}
+      {onQuestionReply}
+      {onQuestionReject}
+    />
     <ChatComposer
       {activeWorkspaceRoot}
       {busy}

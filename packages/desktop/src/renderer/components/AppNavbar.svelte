@@ -183,9 +183,11 @@
     return "Compile and upload active sketch";
   });
   const primaryIconButtonClass =
-    "inline-flex h-8 w-8 items-center justify-center rounded-md border border-primary-500 bg-primary-600 text-dark-fg0 transition-colors duration-150 hover:bg-primary-700  disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-fg4 transition-colors duration-150 hover:text-dark-fg0 hover:bg-dark-fg4/20   disabled:cursor-not-allowed disabled:opacity-50";
+
+  // "inline-flex h-8 w-8 items-center justify-center rounded-md border border-dark-fg3 bg-dark-fg3 text-dark-bgS transition-colors duration-150 hover:bg-dark-fg1  disabled:cursor-not-allowed disabled:opacity-50";
   const cancelIconButtonClass =
-    "inline-flex h-8 w-8 items-center justify-center rounded-md border border-dark-red bg-dark-bg text-dark-red transition-colors duration-150 hover:border-dark-red hover:text-dark-red  disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-red transition-colors duration-150 hover:text-dark-fg0 hover:bg-dark-fg4/20  disabled:cursor-not-allowed disabled:opacity-50";
   const dropdownTriggerClass =
     "input-field inline-flex h-8 w-full items-center justify-between gap-2 rounded-md py-2 text-left text-dark-fg focus:ring-0 [-webkit-app-region:no-drag]";
   const dropdownPanelClass =
