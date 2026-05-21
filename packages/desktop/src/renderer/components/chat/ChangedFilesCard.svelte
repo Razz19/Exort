@@ -166,9 +166,14 @@
                   >
                     {#each file.lines
                       .slice(0, visible)
-                      .filter((line) => !line.text
-                            .trimStart()
-                            .startsWith("@@")) as line, lineIndex (`${key}:${lineIndex}`)}
+                      .filter((line) => {
+                        const text = line.text.trimStart();
+                        return (
+                          !text.startsWith("@@") &&
+                          !text.startsWith("+++") &&
+                          !text.startsWith("---")
+                        );
+                      }) as line, lineIndex (`${key}:${lineIndex}`)}
                       <div class={lineClass(line.kind)}>{line.text}</div>
                     {/each}
                   </div>
