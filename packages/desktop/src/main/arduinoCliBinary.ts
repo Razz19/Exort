@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
-export const EXORT_MANAGED_ARDUINO_CLI_VERSION = '1.4.1';
+export const EXORT_MANAGED_ARDUINO_CLI_VERSION = '1.5.0';
 export const EXORT_MANAGED_ARDUINO_CLI_RELEASE_TAG = `v${EXORT_MANAGED_ARDUINO_CLI_VERSION}`;
 export const EXORT_ARDUINO_CLI_BINARY_ENV = 'EXORT_ARDUINO_CLI_BINARY';
 

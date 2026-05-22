@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import { chmod, copyFile, mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -17,6 +19,7 @@ type ReleaseAssetEntry = {
   archiveName: string;
   archiveType: ArchiveType;
   binaryName: string;
+  sha256: string;
 };
 
 type ReleaseAssetMap = Record<string, ReleaseAssetEntry>;
@@ -37,6 +40,11 @@ export type ArduinoCliReleaseInstallResult = {
   archiveType?: ArchiveType;
   binaryPath?: string;
   message?: string;
+};
+
+export type ArduinoCliReleaseAssetDetails = ReleaseAssetEntry & {
+  targetKey: string;
+  url: string;
 };
 
 export type ArduinoCliPlatformInput = {
@@ -72,6 +80,22 @@ export function resolveArduinoCliReleaseTargetKey(input: ArduinoCliPlatformInput
 
 function buildReleaseUrl(asset: ReleaseAssetEntry): string {
   return `${ARDUINO_CLI_RELEASE_BASE_URL}/${EXORT_MANAGED_ARDUINO_CLI_RELEASE_TAG}/${asset.archiveName}`;
+}
+
+export function resolveArduinoCliReleaseAssetForCurrentTarget(
+  input: ArduinoCliPlatformInput = process
+): ArduinoCliReleaseAssetDetails {
+  const targetKey = resolveArduinoCliReleaseTargetKey(input);
+  const asset = RELEASE_ASSETS[targetKey];
+  if (!asset) {
+    throw new Error(`No Arduino CLI release asset is configured for target ${targetKey}.`);
+  }
+
+  return {
+    ...asset,
+    targetKey,
+    url: buildReleaseUrl(asset)
+  };
 }
 
 function trimOutput(value: string): string {
@@ -186,6 +210,27 @@ async function downloadFile(url: string, destinationPath: string): Promise<void>
   await writeFile(destinationPath, data);
 }
 
+function normalizeSha256(value: string): string {
+  return value.trim().toLowerCase().replace(/^sha256:/, '');
+}
+
+async function computeFileSha256(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = createReadStream(filePath);
+
+    stream.on('data', (chunk) => {
+      hash.update(chunk);
+    });
+    stream.on('end', () => {
+      resolve(hash.digest('hex'));
+    });
+    stream.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
 function buildArchivePath(tempRoot: string, archiveType: ArchiveType): string {
   return path.join(tempRoot, archiveType === 'zip' ? 'arduino-cli-release.zip' : 'arduino-cli-release.tar.gz');
 }
@@ -287,22 +332,24 @@ export async function installArduinoCliFromReleaseAssets(params?: {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'exort-arduino-cli-release-'));
 
   try {
-    const targetKey = resolveArduinoCliReleaseTargetKey();
-    const asset = RELEASE_ASSETS[targetKey];
-    if (!asset) {
-      return {
-        ok: false,
-        message: `No Arduino CLI release asset is configured for target ${targetKey}.`
-      };
-    }
-
-    const assetUrl = buildReleaseUrl(asset);
+    const assetDetails = resolveArduinoCliReleaseAssetForCurrentTarget();
+    const { targetKey, url: assetUrl } = assetDetails;
+    const asset: ReleaseAssetEntry = assetDetails;
     log?.(`arduino:binary:provision:release:target key=${targetKey}`);
     log?.(`arduino:binary:provision:start source=managed method=release-url target=${managed.binaryPath}`);
     log?.(`arduino:binary:provision:release:download url=${assetUrl}`);
 
     const archivePath = buildArchivePath(tempRoot, asset.archiveType);
     await downloadFile(assetUrl, archivePath);
+    log?.(`arduino:binary:provision:release:verify archive=${archivePath}`);
+    const expectedSha256 = normalizeSha256(asset.sha256);
+    const actualSha256 = normalizeSha256(await computeFileSha256(archivePath));
+    if (expectedSha256 !== actualSha256) {
+      throw new Error(
+        `Checksum verification failed for ${asset.archiveName}. Expected sha256 ${expectedSha256} but got ${actualSha256}.`
+      );
+    }
+    log?.(`arduino:binary:provision:release:verify:ok archive=${archivePath}`);
 
     const extractDir = path.join(tempRoot, 'extract');
     log?.(`arduino:binary:provision:release:extract archive=${archivePath}`);

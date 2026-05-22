@@ -6,10 +6,13 @@ import {
 } from '../agent/openCodeBinary.js';
 import { ensureOpenCodeIsolation, getOpenCodeIsolationStatus } from '../agent/openCodeIsolation.js';
 import {
+  EXORT_MANAGED_ARDUINO_CLI_RELEASE_TAG,
+  EXORT_MANAGED_ARDUINO_CLI_VERSION,
   ensureManagedArduinoCliBinary,
   getManagedArduinoCliStatus,
   type ArduinoCliBinarySource
 } from '../arduinoCliBinary.js';
+import { resolveArduinoCliReleaseAssetForCurrentTarget } from './arduinoCliReleaseInstaller.js';
 import { installOpenCodeFromReleaseAssets, resolveOpenCodeReleaseAssetForCurrentTarget } from './opencodeReleaseInstaller.js';
 
 export type RequirementId = 'opencode' | 'arduino-cli';
@@ -74,7 +77,7 @@ function getManualCommands(id: RequirementId, os: OSKind): string[] {
 
   if (os === 'windows') {
     return [
-      'Download arduino-cli_1.4.1_Windows_64bit.zip from https://github.com/arduino/arduino-cli/releases/tag/v1.4.1',
+      `Download arduino-cli_${EXORT_MANAGED_ARDUINO_CLI_VERSION}_Windows_64bit.zip from https://github.com/arduino/arduino-cli/releases/tag/${EXORT_MANAGED_ARDUINO_CLI_RELEASE_TAG}`,
       'winget install --id ArduinoSA.CLI -e --accept-package-agreements --accept-source-agreements',
       'choco install arduino-cli',
       'scoop install arduino-cli'
@@ -82,7 +85,7 @@ function getManualCommands(id: RequirementId, os: OSKind): string[] {
   }
 
   return [
-    'Download the Arduino CLI 1.4.1 archive for your platform from https://github.com/arduino/arduino-cli/releases/tag/v1.4.1',
+    `Download the Arduino CLI ${EXORT_MANAGED_ARDUINO_CLI_VERSION} archive for your platform from https://github.com/arduino/arduino-cli/releases/tag/${EXORT_MANAGED_ARDUINO_CLI_RELEASE_TAG}`,
     'brew install arduino-cli',
     'curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh'
   ];
@@ -133,7 +136,10 @@ async function getVersion(id: RequirementId): Promise<{
   }
 
   if (id === 'arduino-cli') {
-    const status = await getManagedArduinoCliStatus();
+    const [status, releaseAsset] = await Promise.all([
+      getManagedArduinoCliStatus(),
+      Promise.resolve().then(() => resolveArduinoCliReleaseAssetForCurrentTarget()).catch(() => null)
+    ]);
     return {
       ok: status.installed,
       version: status.version,
@@ -141,7 +147,10 @@ async function getVersion(id: RequirementId): Promise<{
       provisionDiagnostics: status.provisionDiagnostics,
       binaryPath: status.binaryPath,
       source: status.source,
-      managedVersion: status.managedVersion
+      managedVersion: status.managedVersion,
+      releaseTargetKey: releaseAsset?.targetKey,
+      releaseArchiveName: releaseAsset?.archiveName,
+      releaseArchiveSha256: releaseAsset?.sha256
     };
   }
 

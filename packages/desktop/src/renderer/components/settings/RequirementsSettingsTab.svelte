@@ -150,6 +150,15 @@
         `Diagnostics: ${normalizeStatusText(status.provisionDiagnostics)}`,
       );
     }
+    if (status.releaseTargetKey) {
+      lines.push(`Release target: ${status.releaseTargetKey}`);
+    }
+    if (status.releaseArchiveName) {
+      lines.push(`Release archive: ${status.releaseArchiveName}`);
+    }
+    if (status.releaseArchiveSha256) {
+      lines.push(`Release SHA-256: ${status.releaseArchiveSha256}`);
+    }
     if (id !== "opencode") return lines;
 
     lines.push(
@@ -169,15 +178,6 @@
     }
     if (status.runtimeStateRoot) {
       lines.push(`State root: ${status.runtimeStateRoot}`);
-    }
-    if (status.releaseTargetKey) {
-      lines.push(`Release target: ${status.releaseTargetKey}`);
-    }
-    if (status.releaseArchiveName) {
-      lines.push(`Release archive: ${status.releaseArchiveName}`);
-    }
-    if (status.releaseArchiveSha256) {
-      lines.push(`Release SHA-256: ${status.releaseArchiveSha256}`);
     }
     return lines;
   }

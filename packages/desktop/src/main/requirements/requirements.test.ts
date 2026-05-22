@@ -33,12 +33,16 @@ test('Arduino CLI release target selection rejects unsupported platforms clearly
 });
 
 test('Arduino CLI release assets exist for all supported targets', () => {
-  const assets = arduinoCliReleaseAssets as Record<string, { archiveName?: string; archiveType?: string; binaryName?: string }>;
+  const assets = arduinoCliReleaseAssets as Record<
+    string,
+    { archiveName?: string; archiveType?: string; binaryName?: string; sha256?: string }
+  >;
 
   for (const key of ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64', 'windows-x64']) {
     assert.equal(typeof assets[key]?.archiveName, 'string');
     assert.match(assets[key]?.archiveName ?? '', new RegExp(`arduino-cli_${EXORT_MANAGED_ARDUINO_CLI_VERSION}`));
     assert.equal(assets[key]?.binaryName, 'arduino-cli');
+    assert.match(assets[key]?.sha256 ?? '', /^[a-f0-9]{64}$/);
   }
 });
 
