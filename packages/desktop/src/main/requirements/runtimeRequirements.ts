@@ -1,4 +1,5 @@
 import {
+  EXORT_MANAGED_OPENCODE_RELEASE_TAG,
   ensureManagedOpenCodeBinary,
   getManagedOpenCodeStatus,
   type OpenCodeBinarySource
@@ -9,7 +10,7 @@ import {
   getManagedArduinoCliStatus,
   type ArduinoCliBinarySource
 } from '../arduinoCliBinary.js';
-import { installOpenCodeFromReleaseAssets } from './opencodeReleaseInstaller.js';
+import { installOpenCodeFromReleaseAssets, resolveOpenCodeReleaseAssetForCurrentTarget } from './opencodeReleaseInstaller.js';
 
 export type RequirementId = 'opencode' | 'arduino-cli';
 
@@ -28,6 +29,9 @@ export type RequirementStatus = {
   runtimeConfigRoot?: string;
   runtimeStateRoot?: string;
   isolated?: boolean;
+  releaseTargetKey?: string;
+  releaseArchiveName?: string;
+  releaseArchiveSha256?: string;
 };
 
 export type RequirementInstallResult = {
@@ -63,7 +67,7 @@ function getRequirementLabel(id: RequirementId): string {
 function getManualCommands(id: RequirementId, os: OSKind): string[] {
   if (id === 'opencode') {
     return [
-      'Download the pinned OpenCode release from https://github.com/anomalyco/opencode/releases/tag/v1.2.10',
+      `Download the pinned OpenCode release from https://github.com/anomalyco/opencode/releases/tag/${EXORT_MANAGED_OPENCODE_RELEASE_TAG}`,
       'Set EXORT_OPENCODE_BINARY to the downloaded binary and EXORT_ALLOW_SYSTEM_OPENCODE=1 before launching Exort'
     ];
   }
@@ -96,9 +100,16 @@ async function getVersion(id: RequirementId): Promise<{
   runtimeConfigRoot?: string;
   runtimeStateRoot?: string;
   isolated?: boolean;
+  releaseTargetKey?: string;
+  releaseArchiveName?: string;
+  releaseArchiveSha256?: string;
 }> {
   if (id === 'opencode') {
-    const [status, isolation] = await Promise.all([getManagedOpenCodeStatus(), getOpenCodeIsolationStatus()]);
+    const [status, isolation, releaseAsset] = await Promise.all([
+      getManagedOpenCodeStatus(),
+      getOpenCodeIsolationStatus(),
+      resolveOpenCodeReleaseAssetForCurrentTarget().catch(() => null)
+    ]);
     const details = [status.details, isolation.isolated ? undefined : `Runtime isolation unavailable: ${isolation.details ?? 'Unknown error'}`]
       .filter((item): item is string => Boolean(item && item.trim().length > 0))
       .join(' ');
@@ -114,7 +125,10 @@ async function getVersion(id: RequirementId): Promise<{
       runtimeDataRoot: isolation.runtimeDataRoot,
       runtimeConfigRoot: isolation.runtimeConfigRoot,
       runtimeStateRoot: isolation.runtimeStateRoot,
-      isolated: isolation.isolated
+      isolated: isolation.isolated,
+      releaseTargetKey: releaseAsset?.targetKey,
+      releaseArchiveName: releaseAsset?.archiveName,
+      releaseArchiveSha256: releaseAsset?.sha256
     };
   }
 
@@ -154,7 +168,10 @@ export async function getRequirementsStatus(): Promise<RequirementStatus[]> {
       runtimeDataRoot: result.runtimeDataRoot,
       runtimeConfigRoot: result.runtimeConfigRoot,
       runtimeStateRoot: result.runtimeStateRoot,
-      isolated: result.isolated
+      isolated: result.isolated,
+      releaseTargetKey: result.releaseTargetKey,
+      releaseArchiveName: result.releaseArchiveName,
+      releaseArchiveSha256: result.releaseArchiveSha256
     });
   }
 

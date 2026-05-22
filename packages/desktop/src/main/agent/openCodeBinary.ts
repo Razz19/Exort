@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
-export const EXORT_MANAGED_OPENCODE_VERSION = '1.2.10';
+export const EXORT_MANAGED_OPENCODE_VERSION = '1.15.7';
 export const EXORT_MANAGED_OPENCODE_RELEASE_TAG = `v${EXORT_MANAGED_OPENCODE_VERSION}`;
 
 const INSTALL_TIMEOUT_MS = 8 * 60 * 1000;

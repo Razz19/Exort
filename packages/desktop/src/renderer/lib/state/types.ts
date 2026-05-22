@@ -39,6 +39,9 @@ export type RuntimeRequirementStatus = {
   runtimeConfigRoot?: string;
   runtimeStateRoot?: string;
   isolated?: boolean;
+  releaseTargetKey?: string;
+  releaseArchiveName?: string;
+  releaseArchiveSha256?: string;
 };
 
 export type AppState = {

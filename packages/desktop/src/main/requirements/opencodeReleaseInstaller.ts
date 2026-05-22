@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createReadStream, existsSync } from 'node:fs';
 import { chmod, copyFile, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -16,6 +17,7 @@ type ReleaseAssetEntry = {
   archiveName: string;
   archiveType: ArchiveType;
   binaryName: string;
+  sha256: string;
 };
 
 type ReleaseAssetMap = Record<string, ReleaseAssetEntry>;
@@ -38,6 +40,11 @@ export type OpenCodeReleaseInstallResult = {
   message?: string;
 };
 
+export type OpenCodeReleaseAssetDetails = ReleaseAssetEntry & {
+  targetKey: string;
+  url: string;
+};
+
 const RELEASE_ASSETS: ReleaseAssetMap = releaseAssets as ReleaseAssetMap;
 const COMMAND_TIMEOUT_MS = 60_000;
 const DOWNLOAD_TIMEOUT_MS = 8 * 60 * 1000;
@@ -45,6 +52,20 @@ const OPENCODE_RELEASE_BASE_URL = 'https://github.com/anomalyco/opencode/release
 
 function buildReleaseUrl(asset: ReleaseAssetEntry): string {
   return `${OPENCODE_RELEASE_BASE_URL}/${EXORT_MANAGED_OPENCODE_RELEASE_TAG}/${asset.archiveName}`;
+}
+
+export async function resolveOpenCodeReleaseAssetForCurrentTarget(): Promise<OpenCodeReleaseAssetDetails> {
+  const targetKey = await resolveTargetKey();
+  const asset = RELEASE_ASSETS[targetKey];
+  if (!asset) {
+    throw new Error(`No release asset is configured for target ${targetKey}.`);
+  }
+
+  return {
+    ...asset,
+    targetKey,
+    url: buildReleaseUrl(asset)
+  };
 }
 
 function trimOutput(value: string): string {
@@ -251,6 +272,27 @@ function buildArchivePath(tempRoot: string, archiveType: ArchiveType): string {
   return path.join(tempRoot, 'opencode-release.tar.gz');
 }
 
+function normalizeSha256(value: string): string {
+  return value.trim().toLowerCase().replace(/^sha256:/, '');
+}
+
+async function computeFileSha256(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = createReadStream(filePath);
+
+    stream.on('data', (chunk) => {
+      hash.update(chunk);
+    });
+    stream.on('end', () => {
+      resolve(hash.digest('hex'));
+    });
+    stream.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
 async function downloadFile(url: string, destinationPath: string): Promise<void> {
   const controller = new AbortController();
   const response = await withTimeout(
@@ -377,22 +419,24 @@ export async function installOpenCodeFromReleaseAssets(params?: {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'exort-opencode-release-'));
 
   try {
-    const targetKey = await resolveTargetKey();
-    const asset = RELEASE_ASSETS[targetKey];
-    if (!asset) {
-      return {
-        ok: false,
-        message: `No release asset is configured for target ${targetKey}.`
-      };
-    }
-
-    const assetUrl = buildReleaseUrl(asset);
+    const assetDetails = await resolveOpenCodeReleaseAssetForCurrentTarget();
+    const { targetKey, url: assetUrl } = assetDetails;
+    const asset: ReleaseAssetEntry = assetDetails;
     log?.(`runtime:binary:provision:release:target key=${targetKey}`);
     log?.(`runtime:binary:provision:start source=managed method=release-url target=${managed.binaryPath}`);
     log?.(`runtime:binary:provision:release:download url=${assetUrl}`);
 
     const archivePath = buildArchivePath(tempRoot, asset.archiveType);
     await downloadFile(assetUrl, archivePath);
+    log?.(`runtime:binary:provision:release:verify archive=${archivePath}`);
+    const expectedSha256 = normalizeSha256(asset.sha256);
+    const actualSha256 = normalizeSha256(await computeFileSha256(archivePath));
+    if (expectedSha256 !== actualSha256) {
+      throw new Error(
+        `Checksum verification failed for ${asset.archiveName}. Expected sha256 ${expectedSha256} but got ${actualSha256}.`
+      );
+    }
+    log?.(`runtime:binary:provision:release:verify:ok archive=${archivePath}`);
 
     const extractDir = path.join(tempRoot, 'extract');
     log?.(`runtime:binary:provision:release:extract archive=${archivePath}`);

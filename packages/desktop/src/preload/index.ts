@@ -302,6 +302,9 @@ type RequirementStatus = {
   runtimeConfigRoot?: string;
   runtimeStateRoot?: string;
   isolated?: boolean;
+  releaseTargetKey?: string;
+  releaseArchiveName?: string;
+  releaseArchiveSha256?: string;
 };
 type RequirementInstallResult = {
   id: RequirementId;

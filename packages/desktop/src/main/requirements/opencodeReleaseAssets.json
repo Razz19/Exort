@@ -2,56 +2,67 @@
   "darwin-arm64": {
     "archiveName": "opencode-darwin-arm64.zip",
     "archiveType": "zip",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "335307ee87d3dac84986bf8f0bd4273a43c35fcb9b124556c2f4fad4a510e3a4"
   },
   "darwin-x64": {
     "archiveName": "opencode-darwin-x64.zip",
     "archiveType": "zip",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "12e4a562bcd6e691eb846ceedc5c1f7bad88f047df3775be21aaf979bda959d7"
   },
   "darwin-x64-baseline": {
     "archiveName": "opencode-darwin-x64-baseline.zip",
     "archiveType": "zip",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "a925abd6a72afbd6f35010184a6b93caa1f46c14faac739a5b3543b41244d72b"
   },
   "windows-x64": {
     "archiveName": "opencode-windows-x64.zip",
     "archiveType": "zip",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "8ac96b52692a3daeb84a20295cc7ed43aa3c698078e802926a47aef83748eab2"
   },
   "windows-x64-baseline": {
     "archiveName": "opencode-windows-x64-baseline.zip",
     "archiveType": "zip",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "887f2ffb6c607b03e993e6537dfe1c6119fa0712320b58813ca4ad5cee73e27b"
   },
   "linux-x64": {
     "archiveName": "opencode-linux-x64.tar.gz",
     "archiveType": "tar.gz",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "6f7f95f13917b9aab8421dbb7e121abf2fecfecdccd16fd5b497f522f454f928"
   },
   "linux-x64-baseline": {
     "archiveName": "opencode-linux-x64-baseline.tar.gz",
     "archiveType": "tar.gz",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "62ddaa36242f4944eb66aa122cbb7a8b6375f5196a36214d4938e4b7eb1d8cd1"
   },
   "linux-x64-musl": {
     "archiveName": "opencode-linux-x64-musl.tar.gz",
     "archiveType": "tar.gz",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "7966e6f2fcde07b8390d5759d5d76097f6c3b8e2a1c8a479977b51e5f601abdb"
   },
   "linux-x64-baseline-musl": {
     "archiveName": "opencode-linux-x64-baseline-musl.tar.gz",
     "archiveType": "tar.gz",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "8757664d6915291bee4eec19a4387cef0b84bac13a6d3e923da9a176e44812b1"
   },
   "linux-arm64": {
     "archiveName": "opencode-linux-arm64.tar.gz",
     "archiveType": "tar.gz",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "d2ca40f11b0eb1648cbffaf9850c122a83062b21ada18e5db29558c6bfafee0f"
   },
   "linux-arm64-musl": {
     "archiveName": "opencode-linux-arm64-musl.tar.gz",
     "archiveType": "tar.gz",
-    "binaryName": "opencode"
+    "binaryName": "opencode",
+    "sha256": "aae45df3aa8981875059045d87028926e7313d99998ac65598f1f95732d171f3"
   }
 }

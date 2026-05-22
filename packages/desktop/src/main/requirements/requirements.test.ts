@@ -11,6 +11,7 @@ import {
 } from '../arduinoCliBinary.js';
 import { resolveArduinoCliReleaseTargetKey } from './arduinoCliReleaseInstaller.js';
 import arduinoCliReleaseAssets from './arduinoCliReleaseAssets.json';
+import opencodeReleaseAssets from './opencodeReleaseAssets.json';
 
 test('Arduino CLI release target selection covers supported desktop platforms', () => {
   assert.equal(resolveArduinoCliReleaseTargetKey({ platform: 'darwin', arch: 'arm64' }), 'darwin-arm64');
@@ -38,6 +39,31 @@ test('Arduino CLI release assets exist for all supported targets', () => {
     assert.equal(typeof assets[key]?.archiveName, 'string');
     assert.match(assets[key]?.archiveName ?? '', new RegExp(`arduino-cli_${EXORT_MANAGED_ARDUINO_CLI_VERSION}`));
     assert.equal(assets[key]?.binaryName, 'arduino-cli');
+  }
+});
+
+test('OpenCode release assets include sha256 for all supported targets', () => {
+  const assets = opencodeReleaseAssets as Record<
+    string,
+    { archiveName?: string; archiveType?: string; binaryName?: string; sha256?: string }
+  >;
+
+  for (const key of [
+    'darwin-arm64',
+    'darwin-x64',
+    'darwin-x64-baseline',
+    'windows-x64',
+    'windows-x64-baseline',
+    'linux-x64',
+    'linux-x64-baseline',
+    'linux-x64-musl',
+    'linux-x64-baseline-musl',
+    'linux-arm64',
+    'linux-arm64-musl'
+  ]) {
+    assert.equal(typeof assets[key]?.archiveName, 'string');
+    assert.equal(assets[key]?.binaryName, 'opencode');
+    assert.match(assets[key]?.sha256 ?? '', /^[a-f0-9]{64}$/);
   }
 });
 
