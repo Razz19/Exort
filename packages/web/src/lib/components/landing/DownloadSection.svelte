@@ -17,34 +17,34 @@
   const downloads = [
     {
       label: "macOS Apple Silicon",
-      file: "Exort-0.1.0-mac-arm64.dmg",
-      href: "https://github.com/Razz19/Exort/releases/download/v0.1.2/Exort-0.1.2-mac-arm64.dmg",
+      file: "Exort-0.2.0-mac-arm64.dmg",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.2.0/Exort-0.2.0-mac-arm64.dmg",
       icon: appleIcon,
       color: "#98971a",
     },
     {
       label: "macOS Intel",
-      file: "Exort-0.1.0-mac-x64.dmg",
-      href: "https://github.com/Razz19/Exort/releases/download/v0.1.2/Exort-0.1.2-mac-x64.dmg",
+      file: "Exort-0.2.0-mac-x64.dmg",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.2.0/Exort-0.2.0-mac-x64.dmg",
       icon: appleIcon,
       color: "#458588",
     },
     {
       label: "Windows",
-      file: "Exort-0.1.0-win-x64.exe",
-      href: "https://github.com/Razz19/Exort/releases/download/v0.1.2/Exort-0.1.2-win-x64.exe",
+      file: "Exort-0.2.0-win-x64.exe",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.2.0/Exort-0.2.0-win-x64.exe",
       icon: windowsIcon,
       color: "#fe8019",
     },
     {
       label: "Linux",
-      file: "Exort-0.1.0-linux-x86_64.AppImage",
-      href: "https://github.com/Razz19/Exort/releases/download/v0.1.2/Exort-0.1.2-linux-x86_64.AppImage",
+      file: "Exort-0.2.0-linux-x86_64.AppImage",
+      href: "https://github.com/Razz19/Exort/releases/download/v0.2.0/Exort-0.2.0-linux-x86_64.AppImage",
       icon: linuxIcon,
       color: "#d79921",
     },
   ];
-  const downloadVersion = "0.1.2";
+  const downloadVersion = "0.2.0";
   const macSecurityRepairCommand =
     "xattr -d com.apple.quarantine /Applications/Exort.app";
   let activeInstallationGuidePlatform = $state("macOS");
