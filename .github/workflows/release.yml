@@ -99,7 +99,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-windows-x64
-          path: packages/desktop/release/*.exe
+          path: |
+            packages/desktop/release/*.exe
+            packages/desktop/release/*.blockmap
+            packages/desktop/release/latest*.yml
           if-no-files-found: error
 
   build-macos-arm64:
@@ -224,8 +227,19 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-macos-arm64
-          path: packages/desktop/release/*-mac-arm64.dmg
+          path: |
+            packages/desktop/release/*-mac-arm64.dmg
+            packages/desktop/release/*-mac-arm64.zip
+            packages/desktop/release/*-mac-arm64.zip.blockmap
           if-no-files-found: error
+
+      - name: Upload per-arch latest-mac.yml for merge
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-yml-mac-arm64
+          path: packages/desktop/release/latest-mac.yml
+          if-no-files-found: error
+          retention-days: 1
 
   build-macos-x64:
     needs: validate
@@ -349,8 +363,19 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-macos-x64
-          path: packages/desktop/release/*-mac-x64.dmg
+          path: |
+            packages/desktop/release/*-mac-x64.dmg
+            packages/desktop/release/*-mac-x64.zip
+            packages/desktop/release/*-mac-x64.zip.blockmap
           if-no-files-found: error
+
+      - name: Upload per-arch latest-mac.yml for merge
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-yml-mac-x64
+          path: packages/desktop/release/latest-mac.yml
+          if-no-files-found: error
+          retention-days: 1
 
   build-linux:
     needs: validate
@@ -389,7 +414,38 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exort-linux-x64
-          path: packages/desktop/release/*.AppImage
+          path: |
+            packages/desktop/release/*.AppImage
+            packages/desktop/release/*.AppImage.zsync
+            packages/desktop/release/latest-linux*.yml
+          if-no-files-found: error
+
+  combine-macos-manifest:
+    needs:
+      - validate
+      - build-macos-arm64
+      - build-macos-x64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download per-arch latest-mac.yml
+        uses: actions/download-artifact@v4
+        with:
+          pattern: latest-yml-mac-*
+          path: mac-manifests
+
+      - name: Merge latest-mac.yml
+        env:
+          LATEST_YML_DIR: ${{ github.workspace }}/mac-manifests
+        run: node packages/desktop/scripts/finalize-latest-mac-yml.mjs
+
+      - name: Upload merged latest-mac.yml artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exort-macos-latest-manifest
+          path: ${{ runner.temp }}/latest-mac.yml
           if-no-files-found: error
 
   release:
@@ -399,6 +455,7 @@ jobs:
       - build-macos-arm64
       - build-macos-x64
       - build-linux
+      - combine-macos-manifest
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
@@ -412,7 +469,12 @@ jobs:
         shell: bash
         run: |
           cd release-assets
-          sha256sum *.exe *.dmg *.AppImage > SHA256SUMS.txt
+          rm -f SHA256SUMS.txt
+          touch SHA256SUMS.txt
+          shopt -s nullglob
+          for file in *.exe *.dmg *.zip *.AppImage; do
+            sha256sum "$file" >> SHA256SUMS.txt
+          done
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
@@ -426,5 +488,9 @@ jobs:
           files: |
             release-assets/*.exe
             release-assets/*.dmg
+            release-assets/*.zip
             release-assets/*.AppImage
+            release-assets/*.blockmap
+            release-assets/*.zsync
+            release-assets/latest*.yml
             release-assets/SHA256SUMS.txt

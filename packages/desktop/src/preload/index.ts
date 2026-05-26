@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
+import type { UpdaterEvent, UpdaterState } from '../shared/updater.js';
 
 type OpenCodeTokenBreakdown = {
   input?: number;
@@ -134,6 +135,7 @@ type AppMenuCommandId =
 type AppMenuCommandEnvelope = {
   command: AppMenuCommandId;
 };
+type UpdaterEventEnvelope = UpdaterEvent;
 type AgentHistoryMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -431,6 +433,10 @@ const appMenuCommandListeners = new Map<
   (payload: AppMenuCommandEnvelope) => void,
   (event: IpcRendererEvent, payload: AppMenuCommandEnvelope) => void
 >();
+const updaterEventListeners = new Map<
+  (payload: UpdaterEventEnvelope) => void,
+  (event: IpcRendererEvent, payload: UpdaterEventEnvelope) => void
+>();
 const electronAPI = {
   getStateBootstrap: () => ipcRenderer.invoke('state:get-bootstrap') as Promise<StateBootstrap>,
   setAppState: (appState: AppState) => ipcRenderer.invoke('state:set-app', appState) as Promise<{ ok: boolean }>,
@@ -505,6 +511,29 @@ const electronAPI = {
     ) as Promise<{
       ok: boolean;
       shouldAutoBootstrap: boolean;
+      error?: string;
+    }>,
+  getUpdaterState: () =>
+    ipcRenderer.invoke('updater:get-state') as Promise<{
+      ok: boolean;
+      state?: UpdaterState;
+      error?: string;
+    }>,
+  checkForUpdates: () =>
+    ipcRenderer.invoke('updater:check') as Promise<{
+      ok: boolean;
+      state?: UpdaterState;
+      error?: string;
+    }>,
+  downloadUpdate: () =>
+    ipcRenderer.invoke('updater:download') as Promise<{
+      ok: boolean;
+      state?: UpdaterState;
+      error?: string;
+    }>,
+  installUpdateAndRestart: () =>
+    ipcRenderer.invoke('updater:install') as Promise<{
+      ok: boolean;
       error?: string;
     }>,
   installRequirement: (payload: { id: RequirementId }) =>
@@ -808,6 +837,21 @@ const electronAPI = {
 
     ipcRenderer.off('app:menu-command', wrapped);
     appMenuCommandListeners.delete(listener);
+  },
+  onUpdaterEvent: (listener: (payload: UpdaterEventEnvelope) => void) => {
+    const wrapped = (_event: IpcRendererEvent, payload: UpdaterEventEnvelope) => {
+      listener(payload);
+    };
+
+    updaterEventListeners.set(listener, wrapped);
+    ipcRenderer.on('updater:event', wrapped);
+  },
+  offUpdaterEvent: (listener: (payload: UpdaterEventEnvelope) => void) => {
+    const wrapped = updaterEventListeners.get(listener);
+    if (!wrapped) return;
+
+    ipcRenderer.off('updater:event', wrapped);
+    updaterEventListeners.delete(listener);
   }
 };
 

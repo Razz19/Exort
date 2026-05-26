@@ -389,3 +389,4 @@ export type {
   WorkspaceManagerState,
   WorkspaceState
 } from './state/types';
+export type { UpdaterEvent, UpdaterState, UpdaterStatus } from '../../shared/updater';

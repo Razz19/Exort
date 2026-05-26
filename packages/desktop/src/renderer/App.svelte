@@ -77,12 +77,18 @@
     OpenCodeTokenUsage,
     PaneTab,
     SelectedModelRef,
+    UpdaterEvent,
+    UpdaterState,
     Workspace,
     WorkspaceManagerState,
     WorkspaceState,
   } from "./lib/types";
 
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
+  const UPDATE_AVAILABLE_TOAST_ID = "update-available";
+  const UPDATE_DOWNLOADING_TOAST_ID = "update-downloading";
+  const UPDATE_DOWNLOADED_TOAST_ID = "update-downloaded";
+  const UPDATE_ERROR_TOAST_ID = "update-error";
   type SettingsTab = "general" | "requirements" | "providers" | "boards";
   type WorkspaceContextLimits = {
     contextLimit: number;
@@ -186,6 +192,9 @@
   let appMenuCommandListener:
     | ((payload: { command: HotkeyCommandId }) => void)
     | null = null;
+  let updaterEventListener: ((payload: UpdaterEvent) => void) | null = null;
+  let updaterState = $state<UpdaterState | null>(null);
+  let startupUpdateCheckRequested = false;
 
   let activeWorkspace = $derived(
     workspaces.find((item) => item.id === activeWorkspaceId) ?? null,
@@ -727,6 +736,10 @@
       });
     };
     window.electronAPI.onAppMenuCommand(appMenuCommandListener);
+    updaterEventListener = (payload: UpdaterEvent) => {
+      applyUpdaterState(payload.state);
+    };
+    window.electronAPI.onUpdaterEvent(updaterEventListener);
 
     void initializeApp();
   });
@@ -750,6 +763,10 @@
     if (appMenuCommandListener) {
       window.electronAPI.offAppMenuCommand(appMenuCommandListener);
       appMenuCommandListener = null;
+    }
+    if (updaterEventListener) {
+      window.electronAPI.offUpdaterEvent(updaterEventListener);
+      updaterEventListener = null;
     }
     void window.electronAPI.unwatchAllFiles();
     void window.electronAPI.unwatchAllWorkspaceTrees();
@@ -853,6 +870,7 @@
 
     await initializeSavedWorkspaces();
     void checkRequirementsForStartupToast();
+    void checkForUpdatesOnStartup();
     if (statusText === "Local mode") {
       statusText = "Local mode ready";
     }
@@ -1036,6 +1054,126 @@
     const action = toastActions.get(id);
     dismissToast(id);
     action?.();
+  }
+
+  function formatUpdaterVersion(state: UpdaterState): string {
+    const version = state.availableVersion ?? state.currentVersion;
+    return version.startsWith("v") ? version : `v${version}`;
+  }
+
+  async function requestUpdateDownload(): Promise<void> {
+    const response = await window.electronAPI.downloadUpdate();
+    if (response.ok) return;
+
+    showToast({
+      id: UPDATE_ERROR_TOAST_ID,
+      title: "Update download failed",
+      message: response.error ?? "Could not download update.",
+      variant: "error",
+    });
+  }
+
+  async function requestUpdateInstall(): Promise<void> {
+    const response = await window.electronAPI.installUpdateAndRestart();
+    if (response.ok) return;
+
+    showToast({
+      id: UPDATE_ERROR_TOAST_ID,
+      title: "Update install failed",
+      message: response.error ?? "Could not install update.",
+      variant: "error",
+    });
+  }
+
+  function applyUpdaterState(nextState: UpdaterState): void {
+    updaterState = nextState;
+
+    if (!nextState.enabled) {
+      dismissToast(UPDATE_AVAILABLE_TOAST_ID);
+      dismissToast(UPDATE_DOWNLOADING_TOAST_ID);
+      dismissToast(UPDATE_DOWNLOADED_TOAST_ID);
+      return;
+    }
+
+    if (nextState.status === "available") {
+      dismissToast(UPDATE_DOWNLOADING_TOAST_ID);
+      dismissToast(UPDATE_DOWNLOADED_TOAST_ID);
+      showToast({
+        id: UPDATE_AVAILABLE_TOAST_ID,
+        title: "Update available",
+        message: `${formatUpdaterVersion(nextState)} is ready to download.`,
+        variant: "info",
+        actionLabel: "Download",
+        onAction: () => {
+          void requestUpdateDownload();
+        },
+      });
+      return;
+    }
+
+    if (nextState.status === "downloading") {
+      const progressText =
+        typeof nextState.progressPercent === "number"
+          ? `Downloading update… ${Math.round(nextState.progressPercent)}%`
+          : "Downloading update…";
+      dismissToast(UPDATE_AVAILABLE_TOAST_ID);
+      showToast({
+        id: UPDATE_DOWNLOADING_TOAST_ID,
+        title: "Downloading update",
+        message: progressText,
+        variant: "info",
+      });
+      return;
+    }
+
+    if (nextState.status === "downloaded") {
+      dismissToast(UPDATE_AVAILABLE_TOAST_ID);
+      dismissToast(UPDATE_DOWNLOADING_TOAST_ID);
+      showToast({
+        id: UPDATE_DOWNLOADED_TOAST_ID,
+        title: "Update ready",
+        message: `${formatUpdaterVersion(nextState)} downloaded. Restart to install.`,
+        variant: "info",
+        actionLabel: "Install",
+        onAction: () => {
+          void requestUpdateInstall();
+        },
+      });
+      return;
+    }
+
+    if (nextState.status === "up-to-date") {
+      dismissToast(UPDATE_AVAILABLE_TOAST_ID);
+      dismissToast(UPDATE_DOWNLOADING_TOAST_ID);
+      dismissToast(UPDATE_DOWNLOADED_TOAST_ID);
+      dismissToast(UPDATE_ERROR_TOAST_ID);
+      return;
+    }
+
+    if (nextState.status === "error") {
+      dismissToast(UPDATE_DOWNLOADING_TOAST_ID);
+      showToast({
+        id: UPDATE_ERROR_TOAST_ID,
+        title: "Updater error",
+        message: nextState.error ?? nextState.message ?? "Update check failed.",
+        variant: "error",
+      });
+    }
+  }
+
+  async function checkForUpdatesOnStartup(): Promise<void> {
+    if (startupUpdateCheckRequested) return;
+    startupUpdateCheckRequested = true;
+
+    const stateResult = await window.electronAPI.getUpdaterState();
+    if (stateResult.ok && stateResult.state) {
+      applyUpdaterState(stateResult.state);
+    }
+
+    const checkResult = await window.electronAPI.checkForUpdates();
+    if (checkResult.ok && checkResult.state) {
+      applyUpdaterState(checkResult.state);
+    }
   }
 
   function formatMissingRequirementNames(

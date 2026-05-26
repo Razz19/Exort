@@ -12,6 +12,10 @@ files:
   - package.json
   - resources/**/*
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+publish:
+  provider: github
+  owner: Razz19
+  repo: Exort
 mac:
   category: public.app-category.developer-tools
   icon: resources/icon.icns

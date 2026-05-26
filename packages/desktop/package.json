@@ -28,6 +28,7 @@
     "@opencode-ai/plugin": "1.2.10",
     "@opencode-ai/sdk": "^1.1.51",
     "dompurify": "^3.3.1",
+    "electron-updater": "^6.6.8",
     "electron-store": "^10.1.0",
     "lucide-svelte": "^0.563.0",
     "marked": "^17.0.1",

@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+import type { UpdaterEvent, UpdaterState } from '../../shared/updater';
+
 export {};
 
 type OpenCodeTokenBreakdown = {
@@ -471,6 +473,25 @@ declare global {
         shouldAutoBootstrap: boolean;
         error?: string;
       }>;
+      getUpdaterState: () => Promise<{
+        ok: boolean;
+        state?: UpdaterState;
+        error?: string;
+      }>;
+      checkForUpdates: () => Promise<{
+        ok: boolean;
+        state?: UpdaterState;
+        error?: string;
+      }>;
+      downloadUpdate: () => Promise<{
+        ok: boolean;
+        state?: UpdaterState;
+        error?: string;
+      }>;
+      installUpdateAndRestart: () => Promise<{
+        ok: boolean;
+        error?: string;
+      }>;
       installRequirement: (payload: {
         id: RequirementId;
       }) => Promise<{ ok: boolean; result?: RequirementInstallResult; error?: string }>;
@@ -639,6 +660,8 @@ declare global {
       offWorkspaceTreeChanged: (listener: (payload: WorkspaceTreeChangedEnvelope) => void) => void;
       onAppMenuCommand: (listener: (payload: AppMenuCommandEnvelope) => void) => void;
       offAppMenuCommand: (listener: (payload: AppMenuCommandEnvelope) => void) => void;
+      onUpdaterEvent: (listener: (payload: UpdaterEvent) => void) => void;
+      offUpdaterEvent: (listener: (payload: UpdaterEvent) => void) => void;
     };
   }
 }

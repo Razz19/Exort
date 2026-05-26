@@ -51,6 +51,7 @@ import {
 } from './requirements/runtimeRequirements.js';
 import { registerProvidersBridge } from './providers/providerBridge.js';
 import { SerialMonitorHandler, type SerialMonitorEvent } from './serial/serialHandler.js';
+import { registerUpdaterBridge } from './updater/appUpdater.js';
 
 type WorkspaceInfo = {
   id: string;
@@ -956,6 +957,10 @@ app.whenReady().then(() => {
   });
   registerProvidersBridge({
     onOpenCodeLog: logOpenCodeLine
+  });
+  registerUpdaterBridge({
+    owner: 'Razz19',
+    repo: 'Exort'
   });
 
   ipcMain.handle('workspace:open-folder', async () => {

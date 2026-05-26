@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import SelectDropdown from "../SelectDropdown.svelte";
   import { appStateStore, patchAppState } from "../../lib/state/stateManager";
+  import type { UpdaterEvent, UpdaterState } from "../../lib/types";
   import type {
     ChatFontSizePreset,
     MonacoThemeId,
@@ -33,6 +34,9 @@
   let showReasoning = $state(false);
   let serialBufferSize = $state<number>(SERIAL_BUFFER_SIZE_DEFAULT);
   let serialBufferInput = $state<string>(String(SERIAL_BUFFER_SIZE_DEFAULT));
+  let updaterState = $state<UpdaterState | null>(null);
+  let updaterRequestInFlight = $state(false);
+  let updaterStatusMessage = $state<string>("Not checked yet.");
 
   onMount(() => {
     const unsubscribe = appStateStore.subscribe((state) => {
@@ -42,9 +46,23 @@
       serialBufferSize = sanitizeSerialBufferSize(state.serial.bufferSize);
       serialBufferInput = String(serialBufferSize);
     });
+    const updaterListener = (payload: UpdaterEvent) => {
+      updaterState = payload.state;
+      updaterStatusMessage = formatUpdaterStatus(payload.state);
+      updaterRequestInFlight = payload.state.status === "checking";
+    };
+
+    window.electronAPI.onUpdaterEvent(updaterListener);
+    void window.electronAPI.getUpdaterState().then((response) => {
+      if (!response.ok || !response.state) return;
+      updaterState = response.state;
+      updaterStatusMessage = formatUpdaterStatus(response.state);
+      updaterRequestInFlight = response.state.status === "checking";
+    });
 
     return () => {
       unsubscribe();
+      window.electronAPI.offUpdaterEvent(updaterListener);
     };
   });
 
@@ -118,6 +136,50 @@
         showReasoning: nextValue,
       },
     });
+  }
+
+  function formatUpdaterStatus(state: UpdaterState): string {
+    if (!state.enabled) {
+      return state.message ?? "Updater disabled for this build.";
+    }
+    if (state.status === "checking") return "Checking for updates...";
+    if (state.status === "available") {
+      return `Update available: ${state.availableVersion ?? "new version"}.`;
+    }
+    if (state.status === "downloading") {
+      if (typeof state.progressPercent === "number") {
+        return `Downloading update (${Math.round(state.progressPercent)}%).`;
+      }
+      return "Downloading update...";
+    }
+    if (state.status === "downloaded") {
+      return "Update downloaded. Install from the toast action.";
+    }
+    if (state.status === "up-to-date") return "You are on the latest version.";
+    if (state.status === "error") return state.error ?? "Updater error.";
+    return state.message ?? "Idle.";
+  }
+
+  function formatCheckedAt(state: UpdaterState | null): string {
+    if (!state?.checkedAt) return "Never";
+    const date = new Date(state.checkedAt);
+    if (Number.isNaN(date.getTime())) return "Unknown";
+    return date.toLocaleString();
+  }
+
+  async function onCheckForUpdates(): Promise<void> {
+    updaterRequestInFlight = true;
+    const response = await window.electronAPI.checkForUpdates();
+    updaterRequestInFlight = false;
+
+    if (!response.ok) {
+      updaterStatusMessage = response.error ?? "Failed to check for updates.";
+      return;
+    }
+    if (response.state) {
+      updaterState = response.state;
+      updaterStatusMessage = formatUpdaterStatus(response.state);
+    }
   }
 </script>
 
@@ -225,6 +287,36 @@
       />
       <span class="text-[11px] text-dark-fg4">
         Range {SERIAL_BUFFER_SIZE_MIN}-{SERIAL_BUFFER_SIZE_MAX}, default {SERIAL_BUFFER_SIZE_DEFAULT}
+      </span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-dark-fg3">
+      Updates
+    </h2>
+    <div class="h-px flex-1 bg-dark-border"></div>
+  </div>
+
+  <div class="rounded-lg border border-dark-border bg-dark-bg px-3 py-3">
+    <h3 class="text-sm font-semibold text-dark-fg">Desktop Updates</h3>
+    <p class="mt-1 text-xs text-dark-fg4">{updaterStatusMessage}</p>
+
+    <div class="mt-3 flex flex-wrap items-center gap-3">
+      <button
+        class="inline-flex h-8 items-center justify-center rounded-md border border-dark-border
+         bg-dark-bgS px-2.5 py-0 text-xs font-medium text-dark-fg2 transition-colors hover:border-dark-gray
+          hover:bg-dark-bg1 hover:text-dark-fg disabled:cursor-not-allowed disabled:opacity-60"
+        onclick={() => void onCheckForUpdates()}
+        disabled={updaterRequestInFlight || !updaterState?.enabled}
+      >
+        Check for updates
+      </button>
+      <span class="text-xs text-dark-fg3">
+        Current version: {updaterState?.currentVersion ?? "unknown"}
+      </span>
+      <span class="text-xs text-dark-fg3">
+        Last checked: {formatCheckedAt(updaterState)}
       </span>
     </div>
   </div>
