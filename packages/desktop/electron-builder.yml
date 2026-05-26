@@ -22,6 +22,8 @@ mac:
   target:
     - dmg
     - zip
+dmg:
+  sign: true
 win:
   icon: resources/icon.ico
   target:

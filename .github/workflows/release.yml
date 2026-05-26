@@ -167,6 +167,9 @@ jobs:
           fi
 
           DMG_PATH="${DMGS[0]}"
+          echo "Verifying signed DMG: $DMG_PATH"
+          codesign --verify --verbose=2 "$DMG_PATH"
+
           echo "Submitting DMG for notarization: $DMG_PATH"
           xcrun notarytool submit "$DMG_PATH" \
             --key "$APPLE_API_KEY" \
@@ -177,6 +180,7 @@ jobs:
           echo "Stapling DMG: $DMG_PATH"
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
+          spctl --assess --type open --context context:primary-signature --verbose "$DMG_PATH"
 
           MOUNT_POINT="$(mktemp -d /tmp/exort-dmg-arm64-XXXXXX)"
           hdiutil attach "$DMG_PATH" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
@@ -188,6 +192,29 @@ jobs:
             ls -la "$MOUNT_POINT" >&2
             exit 1
           fi
+
+          CS_INFO="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1)"
+          echo "$CS_INFO"
+          if ! echo "$CS_INFO" | grep -q "flags=.*runtime"; then
+            echo "Expected hardened runtime flag on $APP_PATH." >&2
+            exit 1
+          fi
+
+          ENTITLEMENTS="$(codesign -d --entitlements :- "$APP_PATH" 2>&1 || true)"
+          if echo "$ENTITLEMENTS" | grep -q "com.apple.security.app-sandbox"; then
+            echo "Unexpected app sandbox entitlement on $APP_PATH." >&2
+            exit 1
+          fi
+          for KEY in \
+            com.apple.security.cs.allow-jit \
+            com.apple.security.cs.allow-unsigned-executable-memory \
+            com.apple.security.cs.disable-library-validation
+          do
+            if ! echo "$ENTITLEMENTS" | grep -q "<key>$KEY</key>"; then
+              echo "Expected entitlement missing on $APP_PATH: $KEY" >&2
+              exit 1
+            fi
+          done
 
           xcrun stapler validate "$APP_PATH"
           spctl --assess --type execute --verbose "$APP_PATH"
@@ -265,6 +292,9 @@ jobs:
           fi
 
           DMG_PATH="${DMGS[0]}"
+          echo "Verifying signed DMG: $DMG_PATH"
+          codesign --verify --verbose=2 "$DMG_PATH"
+
           echo "Submitting DMG for notarization: $DMG_PATH"
           xcrun notarytool submit "$DMG_PATH" \
             --key "$APPLE_API_KEY" \
@@ -275,6 +305,7 @@ jobs:
           echo "Stapling DMG: $DMG_PATH"
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
+          spctl --assess --type open --context context:primary-signature --verbose "$DMG_PATH"
 
           MOUNT_POINT="$(mktemp -d /tmp/exort-dmg-x64-XXXXXX)"
           hdiutil attach "$DMG_PATH" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
@@ -286,6 +317,29 @@ jobs:
             ls -la "$MOUNT_POINT" >&2
             exit 1
           fi
+
+          CS_INFO="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1)"
+          echo "$CS_INFO"
+          if ! echo "$CS_INFO" | grep -q "flags=.*runtime"; then
+            echo "Expected hardened runtime flag on $APP_PATH." >&2
+            exit 1
+          fi
+
+          ENTITLEMENTS="$(codesign -d --entitlements :- "$APP_PATH" 2>&1 || true)"
+          if echo "$ENTITLEMENTS" | grep -q "com.apple.security.app-sandbox"; then
+            echo "Unexpected app sandbox entitlement on $APP_PATH." >&2
+            exit 1
+          fi
+          for KEY in \
+            com.apple.security.cs.allow-jit \
+            com.apple.security.cs.allow-unsigned-executable-memory \
+            com.apple.security.cs.disable-library-validation
+          do
+            if ! echo "$ENTITLEMENTS" | grep -q "<key>$KEY</key>"; then
+              echo "Expected entitlement missing on $APP_PATH: $KEY" >&2
+              exit 1
+            fi
+          done
 
           xcrun stapler validate "$APP_PATH"
           spctl --assess --type execute --verbose "$APP_PATH"
