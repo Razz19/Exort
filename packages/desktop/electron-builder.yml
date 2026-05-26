@@ -12,7 +12,6 @@ files:
   - package.json
   - resources/**/*
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
-forceCodeSigning: true
 mac:
   category: public.app-category.developer-tools
   icon: resources/icon.icns

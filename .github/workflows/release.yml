@@ -149,6 +149,39 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: npm --workspace @exort/desktop run package
 
+      - name: Staple and validate macOS DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          DMGS=(packages/desktop/release/*-mac-arm64.dmg)
+          if [[ ${#DMGS[@]} -ne 1 ]]; then
+            echo "Expected exactly one arm64 DMG, found ${#DMGS[@]}." >&2
+            ls -la packages/desktop/release >&2
+            exit 1
+          fi
+
+          DMG_PATH="${DMGS[0]}"
+          echo "Stapling DMG: $DMG_PATH"
+          xcrun stapler staple "$DMG_PATH"
+          xcrun stapler validate "$DMG_PATH"
+
+          MOUNT_POINT="$(mktemp -d /tmp/exort-dmg-arm64-XXXXXX)"
+          hdiutil attach "$DMG_PATH" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
+          trap 'hdiutil detach "$MOUNT_POINT" -quiet || true; rmdir "$MOUNT_POINT" || true' EXIT
+
+          APP_PATH="$MOUNT_POINT/Exort.app"
+          if [[ ! -d "$APP_PATH" ]]; then
+            echo "Expected app bundle not found at $APP_PATH" >&2
+            ls -la "$MOUNT_POINT" >&2
+            exit 1
+          fi
+
+          xcrun stapler validate "$APP_PATH"
+          spctl --assess --type execute --verbose "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -202,6 +235,39 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: npm --workspace @exort/desktop run package
+
+      - name: Staple and validate macOS DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          DMGS=(packages/desktop/release/*-mac-x64.dmg)
+          if [[ ${#DMGS[@]} -ne 1 ]]; then
+            echo "Expected exactly one x64 DMG, found ${#DMGS[@]}." >&2
+            ls -la packages/desktop/release >&2
+            exit 1
+          fi
+
+          DMG_PATH="${DMGS[0]}"
+          echo "Stapling DMG: $DMG_PATH"
+          xcrun stapler staple "$DMG_PATH"
+          xcrun stapler validate "$DMG_PATH"
+
+          MOUNT_POINT="$(mktemp -d /tmp/exort-dmg-x64-XXXXXX)"
+          hdiutil attach "$DMG_PATH" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
+          trap 'hdiutil detach "$MOUNT_POINT" -quiet || true; rmdir "$MOUNT_POINT" || true' EXIT
+
+          APP_PATH="$MOUNT_POINT/Exort.app"
+          if [[ ! -d "$APP_PATH" ]]; then
+            echo "Expected app bundle not found at $APP_PATH" >&2
+            ls -la "$MOUNT_POINT" >&2
+            exit 1
+          fi
+
+          xcrun stapler validate "$APP_PATH"
+          spctl --assess --type execute --verbose "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
