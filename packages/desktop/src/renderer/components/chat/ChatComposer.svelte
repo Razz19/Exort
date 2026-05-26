@@ -348,13 +348,13 @@
 
     prompt = "";
     clearSentAttachments();
+    if (hasPendingOutputErrorContext) {
+      onDismissPendingOutputErrorContext();
+    }
     queueMicrotask(() => resizeInput());
 
     void Promise.resolve(onSend(payload))
       .then(() => {
-        if (hasPendingOutputErrorContext) {
-          onDismissPendingOutputErrorContext();
-        }
         // Cleared optimistically on submit.
       })
       .catch((error) => {

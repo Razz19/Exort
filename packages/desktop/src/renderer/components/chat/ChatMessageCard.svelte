@@ -913,26 +913,51 @@
     return fileUrl(attachment.path);
   }
 
-  function stripOutputErrorContextBlock(content: string): string {
+  function splitOutputErrorContext(content: string): {
+    body: string;
+    context: string | null;
+  } {
     const trimmed = content.trimEnd();
     const inlineMarker = "\n\nOutput error context:\n";
     const inlineIndex = trimmed.lastIndexOf(inlineMarker);
     if (inlineIndex >= 0) {
-      return trimmed.slice(0, inlineIndex).trimEnd();
+      return {
+        body: trimmed.slice(0, inlineIndex).trimEnd(),
+        context: trimmed
+          .slice(inlineIndex + inlineMarker.length)
+          .trim(),
+      };
     }
 
     const blockOnlyMarker = "Output error context:\n";
     if (trimmed.startsWith(blockOnlyMarker)) {
-      return "";
+      return {
+        body: "",
+        context: trimmed.slice(blockOnlyMarker.length).trim(),
+      };
     }
 
-    return content;
+    return { body: content, context: null };
   }
+
+  let parsedOutputErrorContext = $derived.by(() =>
+    isUser ? splitOutputErrorContext(message.content) : { body: message.content, context: null },
+  );
+  let outputErrorPreviewText = $derived.by(() => {
+    const attachmentContext = outputErrorAttachments[0]?.url?.trim();
+    if (attachmentContext) return attachmentContext;
+    return parsedOutputErrorContext.context;
+  });
+  let shouldShowOutputErrorBadge = $derived.by(() => {
+    if (!isUser) return false;
+    if (outputErrorAttachments.length > 0) return true;
+    return (parsedOutputErrorContext.context?.length ?? 0) > 0;
+  });
 
   let userVisibleContent = $derived.by(() => {
     if (!isUser) return message.content;
-    if (outputErrorAttachments.length === 0) return message.content;
-    return stripOutputErrorContextBlock(message.content);
+    if (!shouldShowOutputErrorBadge) return message.content;
+    return parsedOutputErrorContext.body;
   });
   function summarizeOutputError(text: string): string {
     return text.replace(/\s+/g, " ").trim();
@@ -1046,31 +1071,29 @@
   {/if}
 
   {#if isUser}
-    {#if outputErrorAttachments.length > 0}
+    {#if shouldShowOutputErrorBadge}
       <div class="flex max-w-full flex-wrap justify-end gap-2 self-end">
-        {#each outputErrorAttachments as attachment (attachment.id)}
-          <div
-            class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border bg-dark-bg px-2 py-1 text-xs text-dark-fg2"
-            title={attachment.url ?? "Output error context attached"}
+        <div
+          class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border bg-dark-bg px-2 py-1 text-xs text-dark-fg2"
+          title={outputErrorPreviewText ?? "Output error context attached"}
+        >
+          <span
+            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg text-dark-fg3"
+            aria-hidden="true"
           >
-            <span
-              class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg text-dark-fg3"
-              aria-hidden="true"
-            >
-              <MessageCircleWarning class="h-4 w-4" />
+            <MessageCircleWarning class="h-4 w-4" />
+          </span>
+          <span class="min-w-0">
+            <span class="block max-w-44 truncate text-dark-fg1">
+              {outputErrorAttachments[0]?.name ?? "Compile Error"}
             </span>
-            <span class="min-w-0">
-              <span class="block max-w-44 truncate text-dark-fg1">
-                {attachment.name}
-              </span>
-              <span class="block max-w-40 truncate text-[10px] text-dark-fg4">
-                {summarizeOutputError(
-                  attachment.url ?? "Output error context attached",
-                )}
-              </span>
+            <span class="block max-w-40 truncate text-[10px] text-dark-fg4">
+              {summarizeOutputError(
+                outputErrorPreviewText ?? "Output error context attached",
+              )}
             </span>
-          </div>
-        {/each}
+          </span>
+        </div>
       </div>
     {/if}
 
