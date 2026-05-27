@@ -3,6 +3,7 @@
 
   import ChatPanel from "./components/ChatPanel.svelte";
   import AppNavbar from "./components/AppNavbar.svelte";
+  import InitWindowComponent from "./components/InitWindowComponent.svelte";
   import OutputWindow from "./components/OutputWindow.svelte";
   import PaneManager from "./components/Panes/PaneManager.svelte";
   import SettingsModal from "./components/settings/SettingsModal.svelte";
@@ -142,7 +143,7 @@
   let activeAgentRequestId = $state<string | null>(null);
   let sessionBusy = $state(false);
   let statusText = $state("Local mode");
-  let appLayoutHydrated = $state(false);
+  let appInitialized = $state(false);
   let workspacesBootstrapped = $state(false);
 
   let appStateSnapshot = $state<AppState>(createDefaultAppState());
@@ -875,11 +876,19 @@
     } catch (error) {
       statusText =
         error instanceof Error ? error.message : "Failed to load app state";
-    } finally {
-      appLayoutHydrated = true;
     }
 
-    await initializeSavedWorkspaces();
+    try {
+      await initializeSavedWorkspaces();
+    } catch (error) {
+      statusText =
+        error instanceof Error
+          ? error.message
+          : "Failed to initialize saved workspaces";
+    } finally {
+      appInitialized = true;
+    }
+
     void checkRequirementsForStartupToast();
     void checkForUpdatesOnStartup();
     if (statusText === "Local mode") {
@@ -3184,6 +3193,9 @@
   }
 </script>
 
+{#if !appInitialized}
+  <InitWindowComponent />
+{:else}
 <div class="flex h-screen flex-col bg-dark-bg text-gray-100">
   <AppNavbar
     userEmail={null}
@@ -3212,9 +3224,7 @@
 
   <div class="relative flex flex-1 overflow-hidden">
     <div
-      class={`flex flex-1 overflow-hidden ${draggingSplitter ? "select-none" : ""} ${
-        appLayoutHydrated ? "" : "pointer-events-none opacity-0"
-      }`}
+      class={`flex flex-1 overflow-hidden ${draggingSplitter ? "select-none" : ""}`}
       bind:this={outerSplitContainerEl}
     >
     <div
@@ -3334,34 +3344,6 @@
     </div>
     </div>
 
-    {#if !appLayoutHydrated}
-      <div
-        class="absolute inset-0 flex items-center justify-center p-4"
-        role="status"
-        aria-live="polite"
-        aria-label="Loading layout"
-      >
-        <div
-          class="inline-flex items-center gap-3 rounded-lg border border-dark-border bg-dark-bgS px-4 py-3 text-sm text-dark-fg2"
-        >
-          <span class="flex items-center gap-1.5" aria-hidden="true">
-            <span
-              class="h-2 w-2 rounded-full bg-dark-aqua animate-bounce"
-              style="animation-delay: 0ms;"
-            ></span>
-            <span
-              class="h-2 w-2 rounded-full bg-dark-aqua animate-bounce"
-              style="animation-delay: 120ms;"
-            ></span>
-            <span
-              class="h-2 w-2 rounded-full bg-dark-aqua animate-bounce"
-              style="animation-delay: 240ms;"
-            ></span>
-          </span>
-          <span>Loading layout...</span>
-        </div>
-      </div>
-    {/if}
   </div>
 
   <Toast
@@ -3381,3 +3363,4 @@
     />
   {/if}
 </div>
+{/if}
