@@ -11,7 +11,9 @@
 ### Free, open-source AI coding workspace for microcontrollers.
 
 Exort is an OpenCode-powered desktop app for embedded development. It provides a local workspace for writing microcontroller code, compiling and uploading projects, and monitoring live serial output on supported boards.
+
 <br>
+
 ![Exort application screenshot](assets/app.webp)
 > Start with the included free OpenCode models, or connect your own provider setup for models such as ChatGPT, and other OpenCode-compatible providers.
 
