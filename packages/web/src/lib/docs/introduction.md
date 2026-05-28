@@ -9,7 +9,7 @@ section: Intro
 
 <span style="text-decoration: underline; text-underline-offset: 3px; ">Exort</span> is a free, open-source AI coding workspace for embedded development.
 
-![Exort screenshot](/exort-screenshot.png)
+![Exort screenshot](/exort-screenshot.webp)
 
 It helps you build microcontroller projects faster by combining an AI coding agent, a desktop code workspace, Arduino CLI integration, board management, compile/upload tools, serial monitoring, and serial plotting in one app.
 

@@ -34,11 +34,11 @@
       href: "/roadmap",
       hoverClass: "hover:text-gruvbox-purple focus-visible:text-gruvbox-purple",
     },
-    {
-      label: "Docs",
-      href: "/docs",
-      hoverClass: "hover:text-gruvbox-yellow focus-visible:text-gruvbox-yellow",
-    },
+    // {
+    //   label: "Docs",
+    //   href: "/docs",
+    //   hoverClass: "hover:text-gruvbox-yellow focus-visible:text-gruvbox-yellow",
+    // },
   ];
 
   let isNavScrolled = false;
@@ -117,7 +117,11 @@
     class="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 md:px-6 lg:px-8"
   >
     <a href="/" class="flex items-center gap-3">
-      <img src="/exort-logo.png" alt="Exort" class="h-12 w-12 object-contain" />
+      <img
+        src="/exort-logo.webp"
+        alt="Exort"
+        class="h-12 w-12 object-contain"
+      />
       <span
         class="inline-block pt-2 font-heading text-[clamp(1.45rem,1.05rem+1vw,2rem)] font-extrabold leading-[0.96] tracking-[0.08em] text-gruvbox-fg0"
       >

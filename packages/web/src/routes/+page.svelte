@@ -88,7 +88,6 @@
   let heroActions: HTMLElement | null = null;
   let heroHighlightsWrap: HTMLElement | null = null;
   let heroScreenshotWrap: HTMLElement | null = null;
-  let heroScreenshot: HTMLVideoElement | null = null;
   let workflowSection: HTMLElement | null = null;
 
   let headlineLineEls: HTMLSpanElement[] = [];
@@ -98,20 +97,6 @@
   let mobileHeroHighlightFirst: HTMLParagraphElement | null = null;
   let mobileHeroHighlightSecond: HTMLParagraphElement | null = null;
   let gsapRef: Awaited<typeof import("gsap")>["gsap"] | null = null;
-  const defaultHeroVideoAspectRatio = 16 / 9;
-  let heroVideoAspectRatio = defaultHeroVideoAspectRatio;
-
-  const syncHeroVideoAspectRatio = () => {
-    if (!heroScreenshot) {
-      return;
-    }
-
-    const { videoWidth, videoHeight } = heroScreenshot;
-    if (videoWidth > 0 && videoHeight > 0) {
-      heroVideoAspectRatio = videoWidth / videoHeight;
-    }
-  };
-
   const ensureGsap = async () => {
     if (gsapRef) {
       return gsapRef;
@@ -512,7 +497,9 @@
                     class="flex w-full flex-nowrap items-center justify-center gap-x-1.5 opacity-30 sm:justify-start sm:gap-x-2"
                   >
                     {#each supportedBrands as brand}
-                      <div class="flex min-w-0 flex-1 items-center justify-center">
+                      <div
+                        class="flex min-w-0 flex-1 items-center justify-center"
+                      >
                         <img
                           src={brand.logo}
                           alt={brand.name}
@@ -538,28 +525,20 @@
               bind:this={heroScreenshotWrap}
               class="relative z-10 min-w-0 w-full lg:justify-self-end"
             >
-              <div
-                class="relative mx-auto w-full max-w-3xl p-2 sm:p-4 xl:max-w-[84rem]"
-              >
+              <div class="relative mx-auto w-full max-w-5xl p-2 sm:p-4">
                 <AppFrame
                   frameClass="w-full min-w-0 bg-transparent"
-                  contentClass="p-1 sm:p-2"
+                  contentClass="p-2 sm:p-3"
                 >
-                  <div
-                    class="relative w-full overflow-hidden bg-gruvbox-ink-strong"
-                    style={`border-radius: 10px !important; aspect-ratio: ${heroVideoAspectRatio};`}
-                  >
+                  <div class="relative w-full overflow-hidden">
                     <video
-                      bind:this={heroScreenshot}
                       src="/Exort.mp4?v=20260524-2"
                       autoplay
                       muted
                       loop
                       playsinline
-                      onloadedmetadata={syncHeroVideoAspectRatio}
-                      onloadeddata={syncHeroVideoAspectRatio}
                       aria-label="Exort desktop application walkthrough video"
-                      class="relative z-10 block h-full w-full object-contain object-center [will-change:transform]"
+                      class="relative z-10 block h-auto w-full object-contain object-center [will-change:transform]"
                       style="border-radius: 10px !important;"
                     >
                       <track kind="captions" />

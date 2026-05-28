@@ -104,7 +104,11 @@
     class="relative z-20 flex w-full items-center justify-between px-4 py-4 md:px-6 lg:px-8"
   >
     <a href="/" class="flex items-center gap-3">
-      <img src="/exort-logo.png" alt="Exort" class="h-12 w-12 object-contain" />
+      <img
+        src="/exort-logo.webp"
+        alt="Exort"
+        class="h-12 w-12 object-contain"
+      />
       <span
         class="inline-block pt-2 font-heading text-[clamp(1.45rem,1.05rem+1vw,2rem)] font-extrabold leading-[0.96] tracking-[0.08em] text-gruvbox-fg0"
       >
