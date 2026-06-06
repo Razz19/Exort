@@ -1695,7 +1695,15 @@ app.whenReady().then(() => {
         event.sender.send('arduino:command-output', envelope);
       };
 
-      return compileOpenSketchWithArduinoTool(payload, emitOutput);
+      safeConsoleWrite(
+        'log',
+        `[ArduinoCompile] start requestId=${requestId} fqbn=${payload.fqbn ?? 'unknown'} sketch=${payload.activeFilePath ?? 'unknown'}`
+      );
+      const result = await compileOpenSketchWithArduinoTool(payload, emitOutput);
+      const status = result.ok ? result.result.status : 'error';
+      const exitCode = result.ok ? result.result.exitCode ?? 'null' : 'null';
+      safeConsoleWrite('log', `[ArduinoCompile] done requestId=${requestId} status=${status} exitCode=${exitCode}`);
+      return result;
     }
   );
 
@@ -1831,7 +1839,15 @@ app.whenReady().then(() => {
         event.sender.send('platformio:command-output', envelope);
       };
 
-      return compilePlatformioProject(payload, emitOutput);
+      safeConsoleWrite(
+        'log',
+        `[PlatformIOCompile] start requestId=${requestId} env=${payload.environment ?? 'default'} file=${payload.activeFilePath ?? 'unknown'}`
+      );
+      const result = await compilePlatformioProject(payload, emitOutput);
+      const status = result.ok ? result.result.status : 'error';
+      const exitCode = result.ok ? result.result.exitCode ?? 'null' : 'null';
+      safeConsoleWrite('log', `[PlatformIOCompile] done requestId=${requestId} status=${status} exitCode=${exitCode}`);
+      return result;
     }
   );
 

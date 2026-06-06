@@ -691,6 +691,21 @@
     });
   }
 
+  function emitLogLine(
+    requestId: string,
+    operation: ArduinoOperation,
+    message: string,
+    stream: "stdout" | "stderr" = "stdout",
+  ): void {
+    emitOutputEvent({
+      type: "chunk",
+      requestId,
+      operation,
+      stream,
+      chunk: `${message}\n`,
+    });
+  }
+
   async function refreshPorts(): Promise<void> {
     portsBusy = true;
     portsError = null;
@@ -766,10 +781,42 @@
     compileBusy = true;
     activeOutputRequestIds.add(requestId);
     emitStart(requestId, "compile");
+    emitLogLine(requestId, "compile", "[Exort] Compile button clicked.");
+    if (activeEmbeddedProject?.kind === "platformio") {
+      emitLogLine(
+        requestId,
+        "compile",
+        `[Exort] Detected PlatformIO project: ${activeEmbeddedProject.relativeProjectRoot}`,
+      );
+      emitLogLine(
+        requestId,
+        "compile",
+        `[Exort] Environment: ${platformioResolvedEnv || "default_envs/all"}`,
+      );
+    } else if (activeEmbeddedProject?.kind === "arduino") {
+      emitLogLine(
+        requestId,
+        "compile",
+        `[Exort] Detected Arduino sketch: ${activeEmbeddedProject.relativeSketchPath}`,
+      );
+      emitLogLine(requestId, "compile", `[Exort] FQBN: ${effectiveBoardFqbn}`);
+    } else {
+      emitLogLine(requestId, "compile", "[Exort] Embedded project detection is still pending.");
+    }
+
     try {
       if (activeFileDirty) {
+        emitLogLine(requestId, "compile", "[Exort] Saving active file before compile.");
         await onSaveActiveFile();
       }
+
+      emitLogLine(
+        requestId,
+        "compile",
+        activeEmbeddedProject?.kind === "platformio"
+          ? "[Exort] Running PlatformIO compile..."
+          : "[Exort] Running Arduino compile...",
+      );
 
       const response =
         activeEmbeddedProject?.kind === "platformio"

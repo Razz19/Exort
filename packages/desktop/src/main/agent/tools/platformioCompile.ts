@@ -232,7 +232,21 @@ async function runPlatformioCompile(
 ): Promise<CompileRunResult> {
   const tempRoot = path.join(workspaceRoot, '.exort', 'tmp');
   await fs.mkdir(tempRoot, { recursive: true });
-  const commandName = await resolvePlatformioCommand();
+  let commandName: string;
+  try {
+    commandName = await resolvePlatformioCommand();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to resolve PlatformIO CLI.';
+    outputChunkCallback?.({ stream: 'stderr', chunk: `[PlatformIO] ${message}\n` });
+    return {
+      commandName: 'pio',
+      exitCode: null,
+      stdout: '',
+      stderr: '',
+      error: message,
+      aborted: false
+    };
+  }
   const runtimeEnv = {
     ...withToolRuntimePathEnv(),
     TMPDIR: tempRoot,
@@ -240,6 +254,7 @@ async function runPlatformioCompile(
     TEMP: tempRoot,
     TEMPDIR: tempRoot
   };
+  outputChunkCallback?.({ stream: 'stdout', chunk: `[PlatformIO] Command: ${[commandName, ...args].join(' ')}\n` });
 
   return new Promise((resolve) => {
     const proc = spawn(commandName, args, signal ? { cwd: workspaceRoot, env: runtimeEnv, signal } : { cwd: workspaceRoot, env: runtimeEnv });
@@ -270,12 +285,14 @@ async function runPlatformioCompile(
         signal?.aborted === true ||
         (error as NodeJS.ErrnoException).name === 'AbortError' ||
         (error as NodeJS.ErrnoException).code === 'ABORT_ERR';
+      const message = wasAborted ? 'Command was aborted.' : error instanceof Error ? error.message : String(error);
+      outputChunkCallback?.({ stream: 'stderr', chunk: `[PlatformIO] Failed to start command: ${message}\n` });
       settle({
         commandName,
         exitCode: null,
         stdout,
         stderr,
-        error: wasAborted ? 'Command was aborted.' : error instanceof Error ? error.message : String(error),
+        error: message,
         aborted: wasAborted
       });
     });

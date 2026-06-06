@@ -201,6 +201,7 @@ async function createWorkspaceTempEnv(workspaceRoot: string): Promise<NodeJS.Pro
   await fs.mkdir(tempRoot, { recursive: true });
 
   return withPlatformioRuntimeEnv({
+    ...process.env,
     TMPDIR: tempRoot,
     TMP: tempRoot,
     TEMP: tempRoot,
@@ -214,8 +215,23 @@ async function runPlatformio(
   signal?: AbortSignal,
   outputChunkCallback?: OutputChunkCallback
 ): Promise<CommandRunResult & { command: string }> {
-  const resolved = await resolvePlatformioCliBinary();
+  let resolved;
+  try {
+    resolved = await resolvePlatformioCliBinary();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to resolve PlatformIO CLI.';
+    outputChunkCallback?.({ stream: 'stderr', chunk: `[PlatformIO] ${message}\n` });
+    return {
+      command: 'pio',
+      exitCode: null,
+      stdout: '',
+      stderr: '',
+      error: message,
+      aborted: false
+    };
+  }
   const env = await createWorkspaceTempEnv(workspaceRoot);
+  outputChunkCallback?.({ stream: 'stdout', chunk: `[PlatformIO] Command: ${[resolved.command, ...args].join(' ')}\n` });
 
   return new Promise((resolve) => {
     const proc = spawn(resolved.command, args, {
@@ -256,6 +272,7 @@ async function runPlatformio(
         : error instanceof Error
           ? error.message
           : String(error);
+      outputChunkCallback?.({ stream: 'stderr', chunk: `[PlatformIO] Failed to start command: ${message}\n` });
       settle({
         command: resolved.command,
         exitCode: null,
