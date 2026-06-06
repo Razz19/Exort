@@ -45,6 +45,15 @@ import {
   updateCoreIndex,
   uploadOpenSketch
 } from './arduinoBridge.js';
+import { detectEmbeddedProject, type EmbeddedProjectInfo } from './embeddedProjectResolver.js';
+import {
+  compilePlatformioProject,
+  listPlatformioEnvironments,
+  uploadPlatformioProject,
+  type PlatformioCompileResult,
+  type PlatformioProjectTarget,
+  type PlatformioUploadResult
+} from './platformioBridge.js';
 import {
   getRequirementsStatus,
   installRequirement,
@@ -138,6 +147,12 @@ type ArduinoCommandOutputEnvelope = {
   operation: 'compile' | 'upload';
   stream: 'stdout' | 'stderr';
   chunk: string;
+};
+
+type PlatformioProjectEnvironment = {
+  name: string;
+  selected: boolean;
+  default: boolean;
 };
 
 type ArduinoBoardConfigOptionValue = {
@@ -626,6 +641,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ICON_PATH = path.join(__dirname, '../../resources/exort_logo.png');
 const activeAgentTurns = new Map<string, AbortController>();
 const activeArduinoUploads = new Map<string, AbortController>();
+const activePlatformioUploads = new Map<string, AbortController>();
 type WatchedWorkspaceTree = {
   subscribers: Set<number>;
   watcher: FSWatcher;
@@ -1744,6 +1760,142 @@ app.whenReady().then(() => {
     }
 
     safeConsoleWrite('log', `[ArduinoUpload] cancel requestId=${normalizedRequestId}`);
+    running.abort();
+    return { ok: true, cancelled: true };
+  });
+
+  ipcMain.handle(
+    'embedded:detect-active-project',
+    async (
+      _event,
+      payload: {
+        workspaceRoot: string;
+        activeFilePath: string;
+      }
+    ): Promise<{ ok: boolean; project?: EmbeddedProjectInfo; error?: string }> => {
+      try {
+        return {
+          ok: true,
+          project: await detectEmbeddedProject(payload?.workspaceRoot, payload?.activeFilePath)
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : 'Failed to detect embedded project.'
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    'platformio:list-envs',
+    async (
+      _event,
+      payload: {
+        workspaceRoot: string;
+        activeFilePath: string;
+      }
+    ): Promise<{
+      ok: boolean;
+      target?: PlatformioProjectTarget;
+      environments?: PlatformioProjectEnvironment[];
+      error?: string;
+    }> => {
+      return listPlatformioEnvironments(payload?.workspaceRoot, payload?.activeFilePath);
+    }
+  );
+
+  ipcMain.handle(
+    'platformio:compile-project',
+    async (
+      event,
+      payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath: string;
+        environment?: string;
+      }
+    ): Promise<{ ok: boolean; result?: PlatformioCompileResult; error?: string }> => {
+      const requestId = payload.requestId?.trim();
+      if (!requestId) {
+        return { ok: false, error: 'requestId is required.' };
+      }
+
+      const emitOutput = (chunk: { stream: 'stdout' | 'stderr'; chunk: string }) => {
+        const envelope: ArduinoCommandOutputEnvelope = {
+          requestId,
+          operation: 'compile',
+          stream: chunk.stream,
+          chunk: chunk.chunk
+        };
+        event.sender.send('platformio:command-output', envelope);
+      };
+
+      return compilePlatformioProject(payload, emitOutput);
+    }
+  );
+
+  ipcMain.handle(
+    'platformio:upload-project',
+    async (
+      event,
+      payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath: string;
+        environment?: string;
+        port?: string;
+      }
+    ): Promise<{ ok: boolean; result?: PlatformioUploadResult; error?: string }> => {
+      const requestId = payload.requestId?.trim();
+      if (!requestId) {
+        return { ok: false, error: 'requestId is required.' };
+      }
+
+      if (activePlatformioUploads.has(requestId)) {
+        return { ok: false, error: `Upload already running for requestId ${requestId}` };
+      }
+
+      const abortController = new AbortController();
+      activePlatformioUploads.set(requestId, abortController);
+      safeConsoleWrite(
+        'log',
+        `[PlatformIOUpload] start requestId=${requestId} env=${payload.environment ?? 'default'} port=${payload.port ?? 'auto'} file=${payload.activeFilePath ?? 'unknown'}`
+      );
+
+      try {
+        const emitOutput = (chunk: { stream: 'stdout' | 'stderr'; chunk: string }) => {
+          const envelope: ArduinoCommandOutputEnvelope = {
+            requestId,
+            operation: 'upload',
+            stream: chunk.stream,
+            chunk: chunk.chunk
+          };
+          event.sender.send('platformio:command-output', envelope);
+        };
+        const result = await uploadPlatformioProject(payload, abortController.signal, emitOutput);
+        const status = result.ok ? result.result.status : 'error';
+        const exitCode = result.ok ? result.result.exitCode ?? 'null' : 'null';
+        safeConsoleWrite('log', `[PlatformIOUpload] done requestId=${requestId} status=${status} exitCode=${exitCode}`);
+        return result;
+      } finally {
+        activePlatformioUploads.delete(requestId);
+      }
+    }
+  );
+
+  ipcMain.handle('platformio:cancel-upload', async (_event, requestId: string) => {
+    const normalizedRequestId = requestId?.trim();
+    if (!normalizedRequestId) {
+      return { ok: false, cancelled: false, error: 'requestId is required.' };
+    }
+
+    const running = activePlatformioUploads.get(normalizedRequestId);
+    if (!running) {
+      return { ok: false, cancelled: false, error: 'No active PlatformIO upload for requestId' };
+    }
+
+    safeConsoleWrite('log', `[PlatformIOUpload] cancel requestId=${normalizedRequestId}`);
     running.abort();
     return { ok: true, cancelled: true };
   });

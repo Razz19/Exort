@@ -278,6 +278,41 @@ export type ArduinoCommandOutputEnvelope = {
   chunk: string;
 };
 
+export type EmbeddedProjectInfo =
+  | {
+      kind: 'platformio';
+      workspaceRoot: string;
+      activeFilePath: string;
+      projectRoot: string;
+      platformioIniPath: string;
+      relativeProjectRoot: string;
+      envs: string[];
+      defaultEnvs: string[];
+      resolvedEnv: string | null;
+      envRequired: boolean;
+    }
+  | {
+      kind: 'arduino';
+      workspaceRoot: string;
+      activeFilePath: string;
+      sketchPath: string;
+      sketchDirectory: string;
+      relativeSketchPath: string;
+      relativeSketchDirectory: string;
+    }
+  | {
+      kind: 'unknown';
+      workspaceRoot: string;
+      activeFilePath: string | null;
+      reason: string;
+    };
+
+export type PlatformioProjectEnvironment = {
+  name: string;
+  selected: boolean;
+  default: boolean;
+};
+
 export type ArduinoOutputRunEntry = {
   id: string;
   stream: ArduinoOutputStream;

@@ -21,6 +21,8 @@
     ArduinoOutputEvent,
     ArduinoOperation,
     ArduinoPortOption,
+    EmbeddedProjectInfo,
+    PlatformioProjectEnvironment,
   } from "../lib/types";
 
   type ArduinoUploadResult = {
@@ -31,11 +33,20 @@
     command: string[];
   };
 
+  type PlatformioUploadResult = {
+    ok: boolean;
+    status: "uploaded" | "upload_failed" | "upload_cancelled" | "missing_input";
+    message: string;
+    exitCode?: number | null;
+    command?: string[];
+  };
+
   let {
     userEmail,
     statusText,
     activeWorkspaceRoot,
     activeFilePath,
+    activeEmbeddedProject = null,
     activeFileDirty,
     selectedPort = "",
     selectedBoardFqbn = "",
@@ -59,6 +70,7 @@
     statusText: string;
     activeWorkspaceRoot: string | null;
     activeFilePath: string | null;
+    activeEmbeddedProject: EmbeddedProjectInfo | null;
     activeFileDirty: boolean;
     selectedPort: string;
     selectedBoardFqbn: string;
@@ -125,36 +137,70 @@
   let uploadBusy = $state(false);
   let uploadCancelBusy = $state(false);
   let uploadRequestId = $state<string | null>(null);
+  let uploadBackend = $state<"arduino" | "platformio" | null>(null);
   let portsError = $state<string | null>(null);
   let boardsError = $state<string | null>(null);
   let portsDropdownOpen = $state(false);
   let boardsDropdownOpen = $state(false);
+  let platformioEnvDropdownOpen = $state(false);
   let boardSettingsDropdownOpen = $state(false);
   let boardSearch = $state("");
-  let portsDropdownElement: HTMLDivElement | null = null;
-  let boardsDropdownElement: HTMLDivElement | null = null;
-  let boardSettingsDropdownElement: HTMLDivElement | null = null;
+  let portsDropdownElement = $state<HTMLDivElement | null>(null);
+  let boardsDropdownElement = $state<HTMLDivElement | null>(null);
+  let platformioEnvDropdownElement = $state<HTMLDivElement | null>(null);
+  let boardSettingsDropdownElement = $state<HTMLDivElement | null>(null);
   let boardSettingsBusy = $state(false);
   let boardSettingsError = $state<string | null>(null);
   let boardCurrentDetails = $state<ArduinoBoardDetails | null>(null);
   let boardBaseDetails = $state<ArduinoBoardDetails | null>(null);
   let boardSettingsRequestId = 0;
 
-  let isActiveIno = $derived(
-    !!activeFilePath && activeFilePath.toLowerCase().endsWith(".ino"),
+  let activeProjectKind = $derived(activeEmbeddedProject?.kind ?? "unknown");
+  let platformioEnvironments = $derived<PlatformioProjectEnvironment[]>(
+    activeEmbeddedProject?.kind === "platformio"
+      ? activeEmbeddedProject.envs.map((name) => ({
+          name,
+          selected: activeEmbeddedProject.resolvedEnv === name,
+          default: activeEmbeddedProject.defaultEnvs.includes(name),
+        }))
+      : [],
   );
+  let selectedPlatformioEnv = $state("");
+  let platformioResolvedEnv = $derived.by(() => {
+    if (activeEmbeddedProject?.kind !== "platformio") return "";
+    if (
+      selectedPlatformioEnv &&
+      activeEmbeddedProject.envs.includes(selectedPlatformioEnv)
+    ) {
+      return selectedPlatformioEnv;
+    }
+    return activeEmbeddedProject.resolvedEnv ?? "";
+  });
+  let platformioEnvironmentRequired = $derived(
+    activeEmbeddedProject?.kind === "platformio" &&
+      activeEmbeddedProject.envRequired &&
+      !platformioResolvedEnv,
+  );
+  let platformioEnvLabel = $derived.by(() => {
+    if (activeEmbeddedProject?.kind !== "platformio") return "Environment";
+    if (platformioResolvedEnv) return platformioResolvedEnv;
+    if (activeEmbeddedProject.defaultEnvs.length > 0) return "default_envs";
+    if (activeEmbeddedProject.envs.length === 0) return "Default";
+    return "Select env";
+  });
   let compileDisabled = $derived(
     !activeWorkspaceRoot ||
-      !isActiveIno ||
-      !selectedBoardFqbn ||
+      activeProjectKind === "unknown" ||
+      (activeProjectKind === "arduino" && !selectedBoardFqbn) ||
+      platformioEnvironmentRequired ||
       compileBusy ||
       uploadBusy,
   );
   let uploadStartDisabled = $derived(
     !activeWorkspaceRoot ||
-      !isActiveIno ||
-      !selectedBoardFqbn ||
-      !selectedPort ||
+      activeProjectKind === "unknown" ||
+      (activeProjectKind === "arduino" && (!selectedBoardFqbn || !selectedPort)) ||
+      platformioEnvironmentRequired ||
       uploadBusy ||
       compileBusy,
   );
@@ -165,20 +211,35 @@
     if (uploadBusy) return "Upload in progress";
     if (compileBusy) return "Compile in progress";
     if (!activeWorkspaceRoot) return "Open a workspace first";
-    if (!activeFilePath) return "Open an .ino file first";
-    if (!isActiveIno) return "Compile requires an active .ino file";
-    if (!selectedBoardFqbn) return "Select a board first";
-    return "Compile active sketch";
+    if (!activeFilePath) return "Open a file first";
+    if (activeEmbeddedProject?.kind === "unknown")
+      return activeEmbeddedProject.reason;
+    if (activeProjectKind === "unknown") return "Detecting embedded project";
+    if (activeProjectKind === "arduino" && !selectedBoardFqbn)
+      return "Select a board first";
+    if (platformioEnvironmentRequired)
+      return "Select a PlatformIO environment first";
+    return activeProjectKind === "platformio"
+      ? "Compile PlatformIO project"
+      : "Compile active sketch";
   });
   let uploadTooltip = $derived.by(() => {
     if (uploadBusy) return "Cancel current upload";
     if (compileBusy) return "Compile is in progress";
     if (!activeWorkspaceRoot) return "Open a workspace first";
-    if (!activeFilePath) return "Open an .ino file first";
-    if (!isActiveIno) return "Upload requires an active .ino file";
-    if (!selectedBoardFqbn) return "Select a board first";
-    if (!selectedPort) return "Select a serial port first";
-    return "Compile and upload active sketch";
+    if (!activeFilePath) return "Open a file first";
+    if (activeEmbeddedProject?.kind === "unknown")
+      return activeEmbeddedProject.reason;
+    if (activeProjectKind === "unknown") return "Detecting embedded project";
+    if (activeProjectKind === "arduino" && !selectedBoardFqbn)
+      return "Select a board first";
+    if (activeProjectKind === "arduino" && !selectedPort)
+      return "Select a serial port first";
+    if (platformioEnvironmentRequired)
+      return "Select a PlatformIO environment first";
+    return activeProjectKind === "platformio"
+      ? "Upload PlatformIO project"
+      : "Compile and upload active sketch";
   });
   const primaryIconButtonClass =
     "inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-fg4 transition-colors duration-150 hover:text-dark-fg0 hover:bg-dark-fg4/20   disabled:cursor-not-allowed disabled:opacity-50";
@@ -218,7 +279,10 @@
   };
   let favoriteBoardSet = $derived.by(() => new Set(favoriteBoardFqbns));
   let overlayOpen = $derived(
-    portsDropdownOpen || boardsDropdownOpen || boardSettingsDropdownOpen,
+    portsDropdownOpen ||
+      boardsDropdownOpen ||
+      platformioEnvDropdownOpen ||
+      boardSettingsDropdownOpen,
   );
   let favoriteBoardsOrdered = $derived.by(() => {
     if (favoriteBoardFqbns.length === 0 || boards.length === 0) return [];
@@ -372,6 +436,14 @@
         boardsDropdownOpen = false;
       }
       if (
+        platformioEnvDropdownOpen &&
+        platformioEnvDropdownElement &&
+        target &&
+        !platformioEnvDropdownElement.contains(target)
+      ) {
+        platformioEnvDropdownOpen = false;
+      }
+      if (
         boardSettingsDropdownOpen &&
         boardSettingsDropdownElement &&
         target &&
@@ -384,14 +456,17 @@
       if (event.key !== "Escape") return;
       portsDropdownOpen = false;
       boardsDropdownOpen = false;
+      platformioEnvDropdownOpen = false;
       boardSettingsDropdownOpen = false;
     };
 
     window.electronAPI.onArduinoCommandOutput(outputListener);
+    window.electronAPI.onPlatformioCommandOutput(outputListener);
     document.addEventListener("pointerdown", onDocumentPointerDown);
     document.addEventListener("keydown", onDocumentKeyDown);
     return () => {
       window.electronAPI.offArduinoCommandOutput(outputListener);
+      window.electronAPI.offPlatformioCommandOutput(outputListener);
       document.removeEventListener("pointerdown", onDocumentPointerDown);
       document.removeEventListener("keydown", onDocumentKeyDown);
     };
@@ -430,6 +505,7 @@
     portsDropdownOpen = !portsDropdownOpen;
     if (portsDropdownOpen) {
       boardsDropdownOpen = false;
+      platformioEnvDropdownOpen = false;
       boardSettingsDropdownOpen = false;
       void refreshPorts();
     }
@@ -439,9 +515,19 @@
     boardsDropdownOpen = !boardsDropdownOpen;
     if (boardsDropdownOpen) {
       portsDropdownOpen = false;
+      platformioEnvDropdownOpen = false;
       boardSettingsDropdownOpen = false;
       boardSearch = "";
       void refreshBoards();
+    }
+  }
+
+  function togglePlatformioEnvDropdown(): void {
+    platformioEnvDropdownOpen = !platformioEnvDropdownOpen;
+    if (platformioEnvDropdownOpen) {
+      portsDropdownOpen = false;
+      boardsDropdownOpen = false;
+      boardSettingsDropdownOpen = false;
     }
   }
 
@@ -520,6 +606,7 @@
     if (boardSettingsDropdownOpen) {
       portsDropdownOpen = false;
       boardsDropdownOpen = false;
+      platformioEnvDropdownOpen = false;
     }
   }
 
@@ -532,6 +619,11 @@
     safeSetBoard(fqbn);
     boardsDropdownOpen = false;
     boardSettingsDropdownOpen = false;
+  }
+
+  function handlePlatformioEnvSelection(environment: string): void {
+    selectedPlatformioEnv = environment;
+    platformioEnvDropdownOpen = false;
   }
 
   function handleBoardOptionSelection(optionId: string, valueId: string): void {
@@ -679,16 +771,27 @@
         await onSaveActiveFile();
       }
 
-      const response = await window.electronAPI.compileArduinoOpenSketch({
-        requestId,
-        workspaceRoot: activeWorkspaceRoot,
-        activeFilePath,
-        fqbn: effectiveBoardFqbn,
-      });
+      const response =
+        activeEmbeddedProject?.kind === "platformio"
+          ? await window.electronAPI.compilePlatformioProject({
+              requestId,
+              workspaceRoot: activeWorkspaceRoot,
+              activeFilePath,
+              environment: platformioResolvedEnv || undefined,
+            })
+          : await window.electronAPI.compileArduinoOpenSketch({
+              requestId,
+              workspaceRoot: activeWorkspaceRoot,
+              activeFilePath:
+                activeEmbeddedProject?.kind === "arduino"
+                  ? activeEmbeddedProject.sketchPath
+                  : activeFilePath,
+              fqbn: effectiveBoardFqbn,
+            });
 
       if (!response.ok || !response.result) {
         const detail =
-          response.error ?? "Compile failed before running arduinoCompile.";
+          response.error ?? "Compile failed before running compile command.";
         emitFinish(requestId, "compile", "error", detail, null);
         return;
       }
@@ -699,7 +802,9 @@
       const detail =
         result.message ??
         (success
-          ? "Arduino compile completed successfully."
+          ? activeEmbeddedProject?.kind === "platformio"
+            ? "PlatformIO compile completed successfully."
+            : "Arduino compile completed successfully."
           : "Compile failed.");
       emitFinish(
         requestId,
@@ -724,7 +829,11 @@
 
     uploadCancelBusy = true;
     try {
-      await window.electronAPI.cancelArduinoUpload(uploadRequestId);
+      if (uploadBackend === "platformio") {
+        await window.electronAPI.cancelPlatformioUpload(uploadRequestId);
+      } else {
+        await window.electronAPI.cancelArduinoUpload(uploadRequestId);
+      }
     } catch (error) {
       void error;
     } finally {
@@ -738,6 +847,8 @@
     const requestId = crypto.randomUUID();
     uploadBusy = true;
     uploadRequestId = requestId;
+    uploadBackend =
+      activeEmbeddedProject?.kind === "platformio" ? "platformio" : "arduino";
     uploadCancelBusy = false;
     activeOutputRequestIds.add(requestId);
     emitStart(requestId, "upload");
@@ -747,13 +858,25 @@
         await onSaveActiveFile();
       }
 
-      const response = await window.electronAPI.uploadArduinoOpenSketch({
-        requestId,
-        workspaceRoot: activeWorkspaceRoot,
-        activeFilePath,
-        fqbn: effectiveBoardFqbn,
-        port: selectedPort,
-      });
+      const response =
+        activeEmbeddedProject?.kind === "platformio"
+          ? await window.electronAPI.uploadPlatformioProject({
+              requestId,
+              workspaceRoot: activeWorkspaceRoot,
+              activeFilePath,
+              environment: platformioResolvedEnv || undefined,
+              port: selectedPort || undefined,
+            })
+          : await window.electronAPI.uploadArduinoOpenSketch({
+              requestId,
+              workspaceRoot: activeWorkspaceRoot,
+              activeFilePath:
+                activeEmbeddedProject?.kind === "arduino"
+                  ? activeEmbeddedProject.sketchPath
+                  : activeFilePath,
+              fqbn: effectiveBoardFqbn,
+              port: selectedPort,
+            });
 
       if (!response.ok || !response.result) {
         const detail =
@@ -762,7 +885,7 @@
         return;
       }
 
-      const result = response.result as ArduinoUploadResult;
+      const result = response.result as ArduinoUploadResult | PlatformioUploadResult;
 
       const status =
         result.status === "uploaded"
@@ -787,6 +910,7 @@
       uploadBusy = false;
       uploadCancelBusy = false;
       uploadRequestId = null;
+      uploadBackend = null;
     }
   }
 
@@ -820,6 +944,23 @@
   $effect(() => {
     arduinoEnvironmentRefreshKey;
     void refreshArduinoEnvironment();
+  });
+
+  $effect(() => {
+    if (activeEmbeddedProject?.kind !== "platformio") {
+      selectedPlatformioEnv = "";
+      platformioEnvDropdownOpen = false;
+      return;
+    }
+
+    activeEmbeddedProject.projectRoot;
+    activeEmbeddedProject.envs.join("\u0000");
+    if (
+      selectedPlatformioEnv &&
+      !activeEmbeddedProject.envs.includes(selectedPlatformioEnv)
+    ) {
+      selectedPlatformioEnv = "";
+    }
   });
 
   $effect(() => {
@@ -927,23 +1068,86 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2" bind:this={boardsDropdownElement}>
-        <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Board</span
+      {#if activeProjectKind === "platformio"}
+        <div
+          class="flex items-center gap-2"
+          bind:this={platformioEnvDropdownElement}
         >
-        <div class="relative w-72 shrink-0">
-          <button
-            class={dropdownTriggerClass}
-            onclick={toggleBoardsDropdown}
-            disabled={boardsBusy}
-            title={selectedBoardLabel}
-            aria-label="Select board"
-            aria-expanded={boardsDropdownOpen}
+          <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Env</span>
+          <div class="relative w-56 shrink-0">
+            <button
+              class={dropdownTriggerClass}
+              onclick={togglePlatformioEnvDropdown}
+              disabled={platformioEnvironments.length === 0}
+              title={platformioEnvLabel}
+              aria-label="Select PlatformIO environment"
+              aria-expanded={platformioEnvDropdownOpen}
+            >
+              <span class="truncate text-xs">{platformioEnvLabel}</span>
+              <ChevronDown
+                class={`h-4 w-4 text-dark-fg3 transition-transform ${platformioEnvDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {#if platformioEnvDropdownOpen}
+              <div class={`${dropdownPanelClass} w-full`}>
+                {#if activeEmbeddedProject?.kind === "platformio" && activeEmbeddedProject.defaultEnvs.length > 0}
+                  <button
+                    class={`${dropdownItemClass} ${!selectedPlatformioEnv ? "bg-dark-bg1 text-primary-300" : ""}`}
+                    onclick={() => handlePlatformioEnvSelection("")}
+                    title={activeEmbeddedProject.defaultEnvs.join(", ")}
+                    aria-label="Use PlatformIO default environments"
+                  >
+                    <span class="block truncate">default_envs</span>
+                  </button>
+                  <div class="my-1 border-t border-dark-border"></div>
+                {/if}
+
+                {#if platformioEnvironments.length === 0}
+                  <div class="px-2.5 py-1.5 text-xs text-dark-fg3">
+                    No environments found
+                  </div>
+                {:else}
+                  {#each platformioEnvironments as environment (environment.name)}
+                    <button
+                      class={`${dropdownItemClass} ${
+                        platformioResolvedEnv === environment.name
+                          ? "bg-dark-bg1 text-primary-300"
+                          : ""
+                      }`}
+                      onclick={() =>
+                        handlePlatformioEnvSelection(environment.name)}
+                      title={environment.name}
+                      aria-label={`Select ${environment.name}`}
+                    >
+                      <span class="block truncate">
+                        {environment.name}{environment.default ? " (default)" : ""}
+                      </span>
+                    </button>
+                  {/each}
+                {/if}
+              </div>
+            {/if}
+          </div>
+        </div>
+      {:else}
+        <div class="flex items-center gap-2" bind:this={boardsDropdownElement}>
+          <span class="w-10 shrink-0 text-right text-xs text-dark-fg3">Board</span
           >
-            <span class="truncate text-xs">{selectedBoardLabel}</span>
-            <ChevronDown
-              class={`h-4 w-4 text-dark-fg3 transition-transform ${boardsDropdownOpen ? "rotate-180" : ""}`}
-            />
-          </button>
+          <div class="relative w-72 shrink-0">
+            <button
+              class={dropdownTriggerClass}
+              onclick={toggleBoardsDropdown}
+              disabled={boardsBusy}
+              title={selectedBoardLabel}
+              aria-label="Select board"
+              aria-expanded={boardsDropdownOpen}
+            >
+              <span class="truncate text-xs">{selectedBoardLabel}</span>
+              <ChevronDown
+                class={`h-4 w-4 text-dark-fg3 transition-transform ${boardsDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
 
           {#if boardsDropdownOpen}
             <div
@@ -1081,13 +1285,15 @@
               </div>
             </div>
           {/if}
+          </div>
         </div>
-      </div>
+      {/if}
 
-      <div
-        class="flex items-center gap-2"
-        bind:this={boardSettingsDropdownElement}
-      >
+      {#if activeProjectKind !== "platformio"}
+        <div
+          class="flex items-center gap-2"
+          bind:this={boardSettingsDropdownElement}
+        >
         <span class="w-14 shrink-0 text-right text-xs text-dark-fg3">
           Config
         </span>
@@ -1161,7 +1367,8 @@
             </div>
           {/if}
         </div>
-      </div>
+        </div>
+      {/if}
 
       <button
         class={`${primaryIconButtonClass} ml-2 [-webkit-app-region:no-drag]`}

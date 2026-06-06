@@ -9,6 +9,7 @@
   import ToolGrep from "../tools/ToolGrep.svelte";
   import ToolList from "../tools/ToolList.svelte";
   import ToolQuestion from "../tools/ToolQuestion.svelte";
+  import ToolPlatformioCompile from "../tools/ToolPlatformioCompile.svelte";
   import ToolRead from "../tools/ToolRead.svelte";
   import ToolTask from "../tools/ToolTask.svelte";
   import ToolTodoWrite from "../tools/ToolTodoWrite.svelte";
@@ -48,6 +49,8 @@
   <ToolQuestion {step} />
 {:else if toolName === "arduinocompile"}
   <ToolArduinoCompile {step} />
+{:else if toolName === "platformiocompile"}
+  <ToolPlatformioCompile {step} />
 {:else}
   <ToolGeneric {step} />
 {/if}

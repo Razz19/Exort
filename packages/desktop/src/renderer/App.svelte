@@ -73,6 +73,7 @@
     ChatAttachment,
     ChatItem,
     ChatSendPayload,
+    EmbeddedProjectInfo,
     PendingOutputErrorContext,
     OpenFile,
     OpenCodeModelCatalogProvider,
@@ -185,6 +186,8 @@
   let toasts = $state<ToastMessage[]>([]);
   let arduinoEnvironmentRefreshKey = $state(0);
   let outputRun = $state<ArduinoOutputRun | null>(null);
+  let activeEmbeddedProject = $state<EmbeddedProjectInfo | null>(null);
+  let embeddedProjectDetectionRequestId = 0;
   let draggingSplitter = $state<"outer" | "inner" | null>(null);
   let transientChatWidthPct = $state<number | null>(null);
   let transientEditorWidthPct = $state<number | null>(null);
@@ -239,6 +242,40 @@
   let effectiveFileManagerCollapsed = $derived(
     fileManagerCollapsed || !activeWorkspace,
   );
+  let activeWorkspaceTreeFingerprint = $derived(
+    activeWorkspace
+      ? activeWorkspace.tree
+          .map((item) => `${item.isDirectory ? "d" : "f"}:${item.path}`)
+          .join("\u0000")
+      : "",
+  );
+
+  $effect(() => {
+    const workspaceRoot = activeWorkspace?.rootPath ?? null;
+    const filePath = activeFilePath;
+    activeWorkspaceTreeFingerprint;
+
+    const requestId = ++embeddedProjectDetectionRequestId;
+    if (!workspaceRoot || !filePath) {
+      activeEmbeddedProject = null;
+      return;
+    }
+
+    void (async () => {
+      try {
+        const response = await window.electronAPI.detectEmbeddedProject({
+          workspaceRoot,
+          activeFilePath: filePath,
+        });
+        if (requestId !== embeddedProjectDetectionRequestId) return;
+        activeEmbeddedProject = response.ok && response.project ? response.project : null;
+      } catch {
+        if (requestId === embeddedProjectDetectionRequestId) {
+          activeEmbeddedProject = null;
+        }
+      }
+    })();
+  });
   let monacoTheme = $derived<MonacoThemeId>(
     appStateSnapshot.appearance.monacoTheme,
   );
@@ -3381,6 +3418,7 @@
     {statusText}
     activeWorkspaceRoot={activeWorkspace?.rootPath ?? null}
     {activeFilePath}
+    {activeEmbeddedProject}
     activeFileDirty={activeFile?.dirty ?? false}
     {selectedBoardFqbn}
     {boardOptionSelections}
@@ -3493,6 +3531,7 @@
           {activeWorkspaceId}
           {selectedPort}
           {activeFilePath}
+          {activeEmbeddedProject}
           {activeFile}
           {openFiles}
           {visibleOpenFileTabs}

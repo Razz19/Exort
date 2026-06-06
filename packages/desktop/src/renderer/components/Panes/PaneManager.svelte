@@ -9,11 +9,13 @@
   } from "lucide-svelte";
 
   import type {
+    EmbeddedProjectInfo,
     OpenFile,
     PaneTab,
     Workspace,
   } from "../../lib/types";
   import type { MonacoThemeId } from "../../lib/state/types";
+  import platformioLogoUrl from "../../../../../../assets/PlatformIO_logo.svg";
   import FileTree from "../FileTree.svelte";
   import MonacoPane from "./MonacoPane.svelte";
   import SerialMonitorPane from "./SerialMonitorPane.svelte";
@@ -29,6 +31,7 @@
     activeWorkspaceId,
     selectedPort,
     activeFilePath,
+    activeEmbeddedProject,
     activeFile,
     openFiles,
     visibleOpenFileTabs,
@@ -63,6 +66,7 @@
     activeWorkspaceId: string | null;
     selectedPort: string;
     activeFilePath: string | null;
+    activeEmbeddedProject: EmbeddedProjectInfo | null;
     activeFile: OpenFile | null;
     openFiles: Record<string, OpenFile>;
     visibleOpenFileTabs: string[];
@@ -98,6 +102,35 @@
 
   function getTabIconDataUri(filePath: string): string {
     return `data:image/svg+xml;utf8,${encodeURIComponent(getIcon(labelFromPath(filePath)).svg)}`;
+  }
+
+  function getArduinoIconDataUri(): string {
+    return `data:image/svg+xml;utf8,${encodeURIComponent(getIcon("Blink.ino").svg)}`;
+  }
+
+  function projectIndicatorForTab(filePath: string):
+    | {
+        kind: "arduino" | "platformio";
+        title: string;
+        src: string;
+      }
+    | null {
+    if (filePath !== activeFilePath) return null;
+    if (activeEmbeddedProject?.kind === "arduino") {
+      return {
+        kind: "arduino",
+        title: "Arduino project",
+        src: getArduinoIconDataUri(),
+      };
+    }
+    if (activeEmbeddedProject?.kind === "platformio") {
+      return {
+        kind: "platformio",
+        title: "PlatformIO project",
+        src: platformioLogoUrl,
+      };
+    }
+    return null;
   }
 
   function reportInnerSplitContainer(node: HTMLDivElement) {
@@ -191,6 +224,7 @@
                 </div>
               {:else}
                 {#each visibleOpenFileTabs as tabPath (tabPath)}
+                  {@const projectIndicator = projectIndicatorForTab(tabPath)}
                   <div
                     class={`group flex min-w-0 max-w-64 items-center gap-2 border-r border-dark-border px-2 py-2 text-left text-xs  ${
                       tabPath === activeFilePath
@@ -219,6 +253,16 @@
                         aria-hidden="true"
                         draggable="false"
                       />
+                      {#if projectIndicator}
+                        <img
+                          class="h-4 w-4 shrink-0"
+                          src={projectIndicator.src}
+                          alt=""
+                          title={projectIndicator.title}
+                          aria-label={projectIndicator.title}
+                          draggable="false"
+                        />
+                      {/if}
                       <span class="truncate">{labelFromPath(tabPath)}</span>
                     </div>
 

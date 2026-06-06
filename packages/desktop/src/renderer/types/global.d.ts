@@ -85,6 +85,34 @@ type ArduinoCommandOutputEnvelope = {
   stream: 'stdout' | 'stderr';
   chunk: string;
 };
+type EmbeddedProjectInfo =
+  | {
+      kind: 'platformio';
+      workspaceRoot: string;
+      activeFilePath: string;
+      projectRoot: string;
+      platformioIniPath: string;
+      relativeProjectRoot: string;
+      envs: string[];
+      defaultEnvs: string[];
+      resolvedEnv: string | null;
+      envRequired: boolean;
+    }
+  | {
+      kind: 'arduino';
+      workspaceRoot: string;
+      activeFilePath: string;
+      sketchPath: string;
+      sketchDirectory: string;
+      relativeSketchPath: string;
+      relativeSketchDirectory: string;
+    }
+  | {
+      kind: 'unknown';
+      workspaceRoot: string;
+      activeFilePath: string | null;
+      reason: string;
+    };
 type FileChangedEnvelope = {
   filePath: string;
   content: string;
@@ -283,6 +311,49 @@ type ArduinoUploadResult = {
   aborted: boolean;
   stdout: string;
   stderr: string;
+  error?: string;
+};
+type PlatformioProjectTarget = {
+  projectRoot: string;
+  platformioIniPath: string;
+  relativeProjectRoot: string;
+  envs: string[];
+  defaultEnvs: string[];
+  resolvedEnv: string | null;
+  envRequired: boolean;
+};
+type PlatformioProjectEnvironment = {
+  name: string;
+  selected: boolean;
+  default: boolean;
+};
+type PlatformioCompileResult = {
+  ok: boolean;
+  status: 'compiled' | 'compile_failed' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  errorSummary?: string[];
+  stdout?: string | null;
+  stderr?: string | null;
+};
+type PlatformioUploadResult = {
+  ok: boolean;
+  status: 'uploaded' | 'upload_failed' | 'upload_cancelled' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  port?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  stdout?: string | null;
+  stderr?: string | null;
   error?: string;
 };
 type RequirementId = 'opencode' | 'arduino-cli';
@@ -533,6 +604,33 @@ declare global {
         port: string;
       }) => Promise<{ ok: boolean; result?: ArduinoUploadResult; error?: string }>;
       cancelArduinoUpload: (requestId: string) => Promise<{ ok: boolean; cancelled: boolean; error?: string }>;
+      detectEmbeddedProject: (payload: {
+        workspaceRoot: string;
+        activeFilePath: string;
+      }) => Promise<{ ok: boolean; project?: EmbeddedProjectInfo; error?: string }>;
+      listPlatformioEnvironments: (payload: {
+        workspaceRoot: string;
+        activeFilePath: string;
+      }) => Promise<{
+        ok: boolean;
+        target?: PlatformioProjectTarget;
+        environments?: PlatformioProjectEnvironment[];
+        error?: string;
+      }>;
+      compilePlatformioProject: (payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath: string;
+        environment?: string;
+      }) => Promise<{ ok: boolean; result?: PlatformioCompileResult; error?: string }>;
+      uploadPlatformioProject: (payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath: string;
+        environment?: string;
+        port?: string;
+      }) => Promise<{ ok: boolean; result?: PlatformioUploadResult; error?: string }>;
+      cancelPlatformioUpload: (requestId: string) => Promise<{ ok: boolean; cancelled: boolean; error?: string }>;
       serialConnect: (payload: { port: string; baudRate: number }) => Promise<{ ok: boolean; error?: string }>;
       serialDisconnect: (payload?: { reason?: string }) => Promise<{ ok: boolean; error?: string }>;
       serialSend: (payload: { text: string; appendNewline?: boolean }) => Promise<{ ok: boolean; error?: string }>;
@@ -620,6 +718,8 @@ declare global {
       offSerialMonitorEvent: (listener: (payload: SerialMonitorEvent) => void) => void;
       onArduinoCommandOutput: (listener: (payload: ArduinoCommandOutputEnvelope) => void) => void;
       offArduinoCommandOutput: (listener: (payload: ArduinoCommandOutputEnvelope) => void) => void;
+      onPlatformioCommandOutput: (listener: (payload: ArduinoCommandOutputEnvelope) => void) => void;
+      offPlatformioCommandOutput: (listener: (payload: ArduinoCommandOutputEnvelope) => void) => void;
       startAgentTurn: (payload: {
         requestId: string;
         workspaceRoot: string;
