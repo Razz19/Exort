@@ -529,7 +529,7 @@ declare global {
         error?: string;
       }>;
       writeFile: (payload: { filePath: string; content: string }) => Promise<{ ok: boolean }>;
-      formatInoFile: (payload: {
+      formatCodeFile: (payload: {
         filePath: string;
         content: string;
       }) => Promise<{

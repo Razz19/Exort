@@ -629,6 +629,18 @@ const CLANG_FORMAT_CANDIDATES: ClangFormatCandidate[] = [
   { command: 'clang-format-14' },
   { command: 'xcrun', baseArgs: ['clang-format'] }
 ];
+const CLANG_FORMAT_FILE_EXTENSIONS = new Set([
+  '.c',
+  '.cc',
+  '.cpp',
+  '.cxx',
+  '.h',
+  '.hh',
+  '.hpp',
+  '.hxx',
+  '.ino',
+  '.ipp'
+]);
 const store = new Store<StoreSchema>({
   defaults: {
     workspaces: [],
@@ -748,7 +760,11 @@ function runStdinFormatter(command: string, args: string[], input: string): Prom
   });
 }
 
-async function formatInoContentWithClangFormat(filePath: string, content: string): Promise<{
+function isClangFormatSupportedFilePath(filePath: string): boolean {
+  return CLANG_FORMAT_FILE_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+async function formatCodeContentWithClangFormat(filePath: string, content: string): Promise<{
   ok: boolean;
   formatted?: string;
   formatterCommand?: string;
@@ -1395,7 +1411,7 @@ app.whenReady().then(() => {
     return { ok: true };
   });
 
-  ipcMain.handle('file:format-ino', async (_event, payload: { filePath: string; content: string }) => {
+  ipcMain.handle('file:format-code', async (_event, payload: { filePath: string; content: string }) => {
     const filePath = typeof payload?.filePath === 'string' ? payload.filePath.trim() : '';
     if (!filePath) {
       return { ok: false, error: 'filePath is required.' };
@@ -1405,9 +1421,13 @@ app.whenReady().then(() => {
       return { ok: false, error: 'content is required.' };
     }
 
-    const result = await formatInoContentWithClangFormat(filePath, payload.content);
+    if (!isClangFormatSupportedFilePath(filePath)) {
+      return { ok: false, error: 'Unsupported file type for clang-format.' };
+    }
+
+    const result = await formatCodeContentWithClangFormat(filePath, payload.content);
     if (!result.ok) {
-      return { ok: false, error: result.error ?? 'Failed to format .ino file.' };
+      return { ok: false, error: result.error ?? 'Failed to format code file.' };
     }
 
     return { ok: true, formatted: result.formatted };

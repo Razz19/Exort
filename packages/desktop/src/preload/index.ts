@@ -571,8 +571,8 @@ const electronAPI = {
     }>,
   writeFile: (payload: { filePath: string; content: string }) =>
     ipcRenderer.invoke('file:write', payload) as Promise<{ ok: boolean }>,
-  formatInoFile: (payload: { filePath: string; content: string }) =>
-    ipcRenderer.invoke('file:format-ino', payload) as Promise<{
+  formatCodeFile: (payload: { filePath: string; content: string }) =>
+    ipcRenderer.invoke('file:format-code', payload) as Promise<{
       ok: boolean;
       formatted?: string;
       error?: string;

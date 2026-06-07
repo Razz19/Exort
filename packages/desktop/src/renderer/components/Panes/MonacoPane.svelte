@@ -148,6 +148,24 @@
     return 'plaintext';
   }
 
+  function canFormatWithClangFormatFallback(file: string | null, languageId: string): boolean {
+    if (languageId !== "cpp" || !file) return false;
+
+    const normalizedPath = file.toLowerCase();
+    return (
+      normalizedPath.endsWith(".c") ||
+      normalizedPath.endsWith(".cc") ||
+      normalizedPath.endsWith(".cpp") ||
+      normalizedPath.endsWith(".cxx") ||
+      normalizedPath.endsWith(".h") ||
+      normalizedPath.endsWith(".hh") ||
+      normalizedPath.endsWith(".hpp") ||
+      normalizedPath.endsWith(".hxx") ||
+      normalizedPath.endsWith(".ino") ||
+      normalizedPath.endsWith(".ipp")
+    );
+  }
+
   function ensureCustomThemes(): void {
     if (customThemesRegistered) return;
     monaco.editor.defineTheme("arduino-dark", ARDUINO_DARK_THEME);
@@ -194,13 +212,9 @@
         if (!formatAction) return;
 
         if (!formatAction.isSupported()) {
-          const normalizedPath = filePath?.toLowerCase() ?? "";
-          const canUseInoFallback =
-            normalizedPath.endsWith(".ino") && languageId === "cpp";
-
-          if (canUseInoFallback && model) {
+          if (canFormatWithClangFormatFallback(filePath, languageId) && model) {
             try {
-              const result = await window.electronAPI.formatInoFile({
+              const result = await window.electronAPI.formatCodeFile({
                 filePath: filePath ?? "",
                 content: model.getValue(),
               });
@@ -210,7 +224,7 @@
               if (result.formatted === model.getValue()) return;
 
               activeEditor.pushUndoStop();
-              activeEditor.executeEdits("editor.formatInoFallback", [
+              activeEditor.executeEdits("editor.formatCodeFallback", [
                 {
                   range: model.getFullModelRange(),
                   text: result.formatted,
