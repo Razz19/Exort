@@ -116,6 +116,11 @@
   type EditorHotkeyActions = {
     format: () => Promise<void>;
   };
+  type PendingPlanApproval = {
+    messageId: string;
+    planText: string;
+    createdAt: string;
+  };
 
   function buildEffectiveBoardFqbn(
     baseFqbn: string,
@@ -170,6 +175,9 @@
   let workspaceContextUsageByRoot = $state<Record<string, WorkspaceContextUsage>>({});
   let pendingOutputErrorContextByRoot = $state<
     Record<string, PendingOutputErrorContext | null>
+  >({});
+  let pendingPlanApprovalByRoot = $state<
+    Record<string, PendingPlanApproval | null>
   >({});
   let workspaceSyncStateByRoot = $state<Record<string, AgentSyncState>>({});
   let historyLoadedSessionKeyByRoot = $state<Record<string, string>>({});
@@ -372,6 +380,10 @@
   let activePendingOutputErrorContext = $derived.by(() => {
     if (!activeWorkspace) return null;
     return pendingOutputErrorContextByRoot[activeWorkspace.rootPath] ?? null;
+  });
+  let activePendingPlanApproval = $derived.by(() => {
+    if (!activeWorkspace) return null;
+    return pendingPlanApprovalByRoot[activeWorkspace.rootPath] ?? null;
   });
 
   function sumTokenUsage(tokens: OpenCodeTokenUsage | undefined): number {
@@ -1482,6 +1494,9 @@
 
     patchAppState({ activeWorkspaceRoot: workspace.rootPath });
     touchRecentWorkspace(workspace.rootPath);
+    if (selectedSessionId) {
+      clearPendingPlanApproval(workspace.rootPath);
+    }
     persistWorkspaceMetadata(
       workspace,
       selectedSessionId ? { currentSessionId: selectedSessionId } : {},
@@ -1580,6 +1595,8 @@
     delete nextPendingOutputErrorContextByRoot[workspace.rootPath];
     pendingOutputErrorContextByRoot = nextPendingOutputErrorContextByRoot;
 
+    removePendingPlanApproval(workspace.rootPath);
+
     const nextWorkspaceSyncStateByRoot = { ...workspaceSyncStateByRoot };
     delete nextWorkspaceSyncStateByRoot[workspace.rootPath];
     workspaceSyncStateByRoot = nextWorkspaceSyncStateByRoot;
@@ -1625,6 +1642,30 @@
       messages = next;
     }
     refreshWorkspaceContextUsage(workspaceRoot, next);
+  }
+
+  function clearPendingPlanApproval(workspaceRoot: string): void {
+    if (!pendingPlanApprovalByRoot[workspaceRoot]) return;
+    pendingPlanApprovalByRoot = {
+      ...pendingPlanApprovalByRoot,
+      [workspaceRoot]: null,
+    };
+  }
+
+  function setPendingPlanApproval(
+    workspaceRoot: string,
+    approval: PendingPlanApproval,
+  ): void {
+    pendingPlanApprovalByRoot = {
+      ...pendingPlanApprovalByRoot,
+      [workspaceRoot]: approval,
+    };
+  }
+
+  function removePendingPlanApproval(workspaceRoot: string): void {
+    const next = { ...pendingPlanApprovalByRoot };
+    delete next[workspaceRoot];
+    pendingPlanApprovalByRoot = next;
   }
 
   function getMessagesForWorkspaceRoot(workspaceRoot: string): ChatItem[] {
@@ -2008,6 +2049,7 @@
       }
 
       setMessagesForWorkspaceRoot(workspace.rootPath, []);
+      clearPendingPlanApproval(workspace.rootPath);
       persistWorkspaceMetadata(workspace, {
         currentSessionId: result.sessionId ?? null,
       });
@@ -2951,6 +2993,7 @@
       workspaceManagerSnapshot.byRoot[turnWorkspaceRoot]?.currentSessionId,
     );
     const syncSessionId = getHistoryCacheSessionKey(turnSessionId);
+    clearPendingPlanApproval(turnWorkspaceRoot);
     agentBusy = true;
     const thinkingLevel = appStateSnapshot.agent.thinkingLevel ?? "default";
     let turnModelOverride:
@@ -3019,6 +3062,8 @@
     let promptEchoFiltered = false;
     let lastContentPartId: string | null = null;
     let lastContentPartKind: "reasoning" | "text" | null = null;
+    let turnSucceeded = false;
+    let turnHadRuntimeError = false;
 
     const upsertStep = (step: AgentStep) => {
       updateMessageSteps(
@@ -3276,6 +3321,7 @@
       }
 
       if (streamEvent.type === "error") {
+        turnHadRuntimeError = true;
         finalizeRunningAuxSteps(turnWorkspaceRoot, assistantMessageId, "error");
         appendStep({
           id: `error:${crypto.randomUUID()}`,
@@ -3332,6 +3378,7 @@
       if (!run.ok) {
         throw new Error(run.error ?? "Agent runtime failed");
       }
+      turnSucceeded = true;
       if (completion.trim().length === 0) {
         const history = await window.electronAPI.getAgentHistory({
           workspaceRoot: turnWorkspaceRoot,
@@ -3357,6 +3404,19 @@
         }
       }
 
+      const completedPlanText = completion.trim();
+      if (
+        turnAgent === "plan" &&
+        turnSucceeded &&
+        !turnHadRuntimeError &&
+        completedPlanText.length > 0
+      ) {
+        setPendingPlanApproval(turnWorkspaceRoot, {
+          messageId: assistantMessageId,
+          planText: completedPlanText,
+          createdAt: new Date().toISOString(),
+        });
+      }
     } catch (error) {
       const cancelledByUser = stoppingAgentTurn;
       const reason =
@@ -3391,6 +3451,47 @@
         () => undefined,
       );
     }
+  }
+
+  async function handleImplementPendingPlan(): Promise<void> {
+    if (!activeWorkspace || agentBusy) return;
+    const workspace = activeWorkspace;
+    const pendingPlan = pendingPlanApprovalByRoot[workspace.rootPath];
+    const planText = pendingPlan?.planText.trim();
+    if (!planText) return;
+
+    clearPendingPlanApproval(workspace.rootPath);
+    handleAgentModeChange("build");
+    await sendPrompt({
+      prompt: `Implement this plan exactly:\n\n${planText}`,
+      attachments: [],
+      mode: "build",
+    });
+  }
+
+  async function handleRevisePendingPlan(feedback: string): Promise<void> {
+    if (!activeWorkspace || agentBusy) return;
+    const workspace = activeWorkspace;
+    const pendingPlan = pendingPlanApprovalByRoot[workspace.rootPath];
+    const planText = pendingPlan?.planText.trim();
+    const feedbackText = feedback.trim();
+    if (!planText || !feedbackText) return;
+
+    clearPendingPlanApproval(workspace.rootPath);
+    handleAgentModeChange("plan");
+    await sendPrompt({
+      prompt:
+        `Revise the current plan based on this feedback. Do not implement yet.\n\n` +
+        `Feedback:\n${feedbackText}\n\n` +
+        `Current plan:\n${planText}`,
+      attachments: [],
+      mode: "plan",
+    });
+  }
+
+  function handleDismissPendingPlan(): void {
+    if (!activeWorkspace) return;
+    clearPendingPlanApproval(activeWorkspace.rootPath);
   }
 
   async function stopAgentTurn(): Promise<void> {
@@ -3495,6 +3596,10 @@
             onOpenFile={openFile}
             pendingOutputErrorContext={activePendingOutputErrorContext}
             onDismissPendingOutputErrorContext={handleDismissPendingOutputErrorContext}
+            pendingPlanApproval={activePendingPlanApproval}
+            onImplementPendingPlan={handleImplementPendingPlan}
+            onRevisePendingPlan={handleRevisePendingPlan}
+            onDismissPendingPlan={handleDismissPendingPlan}
           />
         </div>
       {/if}

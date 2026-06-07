@@ -10,6 +10,7 @@
   import ChatComposer from "./ChatComposer.svelte";
   import ChatHeader from "./ChatHeader.svelte";
   import HistoryLoading from "./HistoryLoading.svelte";
+  import PlanApprovalPrompt from "./PlanApprovalPrompt.svelte";
   import ChatTimeline from "./ChatTimeline.svelte";
   import {
     filePathFromChatClickTarget,
@@ -24,6 +25,11 @@
     contextLimit: number;
     outputLimit: number;
   } | null;
+  type PendingPlanApproval = {
+    messageId: string;
+    planText: string;
+    createdAt: string;
+  };
 
   let {
     messages,
@@ -51,6 +57,10 @@
     onOpenFile,
     pendingOutputErrorContext = null,
     onDismissPendingOutputErrorContext = () => {},
+    pendingPlanApproval = null,
+    onImplementPendingPlan,
+    onRevisePendingPlan,
+    onDismissPendingPlan,
   } =
     $props<{
       messages: ChatItem[];
@@ -78,6 +88,10 @@
       onOpenFile?: (filePath: string) => Promise<void> | void;
       pendingOutputErrorContext?: PendingOutputErrorContext | null;
       onDismissPendingOutputErrorContext?: () => void;
+      pendingPlanApproval?: PendingPlanApproval | null;
+      onImplementPendingPlan?: () => Promise<void> | void;
+      onRevisePendingPlan?: (feedback: string) => Promise<void> | void;
+      onDismissPendingPlan?: () => void;
     }>();
 
   function normalizePathSeparators(value: string): string {
@@ -245,6 +259,15 @@
       {onQuestionReject}
       {onOpenFile}
     />
+    {#if pendingPlanApproval && onImplementPendingPlan && onRevisePendingPlan && onDismissPendingPlan}
+      <PlanApprovalPrompt
+        planText={pendingPlanApproval.planText}
+        {busy}
+        onImplement={onImplementPendingPlan}
+        onRevise={onRevisePendingPlan}
+        onDismiss={onDismissPendingPlan}
+      />
+    {/if}
     <ChatComposer
       {activeWorkspaceRoot}
       {busy}

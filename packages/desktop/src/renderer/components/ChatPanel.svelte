@@ -16,6 +16,11 @@
     contextLimit: number;
     outputLimit: number;
   } | null;
+  type PendingPlanApproval = {
+    messageId: string;
+    planText: string;
+    createdAt: string;
+  };
 
   let props = $props<{
     messages: ChatItem[];
@@ -39,6 +44,10 @@
     historyLoading?: boolean;
     pendingOutputErrorContext?: PendingOutputErrorContext | null;
     onDismissPendingOutputErrorContext?: () => void;
+    pendingPlanApproval?: PendingPlanApproval | null;
+    onImplementPendingPlan?: () => Promise<void> | void;
+    onRevisePendingPlan?: (feedback: string) => Promise<void> | void;
+    onDismissPendingPlan?: () => void;
     onOpenFile?: (filePath: string) => Promise<void> | void;
     onUndoChangedFiles?: (
       files: string[],
