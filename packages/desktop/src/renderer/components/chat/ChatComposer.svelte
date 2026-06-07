@@ -26,10 +26,16 @@
     OpenCodeModelCatalogProvider,
     SelectedModelRef,
   } from "../../lib/types";
+  import PlanApprovalPrompt from "./PlanApprovalPrompt.svelte";
   import { Bot, Brain } from "lucide-svelte";
 
   type ComposerAttachment = ChatAttachment & {
     previewUrl?: string;
+  };
+  type PendingPlanApproval = {
+    messageId: string;
+    planText: string;
+    createdAt: string;
   };
 
   let {
@@ -40,6 +46,10 @@
     onAgentModeChange,
     pendingOutputErrorContext = null,
     onDismissPendingOutputErrorContext = () => {},
+    pendingPlanApproval = null,
+    onImplementPendingPlan,
+    onRevisePendingPlan,
+    onDismissPendingPlan,
     onSend,
     onStop,
   } = $props<{
@@ -50,6 +60,10 @@
     onAgentModeChange: (mode: "build" | "plan") => void;
     pendingOutputErrorContext?: PendingOutputErrorContext | null;
     onDismissPendingOutputErrorContext?: () => void;
+    pendingPlanApproval?: PendingPlanApproval | null;
+    onImplementPendingPlan?: () => Promise<void> | void;
+    onRevisePendingPlan?: (feedback: string) => Promise<void> | void;
+    onDismissPendingPlan?: () => void;
     onSend: (payload: ChatSendPayload) => Promise<void> | void;
     onStop: () => Promise<void> | void;
   }>();
@@ -117,6 +131,12 @@
       (prompt.trim().length > 0 ||
         attachments.length > 0 ||
         pendingOutputErrorContext !== null),
+  );
+  let hasPendingPlanApproval = $derived(
+    pendingPlanApproval !== null &&
+      !!onImplementPendingPlan &&
+      !!onRevisePendingPlan &&
+      !!onDismissPendingPlan,
   );
   let selectedModelEntry = $derived.by(() =>
     findSelectedModel(catalogProviders, selectedModel),
@@ -533,93 +553,102 @@
     role="group"
     aria-label="Chat composer"
   >
-    <input
-      class="hidden"
-      bind:this={fileInputEl}
-      type="file"
-      multiple
-      onchange={handleFileInputChange}
-      aria-label="Attach files"
-    />
+    {#if hasPendingPlanApproval && pendingPlanApproval && onImplementPendingPlan && onRevisePendingPlan && onDismissPendingPlan}
+      <PlanApprovalPrompt
+        planText={pendingPlanApproval.planText}
+        {busy}
+        onImplement={onImplementPendingPlan}
+        onRevise={onRevisePendingPlan}
+        onDismiss={onDismissPendingPlan}
+      />
+    {:else}
+      <input
+        class="hidden"
+        bind:this={fileInputEl}
+        type="file"
+        multiple
+        onchange={handleFileInputChange}
+        aria-label="Attach files"
+      />
 
-    {#if attachments.length > 0 || pendingOutputErrorContext}
-      <div class="mb-2 flex flex-wrap gap-2">
-        {#if pendingOutputErrorContext}
-          <div
-            class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border bg-dark-bg px-2
-            py-1 text-xs text-dark-fg2"
-            title={pendingOutputErrorContext.text}
-          >
-            <span
-              class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg text-dark-fg3"
-              aria-hidden="true"
+      {#if attachments.length > 0 || pendingOutputErrorContext}
+        <div class="mb-2 flex flex-wrap gap-2">
+          {#if pendingOutputErrorContext}
+            <div
+              class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border bg-dark-bg px-2
+              py-1 text-xs text-dark-fg2"
+              title={pendingOutputErrorContext.text}
             >
-              <MessageCircleWarning class="h-4 w-4" />
-            </span>
-            <span class="min-w-0">
-              <span class="block max-w-44 truncate text-dark-fg1">
-                {pendingOutputErrorContext.label}
-              </span>
-              <span class="block max-w-40 truncate text-[10px] text-dark-fg4">
-                {summarizeOutputError(pendingOutputErrorContext.text)}
-              </span>
-            </span>
-            <button
-              type="button"
-              class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors
-               hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-              onclick={() => onDismissPendingOutputErrorContext()}
-              aria-label="Remove output error context"
-              title="Remove"
-            >
-              <X class="h-3.5 w-3.5" />
-            </button>
-          </div>
-        {/if}
-
-        {#each attachments as attachment (attachment.id)}
-          <div
-            class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border
-             bg-dark-bg px-2 py-1 text-xs text-dark-fg2"
-            title={attachment.path}
-          >
-            {#if attachment.previewUrl}
-              <img
-                class="h-7 w-7 shrink-0 rounded object-cover"
-                src={attachment.previewUrl}
-                alt={attachment.name}
-              />
-            {:else}
               <span
-                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg1 text-dark-fg3"
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg text-dark-fg3"
                 aria-hidden="true"
               >
-                <FileText class="h-4 w-4" />
+                <MessageCircleWarning class="h-4 w-4" />
               </span>
-            {/if}
-            <span class="min-w-0">
-              <span class="block max-w-40 truncate text-dark-fg1">
-                {attachment.name}
+              <span class="min-w-0">
+                <span class="block max-w-44 truncate text-dark-fg1">
+                  {pendingOutputErrorContext.label}
+                </span>
+                <span class="block max-w-40 truncate text-[10px] text-dark-fg4">
+                  {summarizeOutputError(pendingOutputErrorContext.text)}
+                </span>
               </span>
-              <span class="block text-[10px] text-dark-fg4">
-                {formatFileSize(attachment.size)}
-              </span>
-            </span>
-            <button
-              type="button"
-              class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-              onclick={() => removeAttachment(attachment.id)}
-              aria-label={`Remove ${attachment.name}`}
-              title="Remove"
-            >
-              <X class="h-3.5 w-3.5" />
-            </button>
-          </div>
-        {/each}
-      </div>
-    {/if}
+              <button
+                type="button"
+                class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors
+                 hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                onclick={() => onDismissPendingOutputErrorContext()}
+                aria-label="Remove output error context"
+                title="Remove"
+              >
+                <X class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          {/if}
 
-    <textarea
+          {#each attachments as attachment (attachment.id)}
+            <div
+              class="group inline-flex max-w-full items-center gap-2 rounded-md border border-dark-border
+               bg-dark-bg px-2 py-1 text-xs text-dark-fg2"
+              title={attachment.path}
+            >
+              {#if attachment.previewUrl}
+                <img
+                  class="h-7 w-7 shrink-0 rounded object-cover"
+                  src={attachment.previewUrl}
+                  alt={attachment.name}
+                />
+              {:else}
+                <span
+                  class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg1 text-dark-fg3"
+                  aria-hidden="true"
+                >
+                  <FileText class="h-4 w-4" />
+                </span>
+              {/if}
+              <span class="min-w-0">
+                <span class="block max-w-40 truncate text-dark-fg1">
+                  {attachment.name}
+                </span>
+                <span class="block text-[10px] text-dark-fg4">
+                  {formatFileSize(attachment.size)}
+                </span>
+              </span>
+              <button
+                type="button"
+                class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                onclick={() => removeAttachment(attachment.id)}
+                aria-label={`Remove ${attachment.name}`}
+                title="Remove"
+              >
+                <X class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      <textarea
       class="chat-timeline-scroll allow-text-selection -mx-3 w-[calc(100%+1.5rem)] resize-none border-0 bg-transparent px-3 py-0 text-sm text-dark-fg placeholder:text-dark-fg4 focus:outline-none focus:ring-0"
       bind:this={textareaEl}
       bind:value={prompt}
@@ -633,9 +662,9 @@
           submit();
         }
       }}
-    ></textarea>
+      ></textarea>
 
-    <div class="mt-1.5 flex min-w-0 items-center justify-between gap-2">
+      <div class="mt-1.5 flex min-w-0 items-center justify-between gap-2">
       <div class="flex min-w-0 flex-1 items-center gap-1">
         <button
           type="button"
@@ -874,5 +903,6 @@
         {/if}
       </div>
     </div>
+    {/if}
   </div>
 </div>

@@ -3463,7 +3463,7 @@
     clearPendingPlanApproval(workspace.rootPath);
     handleAgentModeChange("build");
     await sendPrompt({
-      prompt: `Implement this plan exactly:\n\n${planText}`,
+      prompt: "Implement the plan.",
       attachments: [],
       mode: "build",
     });

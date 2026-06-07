@@ -10,7 +10,6 @@
   import ChatComposer from "./ChatComposer.svelte";
   import ChatHeader from "./ChatHeader.svelte";
   import HistoryLoading from "./HistoryLoading.svelte";
-  import PlanApprovalPrompt from "./PlanApprovalPrompt.svelte";
   import ChatTimeline from "./ChatTimeline.svelte";
   import {
     filePathFromChatClickTarget,
@@ -259,15 +258,6 @@
       {onQuestionReject}
       {onOpenFile}
     />
-    {#if pendingPlanApproval && onImplementPendingPlan && onRevisePendingPlan && onDismissPendingPlan}
-      <PlanApprovalPrompt
-        planText={pendingPlanApproval.planText}
-        {busy}
-        onImplement={onImplementPendingPlan}
-        onRevise={onRevisePendingPlan}
-        onDismiss={onDismissPendingPlan}
-      />
-    {/if}
     <ChatComposer
       {activeWorkspaceRoot}
       {busy}
@@ -278,6 +268,10 @@
       {onAgentModeChange}
       {pendingOutputErrorContext}
       {onDismissPendingOutputErrorContext}
+      {pendingPlanApproval}
+      {onImplementPendingPlan}
+      {onRevisePendingPlan}
+      {onDismissPendingPlan}
     />
   {:else if bootstrapping}
     <HistoryLoading />
