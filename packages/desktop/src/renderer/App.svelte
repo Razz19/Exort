@@ -3482,8 +3482,7 @@
     await sendPrompt({
       prompt:
         `Revise the current plan based on this feedback. Do not implement yet.\n\n` +
-        `Feedback:\n${feedbackText}\n\n` +
-        `Current plan:\n${planText}`,
+        feedbackText,
       attachments: [],
       mode: "plan",
     });
