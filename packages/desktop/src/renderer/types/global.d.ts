@@ -89,7 +89,7 @@ type EmbeddedProjectInfo =
   | {
       kind: 'platformio';
       workspaceRoot: string;
-      activeFilePath: string;
+      activeFilePath: string | null;
       projectRoot: string;
       platformioIniPath: string;
       relativeProjectRoot: string;
@@ -101,7 +101,7 @@ type EmbeddedProjectInfo =
   | {
       kind: 'arduino';
       workspaceRoot: string;
-      activeFilePath: string;
+      activeFilePath: string | null;
       sketchPath: string;
       sketchDirectory: string;
       relativeSketchPath: string;
@@ -606,11 +606,11 @@ declare global {
       cancelArduinoUpload: (requestId: string) => Promise<{ ok: boolean; cancelled: boolean; error?: string }>;
       detectEmbeddedProject: (payload: {
         workspaceRoot: string;
-        activeFilePath: string;
+        activeFilePath?: string | null;
       }) => Promise<{ ok: boolean; project?: EmbeddedProjectInfo; error?: string }>;
       listPlatformioEnvironments: (payload: {
         workspaceRoot: string;
-        activeFilePath: string;
+        activeFilePath?: string | null;
       }) => Promise<{
         ok: boolean;
         target?: PlatformioProjectTarget;
@@ -620,13 +620,13 @@ declare global {
       compilePlatformioProject: (payload: {
         requestId: string;
         workspaceRoot: string;
-        activeFilePath: string;
+        activeFilePath?: string | null;
         environment?: string;
       }) => Promise<{ ok: boolean; result?: PlatformioCompileResult; error?: string }>;
       uploadPlatformioProject: (payload: {
         requestId: string;
         workspaceRoot: string;
-        activeFilePath: string;
+        activeFilePath?: string | null;
         environment?: string;
         port?: string;
       }) => Promise<{ ok: boolean; result?: PlatformioUploadResult; error?: string }>;

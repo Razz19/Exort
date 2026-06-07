@@ -211,7 +211,6 @@
     if (uploadBusy) return "Upload in progress";
     if (compileBusy) return "Compile in progress";
     if (!activeWorkspaceRoot) return "Open a workspace first";
-    if (!activeFilePath) return "Open a file first";
     if (activeEmbeddedProject?.kind === "unknown")
       return activeEmbeddedProject.reason;
     if (activeProjectKind === "unknown") return "Detecting embedded project";
@@ -227,7 +226,6 @@
     if (uploadBusy) return "Cancel current upload";
     if (compileBusy) return "Compile is in progress";
     if (!activeWorkspaceRoot) return "Open a workspace first";
-    if (!activeFilePath) return "Open a file first";
     if (activeEmbeddedProject?.kind === "unknown")
       return activeEmbeddedProject.reason;
     if (activeProjectKind === "unknown") return "Detecting embedded project";
@@ -774,10 +772,17 @@
     await Promise.all([refreshPorts(), refreshBoards()]);
   }
 
+  function getActiveProjectRequestPath(): string | null {
+    if (activeFilePath) return activeFilePath;
+    if (activeEmbeddedProject?.kind === "arduino") return activeEmbeddedProject.sketchPath;
+    return activeEmbeddedProject?.activeFilePath ?? null;
+  }
+
   async function compileActiveSketch(): Promise<void> {
-    if (compileDisabled || !activeWorkspaceRoot || !activeFilePath) return;
+    if (compileDisabled || !activeWorkspaceRoot) return;
 
     const requestId = crypto.randomUUID();
+    const requestFilePath = getActiveProjectRequestPath();
     compileBusy = true;
     activeOutputRequestIds.add(requestId);
     emitStart(requestId, "compile");
@@ -823,7 +828,7 @@
           ? await window.electronAPI.compilePlatformioProject({
               requestId,
               workspaceRoot: activeWorkspaceRoot,
-              activeFilePath,
+              activeFilePath: requestFilePath,
               environment: platformioResolvedEnv || undefined,
             })
           : await window.electronAPI.compileArduinoOpenSketch({
@@ -832,7 +837,7 @@
               activeFilePath:
                 activeEmbeddedProject?.kind === "arduino"
                   ? activeEmbeddedProject.sketchPath
-                  : activeFilePath,
+                  : requestFilePath ?? "",
               fqbn: effectiveBoardFqbn,
             });
 
@@ -889,9 +894,10 @@
   }
 
   async function uploadActiveSketch(): Promise<void> {
-    if (uploadStartDisabled || !activeWorkspaceRoot || !activeFilePath) return;
+    if (uploadStartDisabled || !activeWorkspaceRoot) return;
 
     const requestId = crypto.randomUUID();
+    const requestFilePath = getActiveProjectRequestPath();
     uploadBusy = true;
     uploadRequestId = requestId;
     uploadBackend =
@@ -910,7 +916,7 @@
           ? await window.electronAPI.uploadPlatformioProject({
               requestId,
               workspaceRoot: activeWorkspaceRoot,
-              activeFilePath,
+              activeFilePath: requestFilePath,
               environment: platformioResolvedEnv || undefined,
               port: selectedPort || undefined,
             })
@@ -920,7 +926,7 @@
               activeFilePath:
                 activeEmbeddedProject?.kind === "arduino"
                   ? activeEmbeddedProject.sketchPath
-                  : activeFilePath,
+                  : requestFilePath ?? "",
               fqbn: effectiveBoardFqbn,
               port: selectedPort,
             });

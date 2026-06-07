@@ -86,7 +86,7 @@ export type PlatformioUploadResult = {
 type PlatformioCompilePayload = {
   requestId: string;
   workspaceRoot: string;
-  activeFilePath: string;
+  activeFilePath?: string | null;
   environment?: string;
 };
 
@@ -311,16 +311,22 @@ async function resolvePlatformioTarget(workspaceRootInput: unknown, activeFilePa
   const activeFilePathRaw = asNonBlankString(activeFilePathInput);
   const workspaceRoot = workspaceRootRaw ? path.resolve(workspaceRootRaw) : '';
   if (!workspaceRootRaw) return { ok: false, error: 'workspaceRoot is required.', workspaceRoot };
-  if (!activeFilePathRaw) return { ok: false, error: 'activeFilePath is required.', workspaceRoot };
 
-  const activeFilePath = path.resolve(activeFilePathRaw);
-  if (!isPathInsideWorkspace(workspaceRoot, activeFilePath)) {
-    return { ok: false, error: 'Active file must be inside the current workspace.', workspaceRoot };
+  let activeFilePath: string | null = null;
+  if (activeFilePathRaw) {
+    activeFilePath = path.resolve(activeFilePathRaw);
+    if (!isPathInsideWorkspace(workspaceRoot, activeFilePath)) {
+      return { ok: false, error: 'Active file must be inside the current workspace.', workspaceRoot };
+    }
   }
 
   const detected = await detectEmbeddedProject(workspaceRoot, activeFilePath);
   if (detected.kind !== 'platformio') {
-    return { ok: false, error: 'Active file is not inside a PlatformIO project.', workspaceRoot };
+    return {
+      ok: false,
+      error: detected.kind === 'unknown' ? detected.reason : 'Detected project is not a PlatformIO project.',
+      workspaceRoot
+    };
   }
 
   return { ok: true, workspaceRoot, info: detected };

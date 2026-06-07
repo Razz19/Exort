@@ -256,7 +256,7 @@
     activeWorkspaceTreeFingerprint;
 
     const requestId = ++embeddedProjectDetectionRequestId;
-    if (!workspaceRoot || !filePath) {
+    if (!workspaceRoot) {
       activeEmbeddedProject = null;
       return;
     }

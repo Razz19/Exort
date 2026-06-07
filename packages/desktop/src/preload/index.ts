@@ -122,7 +122,7 @@ type EmbeddedProjectInfo =
   | {
       kind: 'platformio';
       workspaceRoot: string;
-      activeFilePath: string;
+      activeFilePath: string | null;
       projectRoot: string;
       platformioIniPath: string;
       relativeProjectRoot: string;
@@ -134,7 +134,7 @@ type EmbeddedProjectInfo =
   | {
       kind: 'arduino';
       workspaceRoot: string;
-      activeFilePath: string;
+      activeFilePath: string | null;
       sketchPath: string;
       sketchDirectory: string;
       relativeSketchPath: string;
@@ -680,13 +680,13 @@ const electronAPI = {
       cancelled: boolean;
       error?: string;
     }>,
-  detectEmbeddedProject: (payload: { workspaceRoot: string; activeFilePath: string }) =>
+  detectEmbeddedProject: (payload: { workspaceRoot: string; activeFilePath?: string | null }) =>
     ipcRenderer.invoke('embedded:detect-active-project', payload) as Promise<{
       ok: boolean;
       project?: EmbeddedProjectInfo;
       error?: string;
     }>,
-  listPlatformioEnvironments: (payload: { workspaceRoot: string; activeFilePath: string }) =>
+  listPlatformioEnvironments: (payload: { workspaceRoot: string; activeFilePath?: string | null }) =>
     ipcRenderer.invoke('platformio:list-envs', payload) as Promise<{
       ok: boolean;
       target?: PlatformioProjectTarget;
@@ -696,7 +696,7 @@ const electronAPI = {
   compilePlatformioProject: (payload: {
     requestId: string;
     workspaceRoot: string;
-    activeFilePath: string;
+    activeFilePath?: string | null;
     environment?: string;
   }) =>
     ipcRenderer.invoke('platformio:compile-project', payload) as Promise<{
@@ -707,7 +707,7 @@ const electronAPI = {
   uploadPlatformioProject: (payload: {
     requestId: string;
     workspaceRoot: string;
-    activeFilePath: string;
+    activeFilePath?: string | null;
     environment?: string;
     port?: string;
   }) =>

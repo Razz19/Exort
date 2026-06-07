@@ -282,7 +282,7 @@ export type EmbeddedProjectInfo =
   | {
       kind: 'platformio';
       workspaceRoot: string;
-      activeFilePath: string;
+      activeFilePath: string | null;
       projectRoot: string;
       platformioIniPath: string;
       relativeProjectRoot: string;
@@ -294,7 +294,7 @@ export type EmbeddedProjectInfo =
   | {
       kind: 'arduino';
       workspaceRoot: string;
-      activeFilePath: string;
+      activeFilePath: string | null;
       sketchPath: string;
       sketchDirectory: string;
       relativeSketchPath: string;

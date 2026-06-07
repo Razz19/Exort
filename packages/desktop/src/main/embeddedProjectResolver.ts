@@ -6,7 +6,7 @@ export type EmbeddedProjectKind = 'arduino' | 'platformio' | 'unknown';
 export type PlatformioProjectInfo = {
   kind: 'platformio';
   workspaceRoot: string;
-  activeFilePath: string;
+  activeFilePath: string | null;
   projectRoot: string;
   platformioIniPath: string;
   relativeProjectRoot: string;
@@ -19,7 +19,7 @@ export type PlatformioProjectInfo = {
 export type ArduinoProjectInfo = {
   kind: 'arduino';
   workspaceRoot: string;
-  activeFilePath: string;
+  activeFilePath: string | null;
   sketchPath: string;
   sketchDirectory: string;
   relativeSketchPath: string;
@@ -85,6 +85,36 @@ async function findNearestPlatformioIni(workspaceRoot: string, startPath: string
   return null;
 }
 
+async function discoverPlatformioIniFiles(workspaceRoot: string): Promise<string[]> {
+  const queue = [workspaceRoot];
+  const discovered: string[] = [];
+
+  while (queue.length > 0 && discovered.length < MAX_DISCOVERED_SKETCHES) {
+    const current = queue.shift();
+    if (!current) break;
+
+    let entries: Dirent[] = [];
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      const entryPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (!shouldIgnoreDirectory(entry)) queue.push(entryPath);
+        continue;
+      }
+      if (!entry.isFile() || entry.name !== 'platformio.ini') continue;
+      discovered.push(entryPath);
+      if (discovered.length >= MAX_DISCOVERED_SKETCHES) break;
+    }
+  }
+
+  return discovered;
+}
+
 function stripIniInlineComment(value: string): string {
   let quote: '"' | "'" | null = null;
   for (let index = 0; index < value.length; index += 1) {
@@ -141,7 +171,7 @@ export function parsePlatformioIni(text: string): { envs: string[]; defaultEnvs:
 
 async function readPlatformioProject(
   workspaceRoot: string,
-  activeFilePath: string,
+  activeFilePath: string | null,
   platformioIniPath: string
 ): Promise<PlatformioProjectInfo> {
   const text = await fs.readFile(platformioIniPath, 'utf8');
@@ -196,7 +226,7 @@ async function discoverInoFiles(workspaceRoot: string): Promise<string[]> {
   return discovered;
 }
 
-function toArduinoInfo(workspaceRoot: string, activeFilePath: string, sketchPath: string): ArduinoProjectInfo {
+function toArduinoInfo(workspaceRoot: string, activeFilePath: string | null, sketchPath: string): ArduinoProjectInfo {
   const sketchDirectory = path.dirname(sketchPath);
   return {
     kind: 'arduino',
@@ -219,7 +249,39 @@ export async function detectEmbeddedProject(workspaceRootInput: unknown, activeF
 
   const workspaceRoot = path.resolve(workspaceRootRaw);
   if (!activeFilePathRaw) {
-    return { kind: 'unknown', workspaceRoot, activeFilePath: null, reason: 'Open a file first.' };
+    const rootPlatformioIniPath = path.join(workspaceRoot, 'platformio.ini');
+    if (await pathExists(rootPlatformioIniPath)) {
+      return readPlatformioProject(workspaceRoot, null, rootPlatformioIniPath);
+    }
+
+    const platformioIniFiles = await discoverPlatformioIniFiles(workspaceRoot);
+    if (platformioIniFiles.length === 1 && platformioIniFiles[0]) {
+      return readPlatformioProject(workspaceRoot, null, platformioIniFiles[0]);
+    }
+
+    if (platformioIniFiles.length > 1) {
+      return {
+        kind: 'unknown',
+        workspaceRoot,
+        activeFilePath: null,
+        reason: 'Multiple PlatformIO projects found. Open a file inside the target project.'
+      };
+    }
+
+    const discoveredInoFiles = await discoverInoFiles(workspaceRoot);
+    if (discoveredInoFiles.length === 1 && discoveredInoFiles[0]) {
+      return toArduinoInfo(workspaceRoot, null, discoveredInoFiles[0]);
+    }
+
+    return {
+      kind: 'unknown',
+      workspaceRoot,
+      activeFilePath: null,
+      reason:
+        discoveredInoFiles.length > 1
+          ? 'Multiple Arduino sketches found. Open the target .ino file.'
+          : 'No Arduino sketch or PlatformIO project detected in this workspace.'
+    };
   }
 
   const activeFilePath = path.resolve(activeFilePathRaw);

@@ -1778,7 +1778,7 @@ app.whenReady().then(() => {
       _event,
       payload: {
         workspaceRoot: string;
-        activeFilePath: string;
+        activeFilePath?: string | null;
       }
     ): Promise<{ ok: boolean; project?: EmbeddedProjectInfo; error?: string }> => {
       try {
@@ -1801,7 +1801,7 @@ app.whenReady().then(() => {
       _event,
       payload: {
         workspaceRoot: string;
-        activeFilePath: string;
+        activeFilePath?: string | null;
       }
     ): Promise<{
       ok: boolean;
