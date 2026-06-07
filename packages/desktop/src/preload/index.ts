@@ -360,6 +360,34 @@ type PlatformioUploadResult = {
   stderr?: string | null;
   error?: string;
 };
+type PlatformioCleanResult = {
+  ok: boolean;
+  status: 'cleaned' | 'clean_failed' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  errorSummary?: string[];
+  stdout?: string | null;
+  stderr?: string | null;
+};
+type PlatformioTestResult = {
+  ok: boolean;
+  status: 'tested' | 'test_failed' | 'test_cancelled' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  stdout?: string | null;
+  stderr?: string | null;
+  error?: string;
+};
 type RequirementId = 'opencode' | 'arduino-cli';
 type RequirementStatus = {
   id: RequirementId;
@@ -718,6 +746,34 @@ const electronAPI = {
     }>,
   cancelPlatformioUpload: (requestId: string) =>
     ipcRenderer.invoke('platformio:cancel-upload', requestId) as Promise<{
+      ok: boolean;
+      cancelled: boolean;
+      error?: string;
+    }>,
+  cleanPlatformioProject: (payload: {
+    requestId: string;
+    workspaceRoot: string;
+    activeFilePath?: string | null;
+    environment?: string;
+  }) =>
+    ipcRenderer.invoke('platformio:clean-project', payload) as Promise<{
+      ok: boolean;
+      result?: PlatformioCleanResult;
+      error?: string;
+    }>,
+  testPlatformioProject: (payload: {
+    requestId: string;
+    workspaceRoot: string;
+    activeFilePath?: string | null;
+    environment?: string;
+  }) =>
+    ipcRenderer.invoke('platformio:test-project', payload) as Promise<{
+      ok: boolean;
+      result?: PlatformioTestResult;
+      error?: string;
+    }>,
+  cancelPlatformioTest: (requestId: string) =>
+    ipcRenderer.invoke('platformio:cancel-test', requestId) as Promise<{
       ok: boolean;
       cancelled: boolean;
       error?: string;

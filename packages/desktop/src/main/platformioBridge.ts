@@ -83,6 +83,36 @@ export type PlatformioUploadResult = {
   error?: string;
 };
 
+export type PlatformioCleanResult = {
+  ok: boolean;
+  status: 'cleaned' | 'clean_failed' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  errorSummary?: string[];
+  stdout?: string | null;
+  stderr?: string | null;
+};
+
+export type PlatformioTestResult = {
+  ok: boolean;
+  status: 'tested' | 'test_failed' | 'test_cancelled' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  stdout?: string | null;
+  stderr?: string | null;
+  error?: string;
+};
+
 type PlatformioCompilePayload = {
   requestId: string;
   workspaceRoot: string;
@@ -107,6 +137,14 @@ type PlatformioUploadResponse =
       ok: false;
       error: string;
     };
+
+type PlatformioCleanResponse =
+  | { ok: true; result: PlatformioCleanResult }
+  | { ok: false; error: string };
+
+type PlatformioTestResponse =
+  | { ok: true; result: PlatformioTestResult }
+  | { ok: false; error: string };
 
 const MAX_OUTPUT_LENGTH = 12000;
 const MAX_ERROR_SUMMARY_LINES = 8;
@@ -188,11 +226,17 @@ function resolveEnvironment(info: PlatformioProjectInfo, requestedEnvironment: u
   return { ok: false, error: 'PlatformIO environment is required. Select one of the project environments first.' };
 }
 
-export function buildPlatformioRunArgs(projectRoot: string, environment?: string | null, target?: 'upload', uploadPort?: string | null): string[] {
+export function buildPlatformioRunArgs(projectRoot: string, environment?: string | null, target?: 'upload' | 'clean', uploadPort?: string | null): string[] {
   const args = ['run', '-d', projectRoot];
   if (environment) args.push('-e', environment);
   if (target) args.push('-t', target);
   if (uploadPort) args.push('--upload-port', uploadPort);
+  return args;
+}
+
+export function buildPlatformioTestArgs(projectRoot: string, environment?: string | null): string[] {
+  const args = ['test', '-d', projectRoot];
+  if (environment) args.push('-e', environment);
   return args;
 }
 
@@ -463,6 +507,125 @@ export async function uploadPlatformioProject(
       projectRoot: toRelative(target.workspaceRoot, target.info.projectRoot),
       environment: environment.value,
       port,
+      command,
+      exitCode: runResult.exitCode,
+      aborted: runResult.aborted,
+      stdout: asOutputValue(runResult.stdout),
+      stderr: asOutputValue(runResult.stderr),
+      error: runResult.error
+    }
+  };
+}
+
+export async function cleanPlatformioProject(
+  payload: PlatformioCompilePayload,
+  outputChunkCallback?: OutputChunkCallback
+): Promise<PlatformioCleanResponse> {
+  const requestId = asNonBlankString(payload.requestId);
+  if (!requestId) return { ok: false, error: 'requestId is required.' };
+
+  const target = await resolvePlatformioTarget(payload.workspaceRoot, payload.activeFilePath);
+  if (!target.ok) return { ok: false, error: target.error };
+
+  const environment = resolveEnvironment(target.info, payload.environment);
+  if (!environment.ok) {
+    return {
+      ok: true,
+      result: {
+        ok: false,
+        status: 'missing_input',
+        message: environment.error,
+        workspaceRoot: target.workspaceRoot,
+        projectRoot: toRelative(target.workspaceRoot, target.info.projectRoot),
+        environment: null,
+        aborted: false
+      }
+    };
+  }
+
+  const args = buildPlatformioRunArgs(target.info.projectRoot, environment.value, 'clean');
+  const runResult = await runPlatformio(args, target.workspaceRoot, undefined, outputChunkCallback);
+  const command = [runResult.command, ...args];
+  const errorSummary = extractErrorSummary(runResult.stdout, runResult.stderr);
+  const success = runResult.exitCode === 0 && !runResult.error;
+  const failureMessage =
+    errorSummary.length > 0
+      ? `PlatformIO clean failed with exit code ${runResult.exitCode ?? 'unknown'}. First error: ${errorSummary[0]}`
+      : `PlatformIO clean failed with exit code ${runResult.exitCode ?? 'unknown'}.`;
+
+  return {
+    ok: true,
+    result: {
+      ok: success,
+      status: success ? 'cleaned' : 'clean_failed',
+      message: success ? 'PlatformIO clean completed successfully.' : runResult.error ?? failureMessage,
+      workspaceRoot: target.workspaceRoot,
+      projectRoot: toRelative(target.workspaceRoot, target.info.projectRoot),
+      environment: environment.value,
+      command,
+      exitCode: runResult.exitCode,
+      aborted: runResult.aborted,
+      errorSummary: errorSummary.length > 0 ? errorSummary : undefined,
+      stdout: asOutputValue(runResult.stdout),
+      stderr: asOutputValue(runResult.stderr)
+    }
+  };
+}
+
+export async function testPlatformioProject(
+  payload: PlatformioCompilePayload,
+  signal: AbortSignal,
+  outputChunkCallback?: OutputChunkCallback
+): Promise<PlatformioTestResponse> {
+  const requestId = asNonBlankString(payload.requestId);
+  if (!requestId) return { ok: false, error: 'requestId is required.' };
+
+  const target = await resolvePlatformioTarget(payload.workspaceRoot, payload.activeFilePath);
+  if (!target.ok) return { ok: false, error: target.error };
+
+  const environment = resolveEnvironment(target.info, payload.environment);
+  if (!environment.ok) {
+    return {
+      ok: true,
+      result: {
+        ok: false,
+        status: 'missing_input',
+        message: environment.error,
+        workspaceRoot: target.workspaceRoot,
+        projectRoot: toRelative(target.workspaceRoot, target.info.projectRoot),
+        environment: null,
+        aborted: false
+      }
+    };
+  }
+
+  const args = buildPlatformioTestArgs(target.info.projectRoot, environment.value);
+  const runResult = await runPlatformio(args, target.workspaceRoot, signal, outputChunkCallback);
+  const command = [runResult.command, ...args];
+
+  let status: PlatformioTestResult['status'] = 'test_failed';
+  let message = `PlatformIO test failed with exit code ${runResult.exitCode ?? 'unknown'}.`;
+  if (runResult.aborted) {
+    status = 'test_cancelled';
+    message = 'Test cancelled.';
+  } else if (runResult.exitCode === 0 && !runResult.error) {
+    status = 'tested';
+    message = 'PlatformIO test completed successfully.';
+  } else if (runResult.error) {
+    message = runResult.error;
+  } else if (runResult.stderr.trim()) {
+    message = runResult.stderr.trim().split('\n').pop() ?? message;
+  }
+
+  return {
+    ok: true,
+    result: {
+      ok: status === 'tested',
+      status,
+      message,
+      workspaceRoot: target.workspaceRoot,
+      projectRoot: toRelative(target.workspaceRoot, target.info.projectRoot),
+      environment: environment.value,
       command,
       exitCode: runResult.exitCode,
       aborted: runResult.aborted,

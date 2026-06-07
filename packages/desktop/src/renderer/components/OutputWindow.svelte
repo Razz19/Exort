@@ -3,7 +3,9 @@
     AlertTriangle,
     ChevronDown,
     ChevronUp,
+    Eraser,
     FileOutput,
+    FlaskConical,
     Hammer,
     Lightbulb,
     Terminal,
@@ -31,6 +33,8 @@
   let runLogCount = $derived(run?.logs.length ?? 0);
   let operationLabel = $derived.by(() => {
     if (run?.operation === "upload") return "Upload";
+    if (run?.operation === "clean") return "Clean";
+    if (run?.operation === "test") return "Test";
     return "Compile";
   });
   let statusLabel = $derived.by(() => {
@@ -109,6 +113,10 @@
         <div class="flex min-w-0 items-center gap-2 text-xs text-dark-fg1">
           {#if run?.operation === "upload"}
             <Upload class="h-3.5 w-3.5 text-dark-aqua" />
+          {:else if run?.operation === "clean"}
+            <Eraser class="h-3.5 w-3.5 text-dark-aqua" />
+          {:else if run?.operation === "test"}
+            <FlaskConical class="h-3.5 w-3.5 text-dark-aqua" />
           {:else}
             <Hammer class="h-3.5 w-3.5 text-dark-aqua" />
           {/if}

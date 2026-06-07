@@ -356,6 +356,34 @@ type PlatformioUploadResult = {
   stderr?: string | null;
   error?: string;
 };
+type PlatformioCleanResult = {
+  ok: boolean;
+  status: 'cleaned' | 'clean_failed' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  errorSummary?: string[];
+  stdout?: string | null;
+  stderr?: string | null;
+};
+type PlatformioTestResult = {
+  ok: boolean;
+  status: 'tested' | 'test_failed' | 'test_cancelled' | 'missing_input';
+  message: string;
+  workspaceRoot: string;
+  projectRoot?: string;
+  environment?: string | null;
+  command?: string[];
+  exitCode?: number | null;
+  aborted?: boolean;
+  stdout?: string | null;
+  stderr?: string | null;
+  error?: string;
+};
 type RequirementId = 'opencode' | 'arduino-cli';
 type RequirementStatus = {
   id: RequirementId;
@@ -631,6 +659,19 @@ declare global {
         port?: string;
       }) => Promise<{ ok: boolean; result?: PlatformioUploadResult; error?: string }>;
       cancelPlatformioUpload: (requestId: string) => Promise<{ ok: boolean; cancelled: boolean; error?: string }>;
+      cleanPlatformioProject: (payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath?: string | null;
+        environment?: string;
+      }) => Promise<{ ok: boolean; result?: PlatformioCleanResult; error?: string }>;
+      testPlatformioProject: (payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath?: string | null;
+        environment?: string;
+      }) => Promise<{ ok: boolean; result?: PlatformioTestResult; error?: string }>;
+      cancelPlatformioTest: (requestId: string) => Promise<{ ok: boolean; cancelled: boolean; error?: string }>;
       serialConnect: (payload: { port: string; baudRate: number }) => Promise<{ ok: boolean; error?: string }>;
       serialDisconnect: (payload?: { reason?: string }) => Promise<{ ok: boolean; error?: string }>;
       serialSend: (payload: { text: string; appendNewline?: boolean }) => Promise<{ ok: boolean; error?: string }>;

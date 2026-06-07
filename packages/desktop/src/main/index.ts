@@ -47,11 +47,15 @@ import {
 } from './arduinoBridge.js';
 import { detectEmbeddedProject, type EmbeddedProjectInfo } from './embeddedProjectResolver.js';
 import {
+  cleanPlatformioProject,
   compilePlatformioProject,
   listPlatformioEnvironments,
+  testPlatformioProject,
   uploadPlatformioProject,
+  type PlatformioCleanResult,
   type PlatformioCompileResult,
   type PlatformioProjectTarget,
+  type PlatformioTestResult,
   type PlatformioUploadResult
 } from './platformioBridge.js';
 import {
@@ -144,7 +148,7 @@ type StoreSchema = {
 
 type ArduinoCommandOutputEnvelope = {
   requestId: string;
-  operation: 'compile' | 'upload';
+  operation: 'compile' | 'upload' | 'clean' | 'test';
   stream: 'stdout' | 'stderr';
   chunk: string;
 };
@@ -654,6 +658,7 @@ const APP_ICON_PATH = path.join(__dirname, '../../resources/exort_logo.png');
 const activeAgentTurns = new Map<string, AbortController>();
 const activeArduinoUploads = new Map<string, AbortController>();
 const activePlatformioUploads = new Map<string, AbortController>();
+const activePlatformioTests = new Map<string, AbortController>();
 type WatchedWorkspaceTree = {
   subscribers: Set<number>;
   watcher: FSWatcher;
@@ -1932,6 +1937,108 @@ app.whenReady().then(() => {
     }
 
     safeConsoleWrite('log', `[PlatformIOUpload] cancel requestId=${normalizedRequestId}`);
+    running.abort();
+    return { ok: true, cancelled: true };
+  });
+
+  ipcMain.handle(
+    'platformio:clean-project',
+    async (
+      event,
+      payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath: string;
+        environment?: string;
+      }
+    ): Promise<{ ok: boolean; result?: PlatformioCleanResult; error?: string }> => {
+      const requestId = payload.requestId?.trim();
+      if (!requestId) {
+        return { ok: false, error: 'requestId is required.' };
+      }
+
+      const emitOutput = (chunk: { stream: 'stdout' | 'stderr'; chunk: string }) => {
+        const envelope: ArduinoCommandOutputEnvelope = {
+          requestId,
+          operation: 'clean',
+          stream: chunk.stream,
+          chunk: chunk.chunk
+        };
+        event.sender.send('platformio:command-output', envelope);
+      };
+
+      safeConsoleWrite(
+        'log',
+        `[PlatformIOClean] start requestId=${requestId} env=${payload.environment ?? 'default'} file=${payload.activeFilePath ?? 'unknown'}`
+      );
+      const result = await cleanPlatformioProject(payload, emitOutput);
+      const status = result.ok ? result.result.status : 'error';
+      const exitCode = result.ok ? result.result.exitCode ?? 'null' : 'null';
+      safeConsoleWrite('log', `[PlatformIOClean] done requestId=${requestId} status=${status} exitCode=${exitCode}`);
+      return result;
+    }
+  );
+
+  ipcMain.handle(
+    'platformio:test-project',
+    async (
+      event,
+      payload: {
+        requestId: string;
+        workspaceRoot: string;
+        activeFilePath: string;
+        environment?: string;
+      }
+    ): Promise<{ ok: boolean; result?: PlatformioTestResult; error?: string }> => {
+      const requestId = payload.requestId?.trim();
+      if (!requestId) {
+        return { ok: false, error: 'requestId is required.' };
+      }
+
+      if (activePlatformioTests.has(requestId)) {
+        return { ok: false, error: `Test already running for requestId ${requestId}` };
+      }
+
+      const abortController = new AbortController();
+      activePlatformioTests.set(requestId, abortController);
+      safeConsoleWrite(
+        'log',
+        `[PlatformIOTest] start requestId=${requestId} env=${payload.environment ?? 'default'} file=${payload.activeFilePath ?? 'unknown'}`
+      );
+
+      try {
+        const emitOutput = (chunk: { stream: 'stdout' | 'stderr'; chunk: string }) => {
+          const envelope: ArduinoCommandOutputEnvelope = {
+            requestId,
+            operation: 'test',
+            stream: chunk.stream,
+            chunk: chunk.chunk
+          };
+          event.sender.send('platformio:command-output', envelope);
+        };
+        const result = await testPlatformioProject(payload, abortController.signal, emitOutput);
+        const status = result.ok ? result.result.status : 'error';
+        const exitCode = result.ok ? result.result.exitCode ?? 'null' : 'null';
+        safeConsoleWrite('log', `[PlatformIOTest] done requestId=${requestId} status=${status} exitCode=${exitCode}`);
+        return result;
+      } finally {
+        activePlatformioTests.delete(requestId);
+      }
+    }
+  );
+
+  ipcMain.handle('platformio:cancel-test', async (_event, requestId: string) => {
+    const normalizedRequestId = requestId?.trim();
+    if (!normalizedRequestId) {
+      return { ok: false, cancelled: false, error: 'requestId is required.' };
+    }
+
+    const running = activePlatformioTests.get(normalizedRequestId);
+    if (!running) {
+      return { ok: false, cancelled: false, error: 'No active PlatformIO test for requestId' };
+    }
+
+    safeConsoleWrite('log', `[PlatformIOTest] cancel requestId=${normalizedRequestId}`);
     running.abort();
     return { ok: true, cancelled: true };
   });

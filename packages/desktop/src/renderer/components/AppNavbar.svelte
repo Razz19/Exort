@@ -3,6 +3,8 @@
   import { SvelteSet } from "svelte/reactivity";
   import {
     ChevronDown,
+    Eraser,
+    FlaskConical,
     Loader,
     OctagonX,
     PanelLeftClose,
@@ -138,6 +140,10 @@
   let uploadCancelBusy = $state(false);
   let uploadRequestId = $state<string | null>(null);
   let uploadBackend = $state<"arduino" | "platformio" | null>(null);
+  let cleanBusy = $state(false);
+  let testBusy = $state(false);
+  let testCancelBusy = $state(false);
+  let testRequestId = $state<string | null>(null);
   let portsError = $state<string | null>(null);
   let boardsError = $state<string | null>(null);
   let portsDropdownOpen = $state(false);
@@ -238,6 +244,47 @@
     return activeProjectKind === "platformio"
       ? "Upload PlatformIO project"
       : "Compile and upload active sketch";
+  });
+  let cleanDisabled = $derived(
+    !activeWorkspaceRoot ||
+      activeProjectKind !== "platformio" ||
+      platformioEnvironmentRequired ||
+      cleanBusy ||
+      compileBusy ||
+      uploadBusy ||
+      testBusy,
+  );
+  let cleanTooltip = $derived.by(() => {
+    if (cleanBusy) return "Clean in progress";
+    if (compileBusy) return "Compile in progress";
+    if (uploadBusy) return "Upload in progress";
+    if (testBusy) return "Test in progress";
+    if (!activeWorkspaceRoot) return "Open a workspace first";
+    if (platformioEnvironmentRequired)
+      return "Select a PlatformIO environment first";
+    return "Clean PlatformIO build artifacts";
+  });
+  let testStartDisabled = $derived(
+    !activeWorkspaceRoot ||
+      activeProjectKind !== "platformio" ||
+      platformioEnvironmentRequired ||
+      testBusy ||
+      compileBusy ||
+      uploadBusy ||
+      cleanBusy,
+  );
+  let testButtonDisabled = $derived(
+    (!testBusy && testStartDisabled) || (testBusy && testCancelBusy),
+  );
+  let testTooltip = $derived.by(() => {
+    if (testBusy) return "Cancel current test";
+    if (compileBusy) return "Compile in progress";
+    if (uploadBusy) return "Upload in progress";
+    if (cleanBusy) return "Clean in progress";
+    if (!activeWorkspaceRoot) return "Open a workspace first";
+    if (platformioEnvironmentRequired)
+      return "Select a PlatformIO environment first";
+    return "Run PlatformIO tests";
   });
   const primaryIconButtonClass =
     "inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-fg4 transition-colors duration-150 hover:text-dark-fg0 hover:bg-dark-fg4/20   disabled:cursor-not-allowed disabled:opacity-50";
@@ -976,6 +1023,142 @@
     void uploadActiveSketch();
   }
 
+  async function cleanActiveProject(): Promise<void> {
+    if (cleanDisabled || !activeWorkspaceRoot) return;
+
+    const requestId = crypto.randomUUID();
+    const requestFilePath = getActiveProjectRequestPath();
+    cleanBusy = true;
+    activeOutputRequestIds.add(requestId);
+    emitStart(requestId, "clean");
+    emitLogLine(requestId, "clean", "[Exort] Clean button clicked.");
+    if (activeEmbeddedProject?.kind === "platformio") {
+      emitLogLine(
+        requestId,
+        "clean",
+        `[Exort] Detected PlatformIO project: ${activeEmbeddedProject.relativeProjectRoot}`,
+      );
+      emitLogLine(
+        requestId,
+        "clean",
+        `[Exort] Environment: ${platformioResolvedEnv || "default_envs/all"}`,
+      );
+    }
+
+    try {
+      emitLogLine(requestId, "clean", "[Exort] Running PlatformIO clean...");
+      const response = await window.electronAPI.cleanPlatformioProject({
+        requestId,
+        workspaceRoot: activeWorkspaceRoot,
+        activeFilePath: requestFilePath,
+        environment: platformioResolvedEnv || undefined,
+      });
+
+      if (!response.ok || !response.result) {
+        const detail =
+          response.error ?? "Clean failed before running clean command.";
+        emitFinish(requestId, "clean", "error", detail, null);
+        return;
+      }
+
+      const result = response.result;
+      const success = result.status === "cleaned" && result.ok;
+      const status = result.aborted ? "cancelled" : success ? "ok" : "error";
+      const detail =
+        result.message ?? (success ? "PlatformIO clean completed successfully." : "Clean failed.");
+      emitFinish(requestId, "clean", status, detail, result.exitCode ?? null, result.command);
+    } catch (error) {
+      const detail =
+        error instanceof Error ? error.message : "Clean failed unexpectedly.";
+      emitFinish(requestId, "clean", "error", detail, null);
+    } finally {
+      activeOutputRequestIds.delete(requestId);
+      cleanBusy = false;
+    }
+  }
+
+  async function cancelTest(): Promise<void> {
+    if (!testBusy || !testRequestId || testCancelBusy) return;
+
+    testCancelBusy = true;
+    try {
+      await window.electronAPI.cancelPlatformioTest(testRequestId);
+    } catch (error) {
+      void error;
+    } finally {
+      testCancelBusy = false;
+    }
+  }
+
+  async function testActiveProject(): Promise<void> {
+    if (testStartDisabled || !activeWorkspaceRoot) return;
+
+    const requestId = crypto.randomUUID();
+    const requestFilePath = getActiveProjectRequestPath();
+    testBusy = true;
+    testRequestId = requestId;
+    testCancelBusy = false;
+    activeOutputRequestIds.add(requestId);
+    emitStart(requestId, "test");
+    emitLogLine(requestId, "test", "[Exort] Test button clicked.");
+    if (activeEmbeddedProject?.kind === "platformio") {
+      emitLogLine(
+        requestId,
+        "test",
+        `[Exort] Detected PlatformIO project: ${activeEmbeddedProject.relativeProjectRoot}`,
+      );
+      emitLogLine(
+        requestId,
+        "test",
+        `[Exort] Environment: ${platformioResolvedEnv || "default_envs/all"}`,
+      );
+    }
+
+    try {
+      emitLogLine(requestId, "test", "[Exort] Running PlatformIO test...");
+      const response = await window.electronAPI.testPlatformioProject({
+        requestId,
+        workspaceRoot: activeWorkspaceRoot,
+        activeFilePath: requestFilePath,
+        environment: platformioResolvedEnv || undefined,
+      });
+
+      if (!response.ok || !response.result) {
+        const detail =
+          response.error ?? "Test failed before running test command.";
+        emitFinish(requestId, "test", "error", detail, null);
+        return;
+      }
+
+      const result = response.result;
+      const status =
+        result.status === "tested"
+          ? "ok"
+          : result.status === "test_cancelled"
+            ? "cancelled"
+            : "error";
+      emitFinish(requestId, "test", status, result.message, result.exitCode ?? null, result.command);
+    } catch (error) {
+      const detail =
+        error instanceof Error ? error.message : "Test failed unexpectedly.";
+      emitFinish(requestId, "test", "error", detail, null);
+    } finally {
+      activeOutputRequestIds.delete(requestId);
+      testBusy = false;
+      testCancelBusy = false;
+      testRequestId = null;
+    }
+  }
+
+  function onTestButtonClick(): void {
+    if (testBusy) {
+      void cancelTest();
+      return;
+    }
+
+    void testActiveProject();
+  }
+
   function isBoardOptionValueSelected(
     optionId: string,
     valueId: string,
@@ -1456,6 +1639,42 @@
         {/if}
         <span class="sr-only">{uploadBusy ? "Cancel upload" : "Upload"}</span>
       </button>
+
+      {#if activeProjectKind === "platformio"}
+        <button
+          class={`${primaryIconButtonClass} [-webkit-app-region:no-drag]`}
+          onclick={() => void cleanActiveProject()}
+          disabled={cleanDisabled}
+          title={cleanTooltip}
+          aria-label="Clean PlatformIO build artifacts"
+        >
+          {#if cleanBusy}
+            <Loader class="h-5 w-5 animate-spin" />
+          {:else}
+            <Eraser class="h-5 w-5" />
+          {/if}
+          <span class="sr-only">Clean</span>
+        </button>
+
+        <button
+          class={`${testBusy ? cancelIconButtonClass : primaryIconButtonClass} [-webkit-app-region:no-drag]`}
+          onclick={onTestButtonClick}
+          disabled={testButtonDisabled}
+          title={testTooltip}
+          aria-label={testBusy ? "Cancel test" : "Run PlatformIO tests"}
+        >
+          {#if testBusy}
+            {#if testCancelBusy}
+              <Loader class="h-5 w-5 animate-spin" />
+            {:else}
+              <OctagonX class="h-5 w-5" />
+            {/if}
+          {:else}
+            <FlaskConical class="h-5 w-5" />
+          {/if}
+          <span class="sr-only">{testBusy ? "Cancel test" : "Test"}</span>
+        </button>
+      {/if}
     </div>
   </div>
 </header>

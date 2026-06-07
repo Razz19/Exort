@@ -265,7 +265,7 @@ export type ArduinoBoardDetails = {
   configOptions: ArduinoBoardConfigOption[];
 };
 
-export type ArduinoOperation = 'compile' | 'upload';
+export type ArduinoOperation = 'compile' | 'upload' | 'clean' | 'test';
 
 export type ArduinoOutputStream = 'stdout' | 'stderr';
 
