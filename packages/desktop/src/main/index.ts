@@ -197,7 +197,23 @@ const SERIAL_BUFFER_SIZE_MAX = 5000;
 const OPEN_CODE_SMOKE_CHECK_TIMEOUT_MS = 30_000;
 
 app.setName(APP_NAME);
+configureEarlyElectronRuntime();
 let appQuitCleanupInProgress = false;
+
+function configureEarlyElectronRuntime(): void {
+  if (process.platform !== 'linux') return;
+
+  if (!app.commandLine.hasSwitch('disable-gpu-sandbox')) {
+    app.commandLine.appendSwitch('disable-gpu-sandbox');
+  }
+
+  if (
+    process.env.EXORT_DISABLE_HARDWARE_ACCELERATION === '1' ||
+    process.env.EXORT_DISABLE_GPU === '1'
+  ) {
+    app.disableHardwareAcceleration();
+  }
+}
 
 function sendMenuCommandToFocusedWindow(command: AppMenuCommandId): void {
   const focusedWindow = BrowserWindow.getFocusedWindow();

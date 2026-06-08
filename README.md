@@ -118,6 +118,14 @@ npm run build --workspace @exort/desktop
 npm run typecheck --workspace @exort/desktop
 ```
 
+### Linux GPU Startup Issues
+
+Exort disables Chromium's GPU sandbox on Linux to work around Electron GPU process launch failures on some driver and sandbox combinations. If Exort still exits at startup with an error like `GPU process isn't usable. Goodbye`, launch it with software rendering:
+
+```bash
+EXORT_DISABLE_HARDWARE_ACCELERATION=1 ./Exort-*.AppImage
+```
+
 ## Recommended Workflow
 
 1. Open a local workspace (folder).
