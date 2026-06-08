@@ -61,6 +61,11 @@
     return config;
   }
 
+  function updateObservedSize(entry: ResizeObserverEntry): void {
+    width = entry.contentRect.width;
+    height = entry.contentRect.height;
+  }
+
   function destroyPlot(): void {
     if (!plotInstance) return;
     plotInstance.destroy();
@@ -125,20 +130,28 @@
     plotInstance.setData(buildAlignedData());
   });
 
-  onMount(() => {
+  $effect(() => {
+    if (!rootEl) {
+      width = 0;
+      height = 0;
+      return;
+    }
+
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
-      width = entry.contentRect.width;
-      height = entry.contentRect.height;
+      updateObservedSize(entry);
     });
 
-    if (rootEl) {
-      resizeObserver.observe(rootEl);
-    }
+    resizeObserver.observe(rootEl);
 
     return () => {
       resizeObserver.disconnect();
+    };
+  });
+
+  onMount(() => {
+    return () => {
       destroyPlot();
     };
   });
