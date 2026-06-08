@@ -114,6 +114,7 @@ type AppState = {
 };
 
 type PaneTab = 'code' | 'monitor';
+type SerialMonitorView = 'monitor' | 'plotter';
 
 type WorkspaceState = {
   rootPath: string;
@@ -125,6 +126,7 @@ type WorkspaceState = {
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;
+  serialMonitorActiveView: SerialMonitorView;
   fileTree: PersistedTreeItem[];
   expandedDirKeys: string[];
   activePaneTab: PaneTab;
@@ -412,6 +414,11 @@ function sanitizePaneTab(value: unknown): PaneTab {
   return 'code';
 }
 
+function sanitizeSerialMonitorView(value: unknown): SerialMonitorView {
+  if (value === 'plotter') return 'plotter';
+  return 'monitor';
+}
+
 function sanitizeTree(items: unknown): PersistedTreeItem[] {
   if (!Array.isArray(items)) return [];
 
@@ -468,6 +475,7 @@ function createDefaultWorkspaceState(rootPath: string, workspaceName = ''): Work
     serialPort: '',
     serialBaudRate: SERIAL_BAUD_RATE_DEFAULT,
     serialMonitorShowTimestamps: true,
+    serialMonitorActiveView: 'monitor',
     fileTree: [],
     expandedDirKeys: [],
     activePaneTab: 'code',
@@ -593,6 +601,7 @@ function sanitizeWorkspaceState(input: unknown, rootPath: string): WorkspaceStat
       typeof candidate.serialMonitorShowTimestamps === 'boolean'
         ? candidate.serialMonitorShowTimestamps
         : defaults.serialMonitorShowTimestamps,
+    serialMonitorActiveView: sanitizeSerialMonitorView(candidate.serialMonitorActiveView),
     fileTree: sanitizeTree(candidate.fileTree),
     expandedDirKeys: asStringArray(candidate.expandedDirKeys),
     activePaneTab: sanitizePaneTab(candidate.activePaneTab),

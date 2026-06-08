@@ -489,6 +489,7 @@ type AppState = {
   };
 };
 type PaneTab = 'code' | 'monitor';
+type SerialMonitorView = 'monitor' | 'plotter';
 type WorkspaceState = {
   rootPath: string;
   workspaceName: string;
@@ -499,6 +500,7 @@ type WorkspaceState = {
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;
+  serialMonitorActiveView: SerialMonitorView;
   fileTree: PersistedTreeItem[];
   expandedDirKeys: string[];
   activePaneTab: PaneTab;

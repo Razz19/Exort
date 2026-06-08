@@ -21,6 +21,7 @@
   import type {
     SerialLogDirection,
     SerialLogEntry,
+    SerialMonitorView,
     SerialMonitorEvent,
     SerialMonitorSnapshot,
     SerialMonitorStatus,
@@ -53,7 +54,7 @@
   let status = $state<SerialMonitorStatus>("disconnected");
   let baudRate = $state(SERIAL_BAUD_RATE_DEFAULT);
   let sendText = $state("");
-  let activeMonitorView = $state<"monitor" | "plotter">("monitor");
+  let activeMonitorView = $state<SerialMonitorView>("monitor");
   let plotState = $state<SerialPlotState>(plotAccumulator.getState());
 
   let busyConnect = $state(false);
@@ -111,11 +112,13 @@
   $effect(() => {
     if (!activeWorkspaceRoot) {
       showTimestamps = true;
+      activeMonitorView = "monitor";
       return;
     }
 
     const workspaceState = workspaceManagerSnapshot.byRoot[activeWorkspaceRoot];
     showTimestamps = workspaceState?.serialMonitorShowTimestamps ?? true;
+    activeMonitorView = workspaceState?.serialMonitorActiveView ?? "monitor";
   });
 
   $effect(() => {
@@ -312,6 +315,15 @@
     });
   }
 
+  function setActiveMonitorView(nextView: SerialMonitorView): void {
+    activeMonitorView = nextView;
+
+    if (!activeWorkspaceRoot) return;
+    upsertWorkspaceState(activeWorkspaceRoot, {
+      serialMonitorActiveView: nextView,
+    });
+  }
+
   async function exportCsv(): Promise<void> {
     busyExport = true;
     errorMessage = null;
@@ -454,14 +466,14 @@
     >
       <button
         class={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors ${activeMonitorView === "monitor" ? "bg-dark-blue text-dark-fg" : "text-dark-fg3 hover:text-dark-fg1"}`}
-        onclick={() => (activeMonitorView = "monitor")}
+        onclick={() => setActiveMonitorView("monitor")}
       >
         <Tv class="h-4 w-4" />
         <span>Monitor</span>
       </button>
       <button
         class={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors ${activeMonitorView === "plotter" ? "bg-dark-blue text-dark-fg" : "text-dark-fg3 hover:text-dark-fg1"}`}
-        onclick={() => (activeMonitorView = "plotter")}
+        onclick={() => setActiveMonitorView("plotter")}
       >
         <ChartLine class="h-4 w-4" />
         <span>Plotter</span>

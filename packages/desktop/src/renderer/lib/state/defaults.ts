@@ -10,6 +10,7 @@ import {
   type MonacoThemeId,
   type PaneTab,
   type PersistedTreeItem,
+  type SerialMonitorView,
   type ThinkingLevel,
   type WorkspaceManagerState,
   type WorkspaceState
@@ -203,6 +204,11 @@ function sanitizePaneTab(value: unknown): PaneTab {
   return 'code';
 }
 
+function sanitizeSerialMonitorView(value: unknown): SerialMonitorView {
+  if (value === 'plotter') return 'plotter';
+  return 'monitor';
+}
+
 function sanitizeMonacoThemeId(value: unknown): MonacoThemeId {
   if (value === 'arduino-dark') return 'arduino-dark';
   if (value === 'vs') return 'vs';
@@ -292,6 +298,7 @@ export function createDefaultWorkspaceState(rootPath: string, workspaceName = ''
     serialPort: '',
     serialBaudRate: SERIAL_BAUD_RATE_DEFAULT,
     serialMonitorShowTimestamps: true,
+    serialMonitorActiveView: 'monitor',
     fileTree: [],
     expandedDirKeys: [],
     activePaneTab: 'code',
@@ -427,6 +434,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
     typeof candidate.serialMonitorShowTimestamps === 'boolean'
       ? candidate.serialMonitorShowTimestamps
       : defaults.serialMonitorShowTimestamps;
+  const serialMonitorActiveView = sanitizeSerialMonitorView(candidate.serialMonitorActiveView);
   const activeFilePath = asNonBlankString(candidate.activeFilePath) ?? null;
   const currentSessionId = asNonBlankString(candidate.currentSessionId) ?? null;
   const expandedDirKeys = asStringArray(candidate.expandedDirKeys);
@@ -444,6 +452,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
     serialPort,
     serialBaudRate,
     serialMonitorShowTimestamps,
+    serialMonitorActiveView,
     fileTree,
     expandedDirKeys,
     activePaneTab,

@@ -430,6 +430,7 @@ export type {
   AppState,
   PaneTab,
   PersistedTreeItem,
+  SerialMonitorView,
   StateBootstrap,
   WorkspaceManagerState,
   WorkspaceState

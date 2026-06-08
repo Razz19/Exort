@@ -111,6 +111,7 @@ export type RequirementsState = {
 };
 
 export type PaneTab = "code" | "monitor";
+export type SerialMonitorView = "monitor" | "plotter";
 
 export type WorkspaceState = {
   rootPath: string;
@@ -122,6 +123,7 @@ export type WorkspaceState = {
   serialPort: string;
   serialBaudRate: number;
   serialMonitorShowTimestamps: boolean;
+  serialMonitorActiveView: SerialMonitorView;
   fileTree: PersistedTreeItem[];
   expandedDirKeys: string[];
   activePaneTab: PaneTab;
