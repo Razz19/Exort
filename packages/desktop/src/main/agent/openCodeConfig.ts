@@ -45,6 +45,16 @@ Cores / libraries:
   - arduino-cli lib search "LibraryName"
   - arduino-cli lib install "LibraryName"
 
+Official docs:
+- Prefer official documentation before guessing Arduino APIs, board behavior, CLI flags, PlatformIO options, or platform/framework names.
+- Arduino programming/reference docs: https://docs.arduino.cc/language-reference/
+- Arduino CLI command reference: https://docs.arduino.cc/arduino-cli/commands-reference/arduino-cli/
+- Arduino libraries docs: https://docs.arduino.cc/libraries/
+- PlatformIO project configuration docs: https://docs.platformio.org/en/stable/projectconf/index.html
+- PlatformIO Core CLI docs: https://docs.platformio.org/en/stable/core/index.html
+- PlatformIO boards/platforms/frameworks registry: https://registry.platformio.org/
+- When docs and local project files disagree, trust local project files for the current project and use docs to resolve syntax/API uncertainty.
+
 Error-handling loop:
 - For compile errors: fix code yourself and retry compile until it succeeds or a real blocker exists (e.g., missing FQBN, PlatformIO environment, or port).
 
