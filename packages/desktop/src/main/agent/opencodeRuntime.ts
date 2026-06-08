@@ -677,19 +677,7 @@ async function recycleOpenCodeRuntimeAfterProviderAuthMutation(log?: (line: stri
   loggedSessionIds.clear();
 }
 
-const OPENAI_MODEL_RECOMMENDATION_ORDER = ['gpt-5.3-codex', 'gpt-5.2-codex'];
-const OPENAI_CHATGPT_UNSUPPORTED_MODEL_IDS = new Set([
-  'codex-mini-latest',
-  'gpt-5.1-codex',
-  'gpt-5.1-codex-max',
-  'gpt-5.1-codex-mini',
-  'gpt-5.1'
-]);
-const OPENAI_CHATGPT_MODEL_ALLOWLIST = new Set([
-  'gpt-5.2',
-  'gpt-5.2-codex',
-  'gpt-5.3-codex'
-]);
+const OPENAI_MODEL_RECOMMENDATION_ORDER = ['gpt-5.3-codex', 'gpt-5.2-codex', 'gpt-5.5', 'gpt-5.2', 'gpt-4.1', 'gpt-4', 'gpt-3.5-turbo'];
 
 function parseProviderModelStatus(value: unknown): OpenCodeProviderModel['status'] {
   if (value === 'active' || value === 'beta' || value === 'alpha' || value === 'deprecated') {
@@ -799,59 +787,6 @@ function parseProviderModels(modelsValue: unknown): OpenCodeProviderModel[] {
   return parsed;
 }
 
-function parseProviderModelInputCostById(modelsValue: unknown): Map<string, number> {
-  const modelsRecord = asRecord(modelsValue);
-  const costs = new Map<string, number>();
-
-  for (const [key, value] of Object.entries(modelsRecord)) {
-    const model = asRecord(value);
-    const id = getFirstNonBlankString(model.id, key);
-    if (!id) continue;
-
-    const cost = asRecord(model.cost);
-    const inputCost = getFirstNumber(cost.input);
-    if (inputCost == null) continue;
-    costs.set(id, inputCost);
-  }
-
-  return costs;
-}
-
-function isLikelyOpenAIChatGPTOAuthCatalog(models: OpenCodeProviderModel[], inputCostById: Map<string, number>): boolean {
-  if (models.length === 0) return false;
-
-  let observedCosts = 0;
-  for (const model of models) {
-    const inputCost = inputCostById.get(model.id);
-    if (inputCost == null) continue;
-    observedCosts += 1;
-    if (inputCost !== 0) return false;
-  }
-
-  return observedCosts > 0;
-}
-
-function filterOpenAIModelsForDesktopCatalog(
-  providerId: string,
-  models: OpenCodeProviderModel[],
-  isLikelyChatGPTOAuth: boolean
-): OpenCodeProviderModel[] {
-  if (providerId !== 'openai' || !isLikelyChatGPTOAuth) {
-    return models;
-  }
-
-  const withoutKnownUnsupported = models.filter((model) => !OPENAI_CHATGPT_UNSUPPORTED_MODEL_IDS.has(model.id));
-  const allowlisted = withoutKnownUnsupported.filter((model) => OPENAI_CHATGPT_MODEL_ALLOWLIST.has(model.id));
-
-  // If the known ChatGPT Codex allowlist is present, only show those models.
-  // Otherwise keep a permissive fallback (minus known unsupported IDs) to avoid empty lists.
-  if (allowlisted.length > 0) {
-    return allowlisted;
-  }
-
-  return withoutKnownUnsupported;
-}
-
 function pickRecommendedOpenAIModelId(models: OpenCodeProviderModel[], defaultModelId: string | null): string | null {
   const available = new Set(models.map((item) => item.id));
   for (const modelId of OPENAI_MODEL_RECOMMENDATION_ORDER) {
@@ -879,10 +814,7 @@ function buildProviderCatalogEntry(
   if (!providerId) return null;
 
   const defaultModelId = getFirstNonBlankString(defaults[providerId]) ?? null;
-  const parsedModels = parseProviderModels(providerRecord.models);
-  const inputCostById = parseProviderModelInputCostById(providerRecord.models);
-  const isLikelyChatGPTOAuth = isLikelyOpenAIChatGPTOAuthCatalog(parsedModels, inputCostById);
-  const models = filterOpenAIModelsForDesktopCatalog(providerId, parsedModels, isLikelyChatGPTOAuth);
+  const models = parseProviderModels(providerRecord.models);
   const normalizedDefaultModelId =
     defaultModelId && models.some((model) => model.id === defaultModelId) ? defaultModelId : null;
 
