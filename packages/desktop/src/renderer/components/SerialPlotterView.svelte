@@ -26,6 +26,7 @@
   let currentSchema = "";
   let width = $state(0);
   let height = $state(0);
+  let hiddenSeriesKeys = $state<string[]>([]);
 
   let hasPlottableData = $derived(
     plotState.seriesOrder.length > 0 && plotState.samplesX.length > 0,
@@ -35,11 +36,29 @@
     return SERIES_COLORS[index % SERIES_COLORS.length] ?? "#83a598";
   }
 
+  function isSeriesHidden(key: string): boolean {
+    return hiddenSeriesKeys.includes(key);
+  }
+
+  function toggleSeriesVisibility(key: string): void {
+    hiddenSeriesKeys = isSeriesHidden(key)
+      ? hiddenSeriesKeys.filter((hiddenKey) => hiddenKey !== key)
+      : [...hiddenSeriesKeys, key];
+  }
+
+  function sameStringArray(left: string[], right: string[]): boolean {
+    return (
+      left.length === right.length &&
+      left.every((value, index) => value === right[index])
+    );
+  }
+
   function buildAlignedData(): AlignedData {
     const aligned: AlignedData = [plotState.samplesX];
 
     for (const key of plotState.seriesOrder) {
-      aligned.push(plotState.seriesValues[key] ?? []);
+      const values = plotState.seriesValues[key] ?? [];
+      aligned.push(isSeriesHidden(key) ? values.map(() => null) : values);
     }
 
     return aligned;
@@ -53,6 +72,7 @@
       config.push({
         label: series?.label ?? key,
         stroke: seriesColorAt(index),
+        show: !isSeriesHidden(key),
         width: 1.8,
         points: { show: false },
       });
@@ -108,6 +128,16 @@
     plotInstance = new uPlot(options, buildAlignedData(), hostEl);
     currentSchema = nextSchema;
   }
+
+  $effect(() => {
+    const availableKeys = new Set(plotState.seriesOrder);
+    const nextHiddenSeriesKeys = hiddenSeriesKeys.filter((key) =>
+      availableKeys.has(key),
+    );
+    if (!sameStringArray(hiddenSeriesKeys, nextHiddenSeriesKeys)) {
+      hiddenSeriesKeys = nextHiddenSeriesKeys;
+    }
+  });
 
   $effect(() => {
     if (!hasPlottableData || !hostEl) {
@@ -192,15 +222,24 @@
       class="flex flex-wrap items-center gap-2 border-t border-dark-border bg-dark-bgS px-3 py-1.5 text-[11px]"
     >
       {#each plotState.seriesOrder as key, index (key)}
-        <span
-          class="inline-flex items-center gap-1.5 rounded border border-dark-border bg-dark-bg px-2 py-0.5 text-dark-fg2"
+        {@const hidden = isSeriesHidden(key)}
+        <button
+          type="button"
+          class={`inline-flex items-center gap-1.5 rounded border border-dark-border bg-dark-bg px-2 py-0.5 text-dark-fg2 transition-colors hover:border-dark-fg4 hover:text-dark-fg1 ${hidden ? "opacity-45" : ""}`}
+          aria-pressed={!hidden}
+          title={hidden
+            ? `Show ${plotState.seriesByKey[key]?.label ?? key}`
+            : `Hide ${plotState.seriesByKey[key]?.label ?? key}`}
+          onclick={() => toggleSeriesVisibility(key)}
         >
           <span
             class="h-2 w-2 rounded-full"
-            style={`background-color: ${seriesColorAt(index)}`}
+            style={`background-color: ${
+              hidden ? "transparent" : seriesColorAt(index)
+            }`}
           ></span>
           <span>{plotState.seriesByKey[key]?.label ?? key}</span>
-        </span>
+        </button>
       {/each}
     </div>
   {/if}
