@@ -920,7 +920,7 @@ async function readTree(rootPath: string, depth = 0): Promise<Array<{ path: stri
   const list: Array<{ path: string; isDirectory: boolean }> = [];
 
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
+    // Hidden files/folders are shown, but skip heavy/noisy directories that would bloat the tree.
     if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git') continue;
 
     const fullPath = path.join(rootPath, entry.name);
