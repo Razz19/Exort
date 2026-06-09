@@ -6,6 +6,7 @@
     Check,
     ChevronDown,
     GitBranch,
+    GitCommit,
     Loader2,
     Plus,
     RefreshCw,
@@ -181,32 +182,46 @@
 
   const sourceLabel = (value: ChangeSource): string =>
     value === 'git' ? 'Git changes' : 'Last turn changes';
+
+  function closeMenus(): void {
+    branchMenuOpen = false;
+    sourceMenuOpen = false;
+    newBranchOpen = false;
+  }
 </script>
 
-<div class="flex h-full min-w-0 flex-col bg-dark-surface">
+<div class="flex h-full min-w-0 flex-col bg-dark-bg">
   {#if !workspaceRoot}
-    <div class="flex h-full items-center justify-center p-4 text-sm text-dark-fg3">
-      Open a folder to use Git.
+    <div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+      <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-dark-bg1 text-dark-fg3">
+        <GitBranch class="h-5 w-5" />
+      </span>
+      <p class="text-xs text-dark-fg3">Open a folder to use Git.</p>
     </div>
   {:else if loading && !status}
-    <div class="flex h-full items-center justify-center p-4 text-sm text-dark-fg3">
-      <Loader2 class="mr-2 h-4 w-4 animate-spin" /> Loading…
+    <div class="flex h-full items-center justify-center gap-2 p-4 text-xs text-dark-fg3">
+      <Loader2 class="h-4 w-4 animate-spin" /> Loading…
     </div>
   {:else if status && !status.isRepo}
     <div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-      <GitBranch class="h-8 w-8 text-dark-fg3" />
-      <p class="text-sm text-dark-fg2">This folder is not a Git repository.</p>
-      <button class="btn-secondary px-3 py-1.5" disabled={busy} onclick={initRepo}>
-        Initialize Git repository
+      <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-dark-bg1 text-dark-fg3">
+        <GitBranch class="h-5 w-5" />
+      </span>
+      <div class="space-y-1">
+        <p class="text-sm font-medium text-dark-fg1">No Git repository</p>
+        <p class="text-xs text-dark-fg3">Initialize one to start tracking changes.</p>
+      </div>
+      <button class="btn-primary px-3 py-1.5 text-xs" disabled={busy} onclick={initRepo}>
+        Initialize repository
       </button>
       {#if error}<p class="text-xs text-dark-red2">{error}</p>{/if}
     </div>
   {:else if status}
-    <!-- Branch + remote controls -->
-    <div class="flex items-center gap-1 border-b border-dark-border px-2 py-1.5">
+    <!-- Branch + remote toolbar -->
+    <div class="relative flex items-center gap-1 border-b border-dark-border px-3 py-2">
       <div class="relative min-w-0 flex-1">
         <button
-          class="flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs text-dark-fg1 hover:bg-dark-bg1"
+          class="flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs font-medium text-dark-fg1 transition-colors hover:bg-dark-bg1"
           onclick={() => (branchMenuOpen = !branchMenuOpen)}
           title="Switch branch"
         >
@@ -217,25 +232,26 @@
 
         {#if branchMenuOpen}
           <div
-            class="absolute left-0 top-full z-20 mt-1 max-h-64 w-56 overflow-y-auto rounded border border-dark-border bg-dark-surface shadow-lg"
+            class="absolute left-0 top-full z-30 mt-1.5 max-h-64 w-60 overflow-y-auto rounded-lg border border-dark-border bg-dark-surface p-1 shadow-xl"
           >
             {#each branches as branch (branch)}
               <button
-                class="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs text-dark-fg1 hover:bg-dark-bg1"
+                class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-dark-fg1 transition-colors hover:bg-dark-bg1"
                 onclick={() => switchBranch(branch)}
               >
                 {#if branch === status.branch}
-                  <Check class="h-3.5 w-3.5 text-dark-green2" />
+                  <Check class="h-3.5 w-3.5 shrink-0 text-dark-green" />
                 {:else}
-                  <span class="w-3.5"></span>
+                  <span class="w-3.5 shrink-0"></span>
                 {/if}
                 <span class="truncate">{branch}</span>
               </button>
             {/each}
+            <div class="my-1 border-t border-dark-border"></div>
             {#if newBranchOpen}
-              <div class="flex items-center gap-1 border-t border-dark-border p-1.5">
+              <div class="flex items-center gap-1.5 p-1">
                 <input
-                  class="min-w-0 flex-1 rounded border border-dark-border bg-dark-bg px-1.5 py-1 text-xs text-dark-fg1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  class="min-w-0 flex-1 rounded-md border border-dark-border bg-dark-bg px-2 py-1 text-xs text-dark-fg1 placeholder:text-dark-fg4 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   placeholder="New branch name"
                   bind:value={newBranchName}
                   onkeydown={(event) => {
@@ -245,13 +261,17 @@
                     }
                   }}
                 />
-                <button class="btn-secondary px-2 py-1" disabled={busy} onclick={createBranch}>
+                <button
+                  class="btn-primary px-2.5 py-1 text-xs"
+                  disabled={busy || newBranchName.trim().length === 0}
+                  onclick={createBranch}
+                >
                   Create
                 </button>
               </div>
             {:else}
               <button
-                class="flex w-full items-center gap-2 border-t border-dark-border px-2 py-1.5 text-left text-xs text-dark-fg2 hover:bg-dark-bg1"
+                class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-dark-fg2 transition-colors hover:bg-dark-bg1"
                 onclick={() => (newBranchOpen = true)}
               >
                 <Plus class="h-3.5 w-3.5" /> New branch
@@ -262,23 +282,25 @@
       </div>
 
       <button
-        class="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-dark-fg2 hover:bg-dark-bg1 disabled:opacity-50"
+        class="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-dark-fg2 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 disabled:opacity-40 disabled:hover:bg-transparent"
         title="Pull"
         disabled={busy || !status.hasRemote}
         onclick={pull}
       >
-        <ArrowDown class="h-3.5 w-3.5" />{status.behind > 0 ? status.behind : ''}
+        <ArrowDown class="h-3.5 w-3.5" />
+        {#if status.behind > 0}<span class="font-mono text-[10px]">{status.behind}</span>{/if}
       </button>
       <button
-        class="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-dark-fg2 hover:bg-dark-bg1 disabled:opacity-50"
+        class="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-dark-fg2 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 disabled:opacity-40 disabled:hover:bg-transparent"
         title="Push"
         disabled={busy || !status.hasRemote}
         onclick={push}
       >
-        <ArrowUp class="h-3.5 w-3.5" />{status.ahead > 0 ? status.ahead : ''}
+        <ArrowUp class="h-3.5 w-3.5" />
+        {#if status.ahead > 0}<span class="font-mono text-[10px]">{status.ahead}</span>{/if}
       </button>
       <button
-        class="inline-flex items-center justify-center rounded p-1 text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1 disabled:opacity-50"
+        class="inline-flex items-center justify-center rounded-md p-1.5 text-dark-fg3 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 disabled:opacity-40 disabled:hover:bg-transparent"
         title="Refresh"
         disabled={loading || busy}
         onclick={refresh}
@@ -288,32 +310,34 @@
     </div>
 
     <!-- Changes source selector -->
-    <div class="relative flex items-center justify-between border-b border-dark-border px-2 py-1.5">
+    <div class="relative flex items-center justify-between border-b border-dark-border px-3 py-2">
       <button
-        class="inline-flex items-center gap-1 rounded px-1.5 py-1 text-sm font-medium text-dark-fg1 hover:bg-dark-bg1"
+        class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-dark-fg1 transition-colors hover:bg-dark-bg1"
         onclick={() => (sourceMenuOpen = !sourceMenuOpen)}
       >
         {sourceLabel(source)}
         <ChevronDown class="h-4 w-4 text-dark-fg3" />
       </button>
-      <span class="text-xs text-dark-fg3">{rows.length}</span>
+      <span class="rounded-full bg-dark-bg1 px-2 py-0.5 text-[11px] font-medium text-dark-fg2">
+        {rows.length}
+      </span>
 
       {#if sourceMenuOpen}
         <div
-          class="absolute left-2 top-full z-20 mt-1 w-44 rounded border border-dark-border bg-dark-surface shadow-lg"
+          class="absolute left-3 top-full z-30 mt-1.5 w-48 rounded-lg border border-dark-border bg-dark-surface p-1 shadow-xl"
         >
           {#each ['git', 'lastTurn'] as const as value (value)}
             <button
-              class="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs text-dark-fg1 hover:bg-dark-bg1"
+              class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-dark-fg1 transition-colors hover:bg-dark-bg1"
               onclick={() => {
                 source = value;
                 sourceMenuOpen = false;
               }}
             >
               {#if source === value}
-                <Check class="h-3.5 w-3.5 text-dark-green2" />
+                <Check class="h-3.5 w-3.5 shrink-0 text-dark-green" />
               {:else}
-                <span class="w-3.5"></span>
+                <span class="w-3.5 shrink-0"></span>
               {/if}
               {sourceLabel(value)}
             </button>
@@ -323,36 +347,51 @@
     </div>
 
     {#if error}
-      <div class="border-b border-dark-border bg-dark-red/10 px-3 py-1.5 text-xs text-dark-red2">
+      <div class="mx-3 mt-2 rounded-md border border-dark-red/30 bg-dark-red/10 px-3 py-1.5 text-xs text-dark-red2">
         {error}
       </div>
     {/if}
 
     <!-- Change list -->
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="panel-scroll min-h-0 flex-1 overflow-y-auto">
       <GitChangesList changes={rows} onOpenDiff={openDiff} />
     </div>
 
     <!-- Commit (Git changes only) -->
     {#if source === 'git'}
-      <div class="border-t border-dark-border p-2">
+      <div class="border-t border-dark-border p-3">
         <textarea
-          class="mb-2 w-full resize-none rounded border border-dark-border bg-dark-bg px-2 py-1.5 text-xs text-dark-fg1 placeholder:text-dark-fg4 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          class="mb-2 w-full resize-none rounded-lg border border-dark-border bg-dark-bg px-2.5 py-2 text-xs text-dark-fg1 placeholder:text-dark-fg4 focus:outline-none focus:ring-1 focus:ring-primary-500"
           rows="2"
           placeholder="Commit message"
           bind:value={commitMessage}
         ></textarea>
         <button
-          class="btn-primary inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 text-xs disabled:opacity-50"
+          class="btn-primary inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 text-xs"
           disabled={busy || commitMessage.trim().length === 0 || gitRows.length === 0}
           onclick={commit}
         >
           {#if busy}
             <RotateCw class="h-3.5 w-3.5 animate-spin" />
+          {:else}
+            <GitCommit class="h-3.5 w-3.5" />
           {/if}
-          Commit all changes
+          {gitRows.length > 0
+            ? `Commit ${gitRows.length} file${gitRows.length === 1 ? '' : 's'}`
+            : 'Commit all changes'}
         </button>
       </div>
+    {/if}
+
+    {#if branchMenuOpen || sourceMenuOpen}
+      <!-- Outside-click catcher to close open menus -->
+      <button
+        type="button"
+        class="fixed inset-0 z-20 cursor-default"
+        aria-label="Close menu"
+        tabindex="-1"
+        onclick={closeMenus}
+      ></button>
     {/if}
   {/if}
 </div>

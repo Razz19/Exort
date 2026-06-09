@@ -313,6 +313,36 @@ body,
   border: none;
 }
 
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.panel-scroll::-webkit-scrollbar-track {
+  @apply bg-transparent;
+  border: none;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: none;
+}
+
+.panel-scroll:hover,
+.panel-scroll:focus-within {
+  scrollbar-color: theme("colors.dark.bg4") transparent;
+}
+
+.panel-scroll:hover::-webkit-scrollbar-thumb,
+.panel-scroll:focus-within::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-dark-bg4;
+  border: none;
+}
+
 .navbar-dropdown-scroll {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;

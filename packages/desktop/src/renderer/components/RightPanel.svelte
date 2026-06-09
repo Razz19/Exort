@@ -55,13 +55,13 @@
 </script>
 
 <div class="flex h-full min-w-0 flex-col bg-dark-surface">
-  <div class="flex items-end border-b border-dark-border bg-dark-surface px-1">
+  <div class="flex items-stretch border-b border-dark-border bg-dark-surface px-1">
     {#each tabs as tab (tab.id)}
       <button
         class={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors ${
           activeRightPanelTab === tab.id
             ? 'border-primary-500 text-dark-fg0'
-            : 'border-transparent text-dark-fg3 hover:text-dark-fg1'
+            : 'border-transparent text-dark-fg3 hover:bg-dark-bg1/40 hover:text-dark-fg1'
         }`}
         onclick={() => onActiveRightPanelTabChange(tab.id)}
         aria-pressed={activeRightPanelTab === tab.id}

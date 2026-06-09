@@ -34,8 +34,19 @@
       minimap: { enabled: false },
       theme: monacoTheme,
       fontSize: 14,
+      // Keep the diff gutter minimal: single tight line-number column, no glyph/fold margins,
+      // no revert arrows or overview ruler.
       renderOverviewRuler: false,
-      ignoreTrimWhitespace: false
+      ignoreTrimWhitespace: false,
+      renderMarginRevertIcon: false,
+      renderIndicators: false,
+      glyphMargin: false,
+      folding: false,
+      lineNumbersMinChars: 3,
+      lineDecorationsWidth: 6,
+      overviewRulerLanes: 0,
+      renderLineHighlight: 'none',
+      scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 }
     });
 
     return () => {
