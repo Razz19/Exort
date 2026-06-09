@@ -1293,6 +1293,43 @@ app.whenReady().then(async () => {
     }
   );
 
+  ipcMain.handle(
+    'workspace:delete-entry',
+    async (
+      _event,
+      payload: { workspaceRoot: string; path: string }
+    ): Promise<{ ok: boolean; path?: string; error?: string }> => {
+      try {
+        const workspaceRoot = asNonBlankString(payload?.workspaceRoot);
+        const sourcePath = asNonBlankString(payload?.path);
+
+        if (!workspaceRoot) {
+          return { ok: false, error: 'workspaceRoot is required.' };
+        }
+        if (!sourcePath) {
+          return { ok: false, error: 'path is required.' };
+        }
+
+        const resolvedRoot = path.resolve(workspaceRoot);
+        const resolvedSource = path.resolve(sourcePath);
+        if (!isPathWithinRoot(resolvedRoot, resolvedSource)) {
+          return { ok: false, error: 'Path must be inside the workspace.' };
+        }
+        if (resolvedSource === resolvedRoot) {
+          return { ok: false, error: 'Cannot delete the workspace root.' };
+        }
+
+        await fs.rm(resolvedSource, { recursive: true, force: true });
+        return { ok: true, path: resolvedSource };
+      } catch (error) {
+        return {
+          ok: false,
+          error: formatWorkspaceFsError(error, 'Failed to delete entry.')
+        };
+      }
+    }
+  );
+
   ipcMain.handle('workspace:watch-tree', async (event, rootPath: string) => {
     const normalized = path.resolve(rootPath);
     const senderId = event.sender.id;

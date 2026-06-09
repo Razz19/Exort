@@ -49,7 +49,7 @@
   };
 
   const rowContextMenuWidthPx = 148;
-  const rowContextMenuEstimatedHeightPx = 44;
+  const rowContextMenuEstimatedHeightPx = 76;
   const rowContextMenuViewportPaddingPx = 8;
 
   let {
@@ -63,6 +63,7 @@
     onSelectFile,
     onCreateEntry = async () => ({ ok: false, error: "Not implemented" }),
     onRenameEntry = async () => ({ ok: false, error: "Not implemented" }),
+    onDeleteEntry = async () => ({ ok: false, error: "Not implemented" }),
     onOpenInFinder = () => {},
   } = $props<{
     rootPath: string;
@@ -82,6 +83,9 @@
       path: string;
       nextName: string;
     }) => Promise<{ ok: boolean; path?: string; error?: string }>;
+    onDeleteEntry?: (params: {
+      path: string;
+    }) => Promise<{ ok: boolean; error?: string }>;
     onOpenInFinder?: () => void | Promise<void>;
   }>();
 
@@ -392,6 +396,20 @@
       return;
     }
     startRenameForRow(row);
+  }
+
+  async function deleteFromContextMenu(): Promise<void> {
+    const menu = rowContextMenu;
+    if (!menu) return;
+    const targetPath = menu.absolutePath;
+    clearRowContextMenu();
+    cancelInlineEditors();
+
+    const result = await onDeleteEntry({ path: targetPath });
+    if (result.ok && selectedRowPath === targetPath) {
+      selectedRowPath = null;
+      selectedRowIsDirectory = null;
+    }
   }
 
   async function submitCreate(): Promise<void> {
@@ -900,6 +918,14 @@
       onclick={() => startRenameFromContextMenu()}
     >
       Rename
+    </button>
+    <button
+      type="button"
+      class="w-full rounded-md px-2 py-1.5 text-left text-xs text-dark-fg2 transition-colors hover:bg-dark-bg1 hover:text-dark-fg0"
+      role="menuitem"
+      onclick={() => void deleteFromContextMenu()}
+    >
+      Delete
     </button>
   </div>
 {/if}

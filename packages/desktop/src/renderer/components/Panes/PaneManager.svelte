@@ -51,6 +51,10 @@
       ok: false,
       error: "Not implemented",
     }),
+    onDeleteFileTreeEntry = async () => ({
+      ok: false,
+      error: "Not implemented",
+    }),
     onOpenWorkspaceInFinder = () => {},
     onExpandedDirKeysChange = () => {},
     onToggleHiddenFiles = () => {},
@@ -91,6 +95,9 @@
       path: string;
       nextName: string;
     }) => Promise<{ ok: boolean; path?: string; error?: string }>;
+    onDeleteFileTreeEntry: (params: {
+      path: string;
+    }) => Promise<{ ok: boolean; error?: string }>;
     onOpenWorkspaceInFinder: () => Promise<void> | void;
     onExpandedDirKeysChange: (keys: string[]) => void;
     onToggleHiddenFiles: () => void;
@@ -353,6 +360,7 @@
                   onSelectFile={onOpenFile}
                   onCreateEntry={onCreateFileTreeEntry}
                   onRenameEntry={onRenameFileTreeEntry}
+                  onDeleteEntry={onDeleteFileTreeEntry}
                   onOpenInFinder={onOpenWorkspaceInFinder}
                   onCollapseFileManager={() =>
                     onFileManagerCollapsedChange(true)}

@@ -548,6 +548,10 @@ declare global {
         path: string;
         nextName: string;
       }) => Promise<{ ok: boolean; path?: string; error?: string }>;
+      deleteWorkspaceEntry: (payload: {
+        workspaceRoot: string;
+        path: string;
+      }) => Promise<{ ok: boolean; path?: string; error?: string }>;
       watchWorkspaceTree: (rootPath: string) => Promise<{ ok: boolean }>;
       unwatchWorkspaceTree: (rootPath: string) => Promise<{ ok: boolean }>;
       unwatchAllWorkspaceTrees: () => Promise<{ ok: boolean }>;

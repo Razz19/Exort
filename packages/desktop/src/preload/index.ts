@@ -587,6 +587,12 @@ const electronAPI = {
       path?: string;
       error?: string;
     }>,
+  deleteWorkspaceEntry: (payload: { workspaceRoot: string; path: string }) =>
+    ipcRenderer.invoke('workspace:delete-entry', payload) as Promise<{
+      ok: boolean;
+      path?: string;
+      error?: string;
+    }>,
   watchWorkspaceTree: (rootPath: string) => ipcRenderer.invoke('workspace:watch-tree', rootPath) as Promise<{ ok: boolean }>,
   unwatchWorkspaceTree: (rootPath: string) =>
     ipcRenderer.invoke('workspace:unwatch-tree', rootPath) as Promise<{ ok: boolean }>,

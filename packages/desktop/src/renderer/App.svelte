@@ -2269,6 +2269,46 @@
     return { ok: true, path: result.path };
   }
 
+  async function handleFileTreeDeleteEntry(params: {
+    path: string;
+  }): Promise<{ ok: boolean; error?: string }> {
+    const workspace = activeWorkspace;
+    if (!workspace) {
+      return { ok: false, error: "No active workspace." };
+    }
+
+    const sourceEntry = workspace.tree.find(
+      (item) => item.path === params.path,
+    );
+    const sourceIsDirectory = sourceEntry?.isDirectory === true;
+
+    const result = await window.electronAPI.deleteWorkspaceEntry({
+      workspaceRoot: workspace.rootPath,
+      path: params.path,
+    });
+
+    if (!result.ok) {
+      const error = result.error ?? "Failed to delete entry";
+      statusText = error;
+      return { ok: false, error };
+    }
+
+    const normalizedDeleted = normalizePath(params.path);
+    const deletedPrefix = `${normalizedDeleted}/`;
+    const affectedOpenPaths = Object.keys(openFiles).filter((filePath) => {
+      const normalized = normalizePath(filePath);
+      if (normalized === normalizedDeleted) return true;
+      return sourceIsDirectory && normalized.startsWith(deletedPrefix);
+    });
+    for (const filePath of affectedOpenPaths) {
+      await closeOpenFileTab(filePath);
+    }
+
+    await refreshWorkspaceTree(workspace.rootPath);
+    statusText = "Deleted";
+    return { ok: true };
+  }
+
   async function closeOpenFileTab(filePath: string): Promise<void> {
     const file = openFiles[filePath];
     if (!file) return;
@@ -3670,6 +3710,7 @@
           onOpenFile={openFile}
           onCreateFileTreeEntry={handleFileTreeCreateEntry}
           onRenameFileTreeEntry={handleFileTreeRenameEntry}
+          onDeleteFileTreeEntry={handleFileTreeDeleteEntry}
           onOpenWorkspaceInFinder={handleOpenWorkspaceInFinder}
           onExpandedDirKeysChange={handleExpandedDirKeysChange}
           onToggleHiddenFiles={handleToggleHiddenFiles}
