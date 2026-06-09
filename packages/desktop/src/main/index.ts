@@ -47,6 +47,19 @@ import {
 } from './arduinoBridge.js';
 import { detectEmbeddedProject, type EmbeddedProjectInfo } from './embeddedProjectResolver.js';
 import {
+  checkoutBranch as gitCheckoutBranch,
+  commitAll as gitCommitAll,
+  createBranch as gitCreateBranch,
+  fetch as gitFetch,
+  getFileDiff as gitGetFileDiff,
+  getRepoStatus as gitGetRepoStatus,
+  initRepository as gitInitRepository,
+  isGitRepository as gitIsRepository,
+  listBranches as gitListBranches,
+  pull as gitPull,
+  push as gitPush
+} from './git/gitBridge.js';
+import {
   cleanPlatformioProject,
   compilePlatformioProject,
   listPlatformioEnvironments,
@@ -114,6 +127,7 @@ type AppState = {
 };
 
 type PaneTab = 'code' | 'monitor';
+type RightPanelTab = 'files' | 'git';
 type SerialMonitorView = 'monitor' | 'plotter';
 
 type WorkspaceState = {
@@ -130,6 +144,7 @@ type WorkspaceState = {
   fileTree: PersistedTreeItem[];
   expandedDirKeys: string[];
   activePaneTab: PaneTab;
+  activeRightPanelTab: RightPanelTab;
   openFileOrder: string[];
   activeFilePath: string | null;
   currentSessionId: string | null;
@@ -414,6 +429,11 @@ function sanitizePaneTab(value: unknown): PaneTab {
   return 'code';
 }
 
+function sanitizeRightPanelTab(value: unknown): RightPanelTab {
+  if (value === 'git') return 'git';
+  return 'files';
+}
+
 function sanitizeSerialMonitorView(value: unknown): SerialMonitorView {
   if (value === 'plotter') return 'plotter';
   return 'monitor';
@@ -479,6 +499,7 @@ function createDefaultWorkspaceState(rootPath: string, workspaceName = ''): Work
     fileTree: [],
     expandedDirKeys: [],
     activePaneTab: 'code',
+    activeRightPanelTab: 'files',
     openFileOrder: [],
     activeFilePath: null,
     currentSessionId: null
@@ -605,6 +626,7 @@ function sanitizeWorkspaceState(input: unknown, rootPath: string): WorkspaceStat
     fileTree: sanitizeTree(candidate.fileTree),
     expandedDirKeys: asStringArray(candidate.expandedDirKeys),
     activePaneTab: sanitizePaneTab(candidate.activePaneTab),
+    activeRightPanelTab: sanitizeRightPanelTab(candidate.activeRightPanelTab),
     openFileOrder: asStringArray(candidate.openFileOrder),
     activeFilePath: asNonBlankString(candidate.activeFilePath) ?? null,
     currentSessionId: asNonBlankString(candidate.currentSessionId) ?? null
@@ -1297,7 +1319,12 @@ app.whenReady().then(() => {
 
       let watcher: FSWatcher;
       try {
-        watcher = watch(normalized, { recursive: true }, () => {
+        watcher = watch(normalized, { recursive: true }, (_eventType, filename) => {
+          // Ignore churn inside ignored directories (.git, node_modules, dist). These are excluded
+          // from readTree anyway, and git commands constantly rewrite .git internals, which would
+          // otherwise spam tree-changed events and re-render storms.
+          const changedPath = typeof filename === 'string' ? filename.replace(/\\/g, '/') : '';
+          if (/(^|\/)(\.git|node_modules|dist)(\/|$)/.test(changedPath)) return;
           if (entry?.debounceTimer) clearTimeout(entry.debounceTimer);
           entry!.debounceTimer = setTimeout(() => {
             void entry!.refreshTree();
@@ -1820,6 +1847,50 @@ app.whenReady().then(() => {
     safeConsoleWrite('log', `[ArduinoUpload] cancel requestId=${normalizedRequestId}`);
     running.abort();
     return { ok: true, cancelled: true };
+  });
+
+  ipcMain.handle('git:is-repository', async (_event, payload: { workspaceRoot: string }) => {
+    return gitIsRepository(payload?.workspaceRoot);
+  });
+
+  ipcMain.handle('git:status', async (_event, payload: { workspaceRoot: string }) => {
+    return gitGetRepoStatus(payload?.workspaceRoot);
+  });
+
+  ipcMain.handle('git:init', async (_event, payload: { workspaceRoot: string }) => {
+    return gitInitRepository(payload?.workspaceRoot);
+  });
+
+  ipcMain.handle('git:file-diff', async (_event, payload: { workspaceRoot: string; filePath: string }) => {
+    return gitGetFileDiff(payload?.workspaceRoot, payload?.filePath);
+  });
+
+  ipcMain.handle('git:commit-all', async (_event, payload: { workspaceRoot: string; message: string }) => {
+    return gitCommitAll(payload?.workspaceRoot, payload?.message);
+  });
+
+  ipcMain.handle('git:list-branches', async (_event, payload: { workspaceRoot: string }) => {
+    return gitListBranches(payload?.workspaceRoot);
+  });
+
+  ipcMain.handle('git:create-branch', async (_event, payload: { workspaceRoot: string; name: string }) => {
+    return gitCreateBranch(payload?.workspaceRoot, payload?.name);
+  });
+
+  ipcMain.handle('git:checkout-branch', async (_event, payload: { workspaceRoot: string; name: string }) => {
+    return gitCheckoutBranch(payload?.workspaceRoot, payload?.name);
+  });
+
+  ipcMain.handle('git:push', async (_event, payload: { workspaceRoot: string }) => {
+    return gitPush(payload?.workspaceRoot);
+  });
+
+  ipcMain.handle('git:pull', async (_event, payload: { workspaceRoot: string }) => {
+    return gitPull(payload?.workspaceRoot);
+  });
+
+  ipcMain.handle('git:fetch', async (_event, payload: { workspaceRoot: string }) => {
+    return gitFetch(payload?.workspaceRoot);
   });
 
   ipcMain.handle(

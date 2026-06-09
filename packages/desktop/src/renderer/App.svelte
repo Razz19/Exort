@@ -79,6 +79,7 @@
     OpenCodeModelCatalogProvider,
     OpenCodeTokenUsage,
     PaneTab,
+    RightPanelTab,
     SelectedModelRef,
     UpdaterEvent,
     UpdaterState,
@@ -86,6 +87,7 @@
     WorkspaceManagerState,
     WorkspaceState,
   } from "./lib/types";
+  import type { GitFileDiff } from "../shared/git";
 
   const OUTPUT_WINDOW_HEIGHT_PCT = 20;
   const UPDATE_AVAILABLE_TOAST_ID = "update-available";
@@ -168,6 +170,8 @@
   let openFiles = $state<Record<string, OpenFile>>({});
   let openFileOrder = $state<string[]>([]);
   let autosaveTimer = $state<number | null>(null);
+  let activeDiffView = $state<GitFileDiff | null>(null);
+  let gitRefreshToken = $state(0);
 
   let messages = $state<ChatItem[]>([]);
   let workspaceMessagesByRoot = $state<Record<string, ChatItem[]>>({});
@@ -302,6 +306,22 @@
     activeWorkspaceState?.expandedDirKeys ?? [],
   );
   let activePaneTab = $derived(activeWorkspaceState?.activePaneTab ?? "code");
+  let activeRightPanelTab = $derived(
+    activeWorkspaceState?.activeRightPanelTab ?? "files",
+  );
+  let lastTurnChangedFiles = $derived.by(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (
+        message?.role === "assistant" &&
+        message.changedFiles &&
+        message.changedFiles.length > 0
+      ) {
+        return message.changedFiles;
+      }
+    }
+    return [];
+  });
   let activeAgentMode = $derived(activeWorkspaceState?.agentMode ?? "build");
   let activeFile = $derived(
     activeFilePath ? (openFiles[activeFilePath] ?? null) : null,
@@ -1488,6 +1508,7 @@
     } = {},
   ): Promise<void> {
     activeWorkspaceId = workspaceId;
+    activeDiffView = null;
     const workspace = workspaces.find((item) => item.id === workspaceId);
     if (!workspace) return;
     const selectedSessionId = normalizeSessionId(options.sessionId);
@@ -2072,6 +2093,7 @@
   }
 
   async function openFile(filePath: string): Promise<void> {
+    activeDiffView = null;
     const alreadyOpen = openFiles[filePath];
     if (alreadyOpen) {
       openFileOrder = openFileOrder.includes(filePath)
@@ -2300,6 +2322,7 @@
   }
 
   function selectOpenFileTab(filePath: string): void {
+    activeDiffView = null;
     activeFilePath = filePath;
     persistActiveWorkspaceEditorState(filePath);
   }
@@ -2356,6 +2379,22 @@
     persistWorkspaceMetadata(activeWorkspace, {
       activePaneTab: nextTab,
     });
+  }
+
+  function handleRightPanelTabChange(nextTab: RightPanelTab): void {
+    if (!activeWorkspace) return;
+    persistWorkspaceMetadata(activeWorkspace, {
+      activeRightPanelTab: nextTab,
+    });
+  }
+
+  function handleOpenGitDiff(diff: GitFileDiff): void {
+    activeDiffView = diff;
+    handlePaneTabChange("code");
+  }
+
+  function handleCloseDiffView(): void {
+    activeDiffView = null;
   }
 
   function handleInnerSplitContainerElChange(
@@ -3447,6 +3486,7 @@
       }
       stoppingAgentTurn = false;
       agentBusy = false;
+      gitRefreshToken += 1;
       void ensureWorkspaceSessions(turnWorkspaceId, { force: true }).catch(
         () => undefined,
       );
@@ -3653,6 +3693,13 @@
           onFileManagerCollapsedChange={handleFileManagerCollapsedChange}
           onBeginInnerResize={handleInnerResizePointerDown}
           onInnerSplitContainerElChange={handleInnerSplitContainerElChange}
+          {activeRightPanelTab}
+          onActiveRightPanelTabChange={handleRightPanelTabChange}
+          {lastTurnChangedFiles}
+          {gitRefreshToken}
+          onOpenGitDiff={handleOpenGitDiff}
+          {activeDiffView}
+          onCloseDiffView={handleCloseDiffView}
         />
       </div>
 

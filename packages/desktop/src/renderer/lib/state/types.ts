@@ -111,6 +111,7 @@ export type RequirementsState = {
 };
 
 export type PaneTab = "code" | "monitor";
+export type RightPanelTab = "files" | "git";
 export type SerialMonitorView = "monitor" | "plotter";
 
 export type WorkspaceState = {
@@ -127,6 +128,7 @@ export type WorkspaceState = {
   fileTree: PersistedTreeItem[];
   expandedDirKeys: string[];
   activePaneTab: PaneTab;
+  activeRightPanelTab: RightPanelTab;
   openFileOrder: string[];
   activeFilePath: string | null;
   currentSessionId: string | null;

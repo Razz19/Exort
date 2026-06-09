@@ -9,15 +9,19 @@
   } from "lucide-svelte";
 
   import type {
+    AgentChangedFile,
     EmbeddedProjectInfo,
     OpenFile,
     PaneTab,
+    RightPanelTab,
     Workspace,
   } from "../../lib/types";
   import type { MonacoThemeId } from "../../lib/state/types";
+  import type { GitFileDiff } from "../../../shared/git";
   import platformioLogoUrl from "../../../../../../assets/PlatformIO_logo.svg";
-  import FileTree from "../FileTree.svelte";
+  import RightPanel from "../RightPanel.svelte";
   import MonacoPane from "./MonacoPane.svelte";
+  import DiffPane from "./DiffPane.svelte";
   import SerialMonitorPane from "./SerialMonitorPane.svelte";
 
   let {
@@ -55,6 +59,13 @@
     onFileManagerCollapsedChange = () => {},
     onBeginInnerResize = () => {},
     onInnerSplitContainerElChange = () => {},
+    activeRightPanelTab,
+    onActiveRightPanelTabChange = () => {},
+    lastTurnChangedFiles = [],
+    gitRefreshToken = 0,
+    onOpenGitDiff = () => {},
+    activeDiffView = null,
+    onCloseDiffView = () => {},
   } = $props<{
     activePaneTab: PaneTab;
     onPaneTabChange: (tab: PaneTab) => void;
@@ -93,7 +104,19 @@
     onFileManagerCollapsedChange: (collapsed: boolean) => void;
     onBeginInnerResize: (event: PointerEvent) => void;
     onInnerSplitContainerElChange: (element: HTMLDivElement | null) => void;
+    activeRightPanelTab: RightPanelTab;
+    onActiveRightPanelTabChange: (tab: RightPanelTab) => void;
+    lastTurnChangedFiles: AgentChangedFile[];
+    gitRefreshToken: number;
+    onOpenGitDiff: (diff: GitFileDiff) => void;
+    activeDiffView: GitFileDiff | null;
+    onCloseDiffView: () => void;
   }>();
+
+  function labelFromDiffPath(filePath: string): string {
+    const parts = filePath.split(/[\\/]/);
+    return parts[parts.length - 1] ?? filePath;
+  }
 
   function labelFromPath(filePath: string): string {
     const parts = filePath.split(/[\\/]/);
@@ -217,7 +240,31 @@
             class="flex items-center border-b border-dark-border bg-dark-surface"
           >
             <div class="flex min-w-0 flex-1 overflow-x-auto">
-              {#if visibleOpenFileTabs.length === 0}
+              {#if activeDiffView}
+                <div
+                  class="group flex min-w-0 max-w-64 items-center gap-2 border-r border-dark-border bg-dark-fg4/20 px-2 py-2 text-left text-xs text-dark-fg0 border-b border-b-dark-yellow"
+                >
+                  <div class="flex min-w-0 flex-1 items-center gap-2" title={activeDiffView.path}>
+                    <img
+                      class="h-4 w-4 shrink-0 opacity-90"
+                      src={getTabIconDataUri(activeDiffView.path)}
+                      alt=""
+                      aria-hidden="true"
+                      draggable="false"
+                    />
+                    <span class="truncate">{labelFromDiffPath(activeDiffView.path)} (diff)</span>
+                  </div>
+                  <button
+                    class="shrink-0 rounded-md text-dark-fg3 transition hover:bg-dark-bg2 hover:text-dark-fg1"
+                    aria-label="Close diff"
+                    title="Close diff"
+                    onclick={() => onCloseDiffView()}
+                  >
+                    <X class="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              {/if}
+              {#if visibleOpenFileTabs.length === 0 && !activeDiffView}
                 <div class="truncate px-3 py-2 text-xs text-dark-fg3">
                   No file selected
                 </div>
@@ -225,7 +272,7 @@
                 {#each visibleOpenFileTabs as tabPath (tabPath)}
                   <div
                     class={`group flex min-w-0 max-w-64 items-center gap-2 border-r border-dark-border px-2 py-2 text-left text-xs  ${
-                      tabPath === activeFilePath
+                      !activeDiffView && tabPath === activeFilePath
                         ? "bg-dark-fg4/20 text-dark-fg0 border-b border-b-dark-yellow"
                         : "bg-dark-surface text-dark-fg3 hover:bg-dark-bg1 hover:text-dark-fg1"
                     }`}
@@ -303,7 +350,14 @@
           </div>
 
           <div class="flex-1 overflow-hidden">
-            {#if activeFile}
+            {#if activeDiffView}
+              <DiffPane
+                filePath={activeDiffView.path}
+                original={activeDiffView.original}
+                modified={activeDiffView.modified}
+                {monacoTheme}
+              />
+            {:else if activeFile}
               <MonacoPane
                 filePath={activeFile.path}
                 value={activeFile.content}
@@ -338,7 +392,9 @@
           >
             <div class="h-full min-w-0">
               {#if activeWorkspace}
-                <FileTree
+                <RightPanel
+                  {activeRightPanelTab}
+                  {onActiveRightPanelTabChange}
                   rootPath={activeWorkspace.rootPath}
                   items={activeWorkspace.tree}
                   {activeFilePath}
@@ -348,8 +404,10 @@
                   onCreateEntry={onCreateFileTreeEntry}
                   onRenameEntry={onRenameFileTreeEntry}
                   onOpenInFinder={onOpenWorkspaceInFinder}
-                  onCollapseFileManager={() =>
-                    onFileManagerCollapsedChange(true)}
+                  workspaceRoot={activeWorkspace.rootPath}
+                  {lastTurnChangedFiles}
+                  {gitRefreshToken}
+                  {onOpenGitDiff}
                 />
               {:else}
                 <div class="p-4 text-sm text-dark-fg3">

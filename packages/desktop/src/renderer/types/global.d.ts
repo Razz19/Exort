@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { UpdaterEvent, UpdaterState } from '../../shared/updater';
+import type { GitBranchInfo, GitRepoStatus } from '../../shared/git';
 
 export {};
 
@@ -485,6 +486,7 @@ type AppState = {
   };
 };
 type PaneTab = 'code' | 'monitor';
+type RightPanelTab = 'files' | 'git';
 type SerialMonitorView = 'monitor' | 'plotter';
 type WorkspaceState = {
   rootPath: string;
@@ -500,6 +502,7 @@ type WorkspaceState = {
   fileTree: PersistedTreeItem[];
   expandedDirKeys: string[];
   activePaneTab: PaneTab;
+  activeRightPanelTab: RightPanelTab;
   openFileOrder: string[];
   activeFilePath: string | null;
   currentSessionId: string | null;
@@ -634,6 +637,35 @@ declare global {
         port: string;
       }) => Promise<{ ok: boolean; result?: ArduinoUploadResult; error?: string }>;
       cancelArduinoUpload: (requestId: string) => Promise<{ ok: boolean; cancelled: boolean; error?: string }>;
+      gitIsRepository: (payload: {
+        workspaceRoot: string;
+      }) => Promise<{ ok: boolean; isRepo?: boolean; error?: string }>;
+      gitStatus: (payload: {
+        workspaceRoot: string;
+      }) => Promise<{ ok: boolean; status?: GitRepoStatus; error?: string }>;
+      gitInit: (payload: { workspaceRoot: string }) => Promise<{ ok: boolean; error?: string }>;
+      gitFileDiff: (payload: {
+        workspaceRoot: string;
+        filePath: string;
+      }) => Promise<{ ok: boolean; original?: string; modified?: string; error?: string }>;
+      gitCommitAll: (payload: {
+        workspaceRoot: string;
+        message: string;
+      }) => Promise<{ ok: boolean; error?: string }>;
+      gitListBranches: (payload: {
+        workspaceRoot: string;
+      }) => Promise<{ ok: boolean; branches?: GitBranchInfo; error?: string }>;
+      gitCreateBranch: (payload: {
+        workspaceRoot: string;
+        name: string;
+      }) => Promise<{ ok: boolean; error?: string }>;
+      gitCheckoutBranch: (payload: {
+        workspaceRoot: string;
+        name: string;
+      }) => Promise<{ ok: boolean; error?: string }>;
+      gitPush: (payload: { workspaceRoot: string }) => Promise<{ ok: boolean; error?: string }>;
+      gitPull: (payload: { workspaceRoot: string }) => Promise<{ ok: boolean; error?: string }>;
+      gitFetch: (payload: { workspaceRoot: string }) => Promise<{ ok: boolean; error?: string }>;
       detectEmbeddedProject: (payload: {
         workspaceRoot: string;
         activeFilePath?: string | null;

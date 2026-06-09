@@ -10,6 +10,7 @@ import {
   type MonacoThemeId,
   type PaneTab,
   type PersistedTreeItem,
+  type RightPanelTab,
   type SerialMonitorView,
   type ThinkingLevel,
   type WorkspaceManagerState,
@@ -204,6 +205,11 @@ function sanitizePaneTab(value: unknown): PaneTab {
   return 'code';
 }
 
+function sanitizeRightPanelTab(value: unknown): RightPanelTab {
+  if (value === 'git') return 'git';
+  return 'files';
+}
+
 function sanitizeSerialMonitorView(value: unknown): SerialMonitorView {
   if (value === 'plotter') return 'plotter';
   return 'monitor';
@@ -302,6 +308,7 @@ export function createDefaultWorkspaceState(rootPath: string, workspaceName = ''
     fileTree: [],
     expandedDirKeys: [],
     activePaneTab: 'code',
+    activeRightPanelTab: 'files',
     openFileOrder: [],
     activeFilePath: null,
     currentSessionId: null
@@ -439,6 +446,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
   const currentSessionId = asNonBlankString(candidate.currentSessionId) ?? null;
   const expandedDirKeys = asStringArray(candidate.expandedDirKeys);
   const activePaneTab = sanitizePaneTab(candidate.activePaneTab);
+  const activeRightPanelTab = sanitizeRightPanelTab(candidate.activeRightPanelTab);
   const openFileOrder = asStringArray(candidate.openFileOrder);
   const fileTree = sanitizeTree(candidate.fileTree);
 
@@ -456,6 +464,7 @@ export function sanitizeWorkspaceState(input: unknown, rootPath: string): Worksp
     fileTree,
     expandedDirKeys,
     activePaneTab,
+    activeRightPanelTab,
     openFileOrder,
     activeFilePath,
     currentSessionId

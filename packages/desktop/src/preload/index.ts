@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { UpdaterEvent, UpdaterState } from '../shared/updater.js';
+import type { GitBranchInfo, GitRepoStatus } from '../shared/git.js';
 
 type OpenCodeTokenBreakdown = {
   input?: number;
@@ -710,6 +711,45 @@ const electronAPI = {
       cancelled: boolean;
       error?: string;
     }>,
+  gitIsRepository: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:is-repository', payload) as Promise<{
+      ok: boolean;
+      isRepo?: boolean;
+      error?: string;
+    }>,
+  gitStatus: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:status', payload) as Promise<{
+      ok: boolean;
+      status?: GitRepoStatus;
+      error?: string;
+    }>,
+  gitInit: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:init', payload) as Promise<{ ok: boolean; error?: string }>,
+  gitFileDiff: (payload: { workspaceRoot: string; filePath: string }) =>
+    ipcRenderer.invoke('git:file-diff', payload) as Promise<{
+      ok: boolean;
+      original?: string;
+      modified?: string;
+      error?: string;
+    }>,
+  gitCommitAll: (payload: { workspaceRoot: string; message: string }) =>
+    ipcRenderer.invoke('git:commit-all', payload) as Promise<{ ok: boolean; error?: string }>,
+  gitListBranches: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:list-branches', payload) as Promise<{
+      ok: boolean;
+      branches?: GitBranchInfo;
+      error?: string;
+    }>,
+  gitCreateBranch: (payload: { workspaceRoot: string; name: string }) =>
+    ipcRenderer.invoke('git:create-branch', payload) as Promise<{ ok: boolean; error?: string }>,
+  gitCheckoutBranch: (payload: { workspaceRoot: string; name: string }) =>
+    ipcRenderer.invoke('git:checkout-branch', payload) as Promise<{ ok: boolean; error?: string }>,
+  gitPush: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:push', payload) as Promise<{ ok: boolean; error?: string }>,
+  gitPull: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:pull', payload) as Promise<{ ok: boolean; error?: string }>,
+  gitFetch: (payload: { workspaceRoot: string }) =>
+    ipcRenderer.invoke('git:fetch', payload) as Promise<{ ok: boolean; error?: string }>,
   detectEmbeddedProject: (payload: { workspaceRoot: string; activeFilePath?: string | null }) =>
     ipcRenderer.invoke('embedded:detect-active-project', payload) as Promise<{
       ok: boolean;
