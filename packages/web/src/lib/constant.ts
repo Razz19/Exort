@@ -1,4 +1,4 @@
-export const EXORT_APP_VERSION = "0.3.3";
+export const EXORT_APP_VERSION = "0.4.0";
 export const EXORT_GITHUB_LINK = "https://github.com/Razz19/Exort";
 export const EXORT_DISCORD_LINK = "https://discord.gg/xmcmcWkr4V";
 
