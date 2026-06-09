@@ -140,7 +140,14 @@ function summarizeToolPermissionContext(part: AgentSyncPart | undefined): string
 function getToolCommandForPermission(part: AgentSyncPart | undefined): string | null {
   if (!part?.input) return null;
   const input = parseJsonRecord(part.input);
-  return getRecordString(input, ["command", "cmd"]);
+  return getRecordString(input, [
+    "command",
+    "cmd",
+    "filePath",
+    "path",
+    "url",
+    "pattern",
+  ]);
 }
 
 function toolStepTitle(

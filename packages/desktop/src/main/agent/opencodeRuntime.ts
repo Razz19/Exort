@@ -420,6 +420,17 @@ function stringifyRawText(value: unknown): string | null {
   return null;
 }
 
+function extractCommandFromToolRecord(record: Record<string, unknown>): string | null {
+  return (
+    stringifyRawText(record.command) ??
+    stringifyRawText(record.cmd) ??
+    stringifyRawText(record.filePath) ??
+    stringifyRawText(record.path) ??
+    stringifyRawText(record.url) ??
+    stringifyRawText(record.pattern)
+  );
+}
+
 function extractCommandFromToolInput(value: unknown): string | null {
   if (typeof value === 'string') {
     const trimmed = value.trim();
@@ -428,14 +439,14 @@ function extractCommandFromToolInput(value: unknown): string | null {
     try {
       const parsed = JSON.parse(trimmed);
       const record = asRecord(parsed);
-      return stringifyRawText(record.command) ?? stringifyRawText(record.cmd);
+      return extractCommandFromToolRecord(record);
     } catch {
       return trimmed;
     }
   }
 
   const record = asRecord(value);
-  return stringifyRawText(record.command) ?? stringifyRawText(record.cmd);
+  return extractCommandFromToolRecord(record);
 }
 
 function extractPermissionPattern(value: unknown): string | null {
@@ -460,7 +471,11 @@ function resolvePermissionCommand(value: Record<string, unknown>, tool: Record<s
     stringifyRawText(metadata.command) ??
     stringifyRawText(value.command) ??
     extractCommandFromToolInput(tool.input) ??
-    extractCommandFromToolInput(value.input)
+    extractCommandFromToolInput(value.input) ??
+    stringifyRawText(metadata.filePath) ??
+    stringifyRawText(metadata.path) ??
+    stringifyRawText(metadata.url) ??
+    stringifyRawText(metadata.pattern)
   );
 }
 
@@ -3129,6 +3144,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
   const toolSnapshots = new Map<string, ToolFileSnapshot>();
   const toolPermissionContext = new Map<string, string>();
   const toolPermissionCommand = new Map<string, string>();
+  let lastToolPermission: { context?: string; command?: string } | undefined;
   let promptUserMessageId: string | undefined;
   const handleEvent = (event: AgentStreamEvent) => {
     let nextEvent = event;
@@ -3144,32 +3160,37 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
           toolSnapshots.set(event.toolCallId, snapshot);
         }
       }
-      toolPermissionContext.set(
-        event.toolCallId,
-        summarizeToolInputForPermission(event.name, event.input)
-      );
+      const context = summarizeToolInputForPermission(event.name, event.input);
+      toolPermissionContext.set(event.toolCallId, context);
       const command = extractToolCommandForPermission(event.input);
       if (command) {
         toolPermissionCommand.set(event.toolCallId, command);
       }
+      lastToolPermission = { context, command: command ?? undefined };
     }
 
-    if (
-      event.type === 'permission_asked' &&
-      isGenericPermissionTitle(event.title) &&
-      event.toolCallId
-    ) {
-      const context = toolPermissionContext.get(event.toolCallId) ?? toolNames.get(event.toolCallId);
-      const command = event.command ?? toolPermissionCommand.get(event.toolCallId);
-      if (context) {
+    if (event.type === 'permission_asked') {
+      // OpenCode does not always carry a toolCallId on the permission event, so
+      // fall back to the most recent tool call when we cannot resolve by id.
+      const byId = event.toolCallId
+        ? {
+            context: toolPermissionContext.get(event.toolCallId) ?? toolNames.get(event.toolCallId),
+            command: toolPermissionCommand.get(event.toolCallId)
+          }
+        : undefined;
+      const fallbackContext = byId?.context ?? lastToolPermission?.context;
+      const fallbackCommand = byId?.command ?? lastToolPermission?.command;
+
+      const title =
+        isGenericPermissionTitle(event.title) && fallbackContext
+          ? fallbackContext
+          : event.title;
+      const command = event.command ?? fallbackCommand;
+
+      if (title !== event.title || command !== event.command) {
         nextEvent = {
           ...event,
-          title: context,
-          command
-        };
-      } else if (command) {
-        nextEvent = {
-          ...event,
+          title,
           command
         };
       }
