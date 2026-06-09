@@ -1,6 +1,8 @@
 <script lang="ts">
   import { getIcon } from "material-file-icons";
   import {
+    Eye,
+    EyeOff,
     FilePlus,
     Folder,
     FolderOpen,
@@ -54,8 +56,10 @@
     rootPath,
     items,
     activeFilePath,
+    showHiddenFiles = false,
     expandedDirKeys,
     onExpandedDirKeysChange,
+    onToggleHiddenFiles = () => {},
     onSelectFile,
     onCreateEntry = async () => ({ ok: false, error: "Not implemented" }),
     onRenameEntry = async () => ({ ok: false, error: "Not implemented" }),
@@ -64,8 +68,10 @@
     rootPath: string;
     items: Array<{ path: string; isDirectory: boolean }>;
     activeFilePath: string | null;
+    showHiddenFiles?: boolean;
     expandedDirKeys: string[];
     onExpandedDirKeysChange: (keys: string[]) => void;
+    onToggleHiddenFiles?: () => void;
     onSelectFile: (filePath: string) => void | Promise<void>;
     onCreateEntry?: (params: {
       kind: "file" | "folder";
@@ -676,6 +682,22 @@
         aria-label="Create folder"
       >
         <FolderPlus class="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        class={`inline-flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-dark-bg1/60 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+          showHiddenFiles ? "bg-dark-bg1/60 text-dark-fg1" : "text-dark-fg3"
+        }`}
+        onclick={() => onToggleHiddenFiles()}
+        title={showHiddenFiles ? "Hide hidden files" : "Show hidden files"}
+        aria-label={showHiddenFiles ? "Hide hidden files" : "Show hidden files"}
+        aria-pressed={showHiddenFiles}
+      >
+        {#if showHiddenFiles}
+          <Eye class="h-4 w-4" />
+        {:else}
+          <EyeOff class="h-4 w-4" />
+        {/if}
       </button>
       <button
         type="button"

@@ -96,6 +96,7 @@ type AppState = {
     chatCollapsed: boolean;
     editorWidthPct: number;
     fileManagerCollapsed: boolean;
+    showHiddenFiles: boolean;
   };
   serial: {
     bufferSize: number;
@@ -445,7 +446,8 @@ function createDefaultAppState(): AppState {
       chatWidthPct: 40,
       chatCollapsed: false,
       editorWidthPct: 70,
-      fileManagerCollapsed: false
+      fileManagerCollapsed: false,
+      showHiddenFiles: false
     },
     serial: {
       bufferSize: SERIAL_BUFFER_SIZE_DEFAULT
@@ -519,6 +521,10 @@ function sanitizeAppState(input: unknown): AppState {
     typeof layoutCandidate?.fileManagerCollapsed === 'boolean'
       ? layoutCandidate.fileManagerCollapsed
       : defaults.layout.fileManagerCollapsed;
+  const showHiddenFiles =
+    typeof layoutCandidate?.showHiddenFiles === 'boolean'
+      ? layoutCandidate.showHiddenFiles
+      : defaults.layout.showHiddenFiles;
   const providersCandidate =
     candidate.providers && typeof candidate.providers === 'object'
       ? (candidate.providers as Partial<AppState['providers']> & {
@@ -545,7 +551,8 @@ function sanitizeAppState(input: unknown): AppState {
       chatWidthPct,
       chatCollapsed,
       editorWidthPct,
-      fileManagerCollapsed
+      fileManagerCollapsed,
+      showHiddenFiles
     },
     serial: {
       bufferSize: sanitizeSerialBufferSize(candidate.serial?.bufferSize ?? defaults.serial.bufferSize)
@@ -892,15 +899,24 @@ function formatWorkspaceFsError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-async function readTree(rootPath: string, depth = 0): Promise<Array<{ path: string; isDirectory: boolean }>> {
+function getShowHiddenFilesPreference(): boolean {
+  return sanitizeAppState(store.get('appState')).layout.showHiddenFiles;
+}
+
+async function readTree(
+  rootPath: string,
+  depth = 0,
+  showHidden = false
+): Promise<Array<{ path: string; isDirectory: boolean }>> {
   if (depth > 6) return [];
 
   const entries = await fs.readdir(rootPath, { withFileTypes: true });
   const list: Array<{ path: string; isDirectory: boolean }> = [];
 
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
+    // Always skip heavy/noisy directories, even when showing hidden files.
     if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git') continue;
+    if (!showHidden && entry.name.startsWith('.')) continue;
 
     const fullPath = path.join(rootPath, entry.name);
 
@@ -910,7 +926,7 @@ async function readTree(rootPath: string, depth = 0): Promise<Array<{ path: stri
     });
 
     if (entry.isDirectory()) {
-      const nested = await readTree(fullPath, depth + 1);
+      const nested = await readTree(fullPath, depth + 1, showHidden);
       list.push(...nested);
     }
   }
@@ -1077,7 +1093,7 @@ app.whenReady().then(async () => {
     const deduped = current.filter((item) => item.rootPath !== workspace.rootPath);
     store.set('workspaces', [workspace, ...deduped].slice(0, 12));
 
-    const tree = await readTree(selectedPath);
+    const tree = await readTree(selectedPath, 0, getShowHiddenFilesPreference());
 
     return {
       cancelled: false,
@@ -1119,7 +1135,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('workspace:tree', async (_event, rootPath: string) => {
     try {
-      const tree = await readTree(rootPath);
+      const tree = await readTree(rootPath, 0, getShowHiddenFilesPreference());
       return tree;
     } catch (error) {
       const fsError = error as NodeJS.ErrnoException;
@@ -1286,7 +1302,7 @@ app.whenReady().then(async () => {
       const subscribers = new Set<number>();
       const refreshTree = async () => {
         try {
-          const tree = await readTree(normalized);
+          const tree = await readTree(normalized, 0, getShowHiddenFilesPreference());
           for (const id of subscribers) {
             webContents.fromId(id)?.send('workspace:tree-changed', { rootPath: normalized, tree });
           }

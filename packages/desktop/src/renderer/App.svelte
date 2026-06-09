@@ -54,6 +54,7 @@
     hydrateStateManager,
     patchAppState,
     patchWorkspaceManagerState,
+    persistAppStateNow,
     refreshRequirementsStatus,
     touchRecentWorkspace,
     upsertWorkspaceState,
@@ -246,6 +247,9 @@
   );
   let fileManagerCollapsed = $derived(
     appStateSnapshot.layout.fileManagerCollapsed ?? false,
+  );
+  let showHiddenFiles = $derived(
+    appStateSnapshot.layout.showHiddenFiles ?? false,
   );
   let effectiveFileManagerCollapsed = $derived(
     fileManagerCollapsed || !activeWorkspace,
@@ -2378,6 +2382,23 @@
     });
   }
 
+  async function handleToggleHiddenFiles(): Promise<void> {
+    const next = !showHiddenFiles;
+    patchAppState({
+      layout: {
+        showHiddenFiles: next,
+      },
+    });
+
+    // Flush the preference to the main process before refreshing so the tree
+    // read picks up the new value instead of the debounced-stale one.
+    await persistAppStateNow();
+
+    if (activeWorkspace) {
+      await refreshWorkspaceTree(activeWorkspace.rootPath);
+    }
+  }
+
   function handleChatCollapsedChange(nextCollapsed: boolean): void {
     patchAppState({
       layout: {
@@ -3629,6 +3650,7 @@
           onPaneTabChange={handlePaneTabChange}
           editorWidthPct={effectiveEditorWidthPct}
           fileManagerCollapsed={effectiveFileManagerCollapsed}
+          {showHiddenFiles}
           {monacoTheme}
           {activeWorkspace}
           {workspaces}
@@ -3650,6 +3672,7 @@
           onRenameFileTreeEntry={handleFileTreeRenameEntry}
           onOpenWorkspaceInFinder={handleOpenWorkspaceInFinder}
           onExpandedDirKeysChange={handleExpandedDirKeysChange}
+          onToggleHiddenFiles={handleToggleHiddenFiles}
           onFileManagerCollapsedChange={handleFileManagerCollapsedChange}
           onBeginInnerResize={handleInnerResizePointerDown}
           onInnerSplitContainerElChange={handleInnerSplitContainerElChange}

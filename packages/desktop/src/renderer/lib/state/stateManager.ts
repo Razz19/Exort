@@ -26,6 +26,7 @@ type AppStatePatch = {
     chatCollapsed?: boolean;
     editorWidthPct?: number;
     fileManagerCollapsed?: boolean;
+    showHiddenFiles?: boolean;
   };
   serial?: {
     bufferSize?: number;
@@ -77,6 +78,17 @@ function persistAppStateSoon(): void {
     appPersistTimer = null;
     void window.electronAPI.setAppState(stripRuntimeAppStateForPersistence(get(appStateStore)));
   }, 120);
+}
+
+export async function persistAppStateNow(): Promise<void> {
+  if (!canPersist()) return;
+
+  if (appPersistTimer) {
+    clearTimeout(appPersistTimer);
+    appPersistTimer = null;
+  }
+
+  await window.electronAPI.setAppState(stripRuntimeAppStateForPersistence(get(appStateStore)));
 }
 
 function persistWorkspaceStateSoon(): void {

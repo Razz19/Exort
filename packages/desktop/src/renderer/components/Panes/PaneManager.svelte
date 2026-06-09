@@ -25,6 +25,7 @@
     onPaneTabChange = () => {},
     editorWidthPct,
     fileManagerCollapsed = false,
+    showHiddenFiles = false,
     monacoTheme,
     activeWorkspace,
     workspaces,
@@ -52,6 +53,7 @@
     }),
     onOpenWorkspaceInFinder = () => {},
     onExpandedDirKeysChange = () => {},
+    onToggleHiddenFiles = () => {},
     onFileManagerCollapsedChange = () => {},
     onBeginInnerResize = () => {},
     onInnerSplitContainerElChange = () => {},
@@ -60,6 +62,7 @@
     onPaneTabChange: (tab: PaneTab) => void;
     editorWidthPct: number;
     fileManagerCollapsed: boolean;
+    showHiddenFiles: boolean;
     monacoTheme: MonacoThemeId;
     activeWorkspace: Workspace | null;
     workspaces: Workspace[];
@@ -90,6 +93,7 @@
     }) => Promise<{ ok: boolean; path?: string; error?: string }>;
     onOpenWorkspaceInFinder: () => Promise<void> | void;
     onExpandedDirKeysChange: (keys: string[]) => void;
+    onToggleHiddenFiles: () => void;
     onFileManagerCollapsedChange: (collapsed: boolean) => void;
     onBeginInnerResize: (event: PointerEvent) => void;
     onInnerSplitContainerElChange: (element: HTMLDivElement | null) => void;
@@ -342,8 +346,10 @@
                   rootPath={activeWorkspace.rootPath}
                   items={activeWorkspace.tree}
                   {activeFilePath}
+                  {showHiddenFiles}
                   expandedDirKeys={activeWorkspaceExpandedDirKeys}
                   {onExpandedDirKeysChange}
+                  {onToggleHiddenFiles}
                   onSelectFile={onOpenFile}
                   onCreateEntry={onCreateFileTreeEntry}
                   onRenameEntry={onRenameFileTreeEntry}

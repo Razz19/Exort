@@ -266,7 +266,8 @@ export function createDefaultAppState(): AppState {
       chatWidthPct: 40,
       chatCollapsed: false,
       editorWidthPct: 70,
-      fileManagerCollapsed: false
+      fileManagerCollapsed: false,
+      showHiddenFiles: false
     },
     serial: {
       bufferSize: SERIAL_BUFFER_SIZE_DEFAULT
@@ -341,6 +342,10 @@ export function sanitizeAppState(input: unknown): AppState {
     typeof layoutCandidate?.fileManagerCollapsed === 'boolean'
       ? layoutCandidate.fileManagerCollapsed
       : defaults.layout.fileManagerCollapsed;
+  const showHiddenFiles =
+    typeof layoutCandidate?.showHiddenFiles === 'boolean'
+      ? layoutCandidate.showHiddenFiles
+      : defaults.layout.showHiddenFiles;
   const providersCandidate =
     candidate.providers && typeof candidate.providers === 'object'
       ? (candidate.providers as Partial<AppState['providers']> & {
@@ -367,7 +372,8 @@ export function sanitizeAppState(input: unknown): AppState {
       chatWidthPct,
       chatCollapsed,
       editorWidthPct,
-      fileManagerCollapsed
+      fileManagerCollapsed,
+      showHiddenFiles
     },
     serial: {
       bufferSize: sanitizeSerialBufferSize(candidate.serial?.bufferSize ?? defaults.serial.bufferSize)

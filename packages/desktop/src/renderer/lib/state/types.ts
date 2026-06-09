@@ -84,6 +84,7 @@ export type AppState = {
     chatCollapsed: boolean;
     editorWidthPct: number;
     fileManagerCollapsed: boolean;
+    showHiddenFiles: boolean;
   };
   serial: {
     bufferSize: number;
