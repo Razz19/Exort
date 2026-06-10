@@ -6,6 +6,9 @@ import { withRuntimePathEnv } from '../runtimeEnv.js';
 import type {
   GitBranchInfo,
   GitChangeStatus,
+  GitCommitDetails,
+  GitCommitFileChange,
+  GitCommitSummary,
   GitFileChange,
   GitRepoStatus
 } from '../../shared/git.js';
@@ -34,6 +37,9 @@ type ParsedStatus = {
   behind: number;
   entries: ParsedStatusEntry[];
 };
+
+const FIELD_SEPARATOR = '\x1f';
+const RECORD_SEPARATOR = '\x1e';
 
 function asNonBlankString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -208,6 +214,80 @@ export function parseNumstat(output: string): Map<string, { additions: number; d
   return counts;
 }
 
+function mapCommitStatus(value: string): GitChangeStatus {
+  const code = value[0] ?? 'M';
+  if (code === 'A') return 'added';
+  if (code === 'D') return 'deleted';
+  if (code === 'R' || code === 'C') return 'renamed';
+  return 'modified';
+}
+
+function parseCommitSummaryRecord(record: string): GitCommitSummary | null {
+  const parts = record.split(FIELD_SEPARATOR);
+  const hash = asNonBlankString(parts[0]);
+  const shortHash = asNonBlankString(parts[1]);
+  if (!hash || !shortHash) return null;
+
+  return {
+    hash,
+    shortHash,
+    authorName: parts[2] ?? '',
+    authorEmail: parts[3] ?? '',
+    date: parts[4] ?? '',
+    subject: parts[5] ?? ''
+  };
+}
+
+export function parseCommitLog(output: string): GitCommitSummary[] {
+  return output
+    .split(RECORD_SEPARATOR)
+    .map((record) => parseCommitSummaryRecord(record.trim()))
+    .filter((commit): commit is GitCommitSummary => commit !== null);
+}
+
+export function parseCommitDetailsHeader(output: string): Omit<GitCommitDetails, 'files'> | null {
+  const record = output.split(RECORD_SEPARATOR)[0]?.trim();
+  if (!record) return null;
+  const parts = record.split(FIELD_SEPARATOR);
+  const summary = parseCommitSummaryRecord(parts.slice(0, 6).join(FIELD_SEPARATOR));
+  if (!summary) return null;
+  return {
+    ...summary,
+    body: parts.slice(6).join(FIELD_SEPARATOR).trim()
+  };
+}
+
+export function parseCommitFileChanges(
+  nameStatusOutput: string,
+  numstatOutput: string
+): GitCommitFileChange[] {
+  const counts = parseNumstat(numstatOutput);
+  const changes: GitCommitFileChange[] = [];
+
+  for (const line of nameStatusOutput.split(/\r?\n/)) {
+    if (line.trim().length === 0) continue;
+    const parts = line.split('\t');
+    const statusCode = parts[0] ?? '';
+    const status = mapCommitStatus(statusCode);
+    const isRename = status === 'renamed' && parts.length >= 3;
+    const oldPath = isRename ? asNonBlankString(parts[1]) ?? undefined : undefined;
+    const filePath = asNonBlankString(isRename ? parts[2] : parts[1]);
+    if (!filePath) continue;
+    const lineCounts = counts.get(filePath) ?? { additions: 0, deletions: 0 };
+
+    const change: GitCommitFileChange = {
+      path: filePath,
+      status,
+      additions: lineCounts.additions,
+      deletions: lineCounts.deletions
+    };
+    if (oldPath) change.oldPath = oldPath;
+    changes.push(change);
+  }
+
+  return changes;
+}
+
 async function countUntrackedAdditions(repoRoot: string, relativePath: string): Promise<number> {
   try {
     const content = await fs.readFile(path.join(repoRoot, relativePath), 'utf8');
@@ -331,6 +411,120 @@ export async function getFileDiff(
   } catch {
     modified = '';
   }
+
+  return { ok: true, original, modified };
+}
+
+export async function listCommitHistory(
+  rootPath: unknown,
+  limit: unknown
+): Promise<GitEnvelope<{ commits: GitCommitSummary[] }>> {
+  const root = asNonBlankString(rootPath);
+  if (!root) return { ok: false, error: 'A workspace folder is required.' };
+
+  const repoRoot = await resolveRepoRoot(root);
+  if (!repoRoot) return { ok: false, error: 'This folder is not a Git repository.' };
+
+  const normalizedLimit =
+    typeof limit === 'number' && Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, Math.trunc(limit)))
+      : 50;
+  const result = await runGit(
+    [
+      'log',
+      `--max-count=${normalizedLimit}`,
+      '--date=iso-strict',
+      `--pretty=format:%H%x1f%h%x1f%an%x1f%ae%x1f%aI%x1f%s%x1e`
+    ],
+    repoRoot
+  );
+
+  if (result.exitCode !== 0) {
+    const message = failureMessage(result, 'Failed to read Git history.');
+    if (/does not have any commits yet|your current branch .* does not have any commits/i.test(message)) {
+      return { ok: true, commits: [] };
+    }
+    return { ok: false, error: message };
+  }
+
+  return { ok: true, commits: parseCommitLog(result.stdout) };
+}
+
+export async function getCommitDetails(
+  rootPath: unknown,
+  hash: unknown
+): Promise<GitEnvelope<{ commit: GitCommitDetails }>> {
+  const root = asNonBlankString(rootPath);
+  const commitHash = asNonBlankString(hash);
+  if (!root || !commitHash) return { ok: false, error: 'A workspace folder and commit hash are required.' };
+
+  const repoRoot = await resolveRepoRoot(root);
+  if (!repoRoot) return { ok: false, error: 'This folder is not a Git repository.' };
+
+  const [header, nameStatus, numstat] = await Promise.all([
+    runGit(
+      ['show', '-s', '--date=iso-strict', '--format=%H%x1f%h%x1f%an%x1f%ae%x1f%aI%x1f%s%x1f%b%x1e', commitHash],
+      repoRoot
+    ),
+    runGit(['diff-tree', '--root', '--no-commit-id', '--name-status', '-r', '-M', commitHash],
+      repoRoot),
+    runGit(['diff-tree', '--root', '--no-commit-id', '--numstat', '-r', '-M', commitHash], repoRoot)
+  ]);
+
+  if (header.exitCode !== 0) {
+    return { ok: false, error: failureMessage(header, 'Failed to read commit details.') };
+  }
+  if (nameStatus.exitCode !== 0) {
+    return { ok: false, error: failureMessage(nameStatus, 'Failed to read commit file list.') };
+  }
+  if (numstat.exitCode !== 0) {
+    return { ok: false, error: failureMessage(numstat, 'Failed to read commit line changes.') };
+  }
+
+  const parsedHeader = parseCommitDetailsHeader(header.stdout);
+  if (!parsedHeader) return { ok: false, error: 'Failed to parse commit details.' };
+
+  return {
+    ok: true,
+    commit: {
+      ...parsedHeader,
+      files: parseCommitFileChanges(nameStatus.stdout, numstat.stdout)
+    }
+  };
+}
+
+async function readCommitBlob(repoRoot: string, ref: string, relativePath: string): Promise<string> {
+  const result = await runGit(['show', `${ref}:${relativePath}`], repoRoot);
+  return result.exitCode === 0 ? result.stdout : '';
+}
+
+export async function getCommitFileDiff(
+  rootPath: unknown,
+  hash: unknown,
+  filePath: unknown,
+  oldFilePath?: unknown
+): Promise<GitEnvelope<{ original: string; modified: string }>> {
+  const root = asNonBlankString(rootPath);
+  const commitHash = asNonBlankString(hash);
+  const relativePath = asNonBlankString(filePath);
+  if (!root || !commitHash || !relativePath) {
+    return { ok: false, error: 'A workspace folder, commit hash, and file path are required.' };
+  }
+  const oldRelativePath = asNonBlankString(oldFilePath) ?? relativePath;
+
+  const repoRoot = await resolveRepoRoot(root);
+  if (!repoRoot) return { ok: false, error: 'This folder is not a Git repository.' };
+
+  const parents = await runGit(['rev-list', '--parents', '-n', '1', commitHash], repoRoot);
+  if (parents.exitCode !== 0) {
+    return { ok: false, error: failureMessage(parents, 'Failed to read commit parent.') };
+  }
+
+  const parentHash = parents.stdout.trim().split(/\s+/)[1] ?? null;
+  const [original, modified] = await Promise.all([
+    parentHash ? readCommitBlob(repoRoot, parentHash, oldRelativePath) : Promise.resolve(''),
+    readCommitBlob(repoRoot, commitHash, relativePath)
+  ]);
 
   return { ok: true, original, modified };
 }

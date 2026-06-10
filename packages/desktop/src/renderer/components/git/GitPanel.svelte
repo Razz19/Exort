@@ -2,18 +2,27 @@
   import { untrack } from 'svelte';
   import {
     ArrowDown,
+    ArrowLeft,
     ArrowUp,
     Check,
     ChevronDown,
+    FileText,
     GitBranch,
     GitCommit,
+    History,
     Loader2,
     Plus,
     RefreshCw,
     RotateCw
   } from 'lucide-svelte';
   import type { AgentChangedFile } from '../../lib/types';
-  import type { GitFileDiff, GitRepoStatus } from '../../../shared/git';
+  import type {
+    GitCommitDetails,
+    GitCommitFileChange,
+    GitCommitSummary,
+    GitFileDiff,
+    GitRepoStatus
+  } from '../../../shared/git';
   import { patchToOriginalModified } from '../../lib/git/patchDiff';
   import GitChangesList, { type GitChangeRow } from './GitChangesList.svelte';
 
@@ -32,18 +41,25 @@
   }>();
 
   type ChangeSource = 'git' | 'lastTurn';
+  type GitPanelMode = 'changes' | 'history';
 
   let status = $state<GitRepoStatus | null>(null);
   let branches = $state<string[]>([]);
   let loading = $state(false);
+  let historyLoading = $state(false);
+  let commitDetailsLoading = $state(false);
   let busy = $state(false);
   let error = $state<string | null>(null);
+  let historyError = $state<string | null>(null);
   let source = $state<ChangeSource>('git');
+  let mode = $state<GitPanelMode>('changes');
   let commitMessage = $state('');
   let sourceMenuOpen = $state(false);
   let branchMenuOpen = $state(false);
   let newBranchOpen = $state(false);
   let newBranchName = $state('');
+  let commits = $state<GitCommitSummary[]>([]);
+  let selectedCommit = $state<GitCommitDetails | null>(null);
 
   async function refresh(): Promise<void> {
     const root = workspaceRoot;
@@ -72,6 +88,28 @@
     }
   }
 
+  async function loadHistory(options: { clearSelection?: boolean } = {}): Promise<void> {
+    const root = workspaceRoot;
+    if (!root) return;
+    historyLoading = true;
+    historyError = null;
+    try {
+      const result = await window.electronAPI.gitHistory({ workspaceRoot: root, limit: 50 });
+      if (!result.ok) {
+        historyError = result.error ?? 'Failed to load Git history.';
+        commits = [];
+        selectedCommit = null;
+        return;
+      }
+      commits = result.commits ?? [];
+      if (options.clearSelection || !selectedCommit || !commits.some((commit) => commit.hash === selectedCommit?.hash)) {
+        selectedCommit = null;
+      }
+    } finally {
+      historyLoading = false;
+    }
+  }
+
   // Refresh only when the workspace or the parent refresh token actually changes. The key guard is a
   // plain (non-reactive) variable so spurious effect re-runs — e.g. from unrelated app re-renders
   // caused by the workspace file watcher reacting to `.git` churn — become no-ops instead of
@@ -86,6 +124,10 @@
       status = null;
       branches = [];
       error = null;
+      historyError = null;
+      commits = [];
+      selectedCommit = null;
+      mode = 'changes';
       lastRefreshWorkspaceRoot = workspaceRoot;
     }
     untrack(() => {
@@ -150,6 +192,54 @@
     await runOp(() => window.electronAPI.gitPull({ workspaceRoot: workspaceRoot! }));
   }
 
+  async function openHistory(): Promise<void> {
+    mode = 'history';
+    closeMenus();
+    if (commits.length === 0) {
+      await loadHistory();
+    }
+  }
+
+  function closeHistory(): void {
+    mode = 'changes';
+    historyError = null;
+  }
+
+  async function selectCommit(commit: GitCommitSummary): Promise<void> {
+    const root = workspaceRoot;
+    if (!root) return;
+    commitDetailsLoading = true;
+    historyError = null;
+    try {
+      const result = await window.electronAPI.gitCommitDetails({ workspaceRoot: root, hash: commit.hash });
+      if (!result.ok || !result.commit) {
+        historyError = result.error ?? 'Failed to load commit details.';
+        return;
+      }
+      selectedCommit = result.commit;
+    } finally {
+      commitDetailsLoading = false;
+    }
+  }
+
+  async function openCommitDiff(file: GitCommitFileChange): Promise<void> {
+    const root = workspaceRoot;
+    const commit = selectedCommit;
+    if (!root || !commit) return;
+
+    const result = await window.electronAPI.gitCommitFileDiff({
+      workspaceRoot: root,
+      hash: commit.hash,
+      filePath: file.path,
+      oldFilePath: file.oldPath
+    });
+    if (!result.ok) {
+      historyError = result.error ?? 'Failed to load commit file diff.';
+      return;
+    }
+    onOpenDiff({ path: file.path, original: result.original ?? '', modified: result.modified ?? '' });
+  }
+
   let gitRows = $derived<GitChangeRow[]>(
     (status?.changes ?? []).map((change) => ({
       path: change.path,
@@ -196,6 +286,35 @@
   const sourceLabel = (value: ChangeSource): string =>
     value === 'git' ? 'Git changes' : 'Last turn changes';
 
+  function formatCommitDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function statusLabel(status: GitCommitFileChange['status']): string {
+    switch (status) {
+      case 'added':
+        return 'Added';
+      case 'deleted':
+        return 'Deleted';
+      case 'renamed':
+        return 'Renamed';
+      case 'conflicted':
+        return 'Conflict';
+      case 'untracked':
+        return 'Added';
+      case 'modified':
+      default:
+        return 'Modified';
+    }
+  }
+
   function closeMenus(): void {
     branchMenuOpen = false;
     sourceMenuOpen = false;
@@ -230,55 +349,166 @@
       {#if error}<p class="text-xs text-dark-red2">{error}</p>{/if}
     </div>
   {:else if status}
-    <!-- Changes source selector -->
-    <div class="relative flex items-center justify-between border-b border-dark-border px-3 py-2">
-      <button
-        class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-dark-fg1 transition-colors hover:bg-dark-bg1"
-        onclick={() => (sourceMenuOpen = !sourceMenuOpen)}
-      >
-        {sourceLabel(source)}
-        <ChevronDown class="h-4 w-4 text-dark-fg3" />
-      </button>
-      <span class="rounded-full bg-dark-bg1 px-2 py-0.5 text-[11px] font-medium text-dark-fg2">
-        {rows.length}
-      </span>
-
-      {#if sourceMenuOpen}
-        <div
-          class="absolute left-3 top-full z-30 mt-1.5 w-48 rounded-lg border border-dark-border bg-dark-surface p-1 shadow-xl"
+    {#if mode === 'history'}
+      <div class="flex items-center gap-2 border-b border-dark-border px-3 py-2">
+        <button
+          class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-dark-fg2 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1"
+          onclick={closeHistory}
+          title="Back to changes"
         >
-          {#each ['git', 'lastTurn'] as const as value (value)}
-            <button
-              class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-dark-fg1 transition-colors hover:bg-dark-bg1"
-              onclick={() => {
-                source = value;
-                sourceMenuOpen = false;
-              }}
-            >
-              {#if source === value}
-                <Check class="h-3.5 w-3.5 shrink-0 text-dark-green" />
-              {:else}
-                <span class="w-3.5 shrink-0"></span>
-              {/if}
-              {sourceLabel(value)}
-            </button>
-          {/each}
+          <ArrowLeft class="h-3.5 w-3.5" /> Back
+        </button>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-dark-fg1">Git history</p>
         </div>
-      {/if}
-    </div>
+        <button
+          class="inline-flex items-center justify-center rounded-md p-1.5 text-dark-fg3 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1 disabled:opacity-40"
+          disabled={historyLoading}
+          onclick={() => loadHistory({ clearSelection: true })}
+          title="Refresh history"
+        >
+          <RefreshCw class={`h-3.5 w-3.5 ${historyLoading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+    {:else}
+      <div class="relative flex items-center justify-between border-b border-dark-border px-3 py-2">
+        <button
+          class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-dark-fg1 transition-colors hover:bg-dark-bg1"
+          onclick={() => (sourceMenuOpen = !sourceMenuOpen)}
+        >
+          {sourceLabel(source)}
+          <ChevronDown class="h-4 w-4 text-dark-fg3" />
+        </button>
+        <button
+          class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-dark-fg2 transition-colors hover:bg-dark-bg1 hover:text-dark-fg1"
+          onclick={openHistory}
+          title="Show Git history"
+        >
+          <History class="h-3.5 w-3.5" /> History
+        </button>
 
-    {#if error}
+        {#if sourceMenuOpen}
+          <div
+            class="absolute left-3 top-full z-30 mt-1.5 w-48 rounded-lg border border-dark-border bg-dark-surface p-1 shadow-xl"
+          >
+            {#each ['git', 'lastTurn'] as const as value (value)}
+              <button
+                class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-dark-fg1 transition-colors hover:bg-dark-bg1"
+                onclick={() => {
+                  source = value;
+                  sourceMenuOpen = false;
+                }}
+              >
+                {#if source === value}
+                  <Check class="h-3.5 w-3.5 shrink-0 text-dark-green" />
+                {:else}
+                  <span class="w-3.5 shrink-0"></span>
+                {/if}
+                {sourceLabel(value)}
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    {#if error && mode === 'changes'}
       <div class="mx-3 mt-2 rounded-md border border-dark-red/30 bg-dark-red/10 px-3 py-1.5 text-xs text-dark-red2">
         {error}
       </div>
     {/if}
+    {#if historyError && mode === 'history'}
+      <div class="mx-3 mt-2 rounded-md border border-dark-red/30 bg-dark-red/10 px-3 py-1.5 text-xs text-dark-red2">
+        {historyError}
+      </div>
+    {/if}
 
-    <!-- Change list -->
-    <div class="panel-scroll min-h-0 flex-1 overflow-y-auto">
-      <GitChangesList changes={rows} onOpenDiff={openDiff} />
-    </div>
+    {#if mode === 'history'}
+      <div class="panel-scroll min-h-0 flex-1 overflow-y-auto">
+        {#if historyLoading && commits.length === 0}
+          <div class="flex h-full items-center justify-center gap-2 p-4 text-xs text-dark-fg3">
+            <Loader2 class="h-4 w-4 animate-spin" /> Loading history…
+          </div>
+        {:else if commits.length === 0}
+          <div class="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-dark-bg1 text-dark-fg3">
+              <History class="h-5 w-5" />
+            </span>
+            <p class="text-xs text-dark-fg3">No commits to show.</p>
+          </div>
+        {:else}
+          <div class="divide-y divide-dark-border/60">
+            {#each commits as commit (commit.hash)}
+              <button
+                type="button"
+                class={`flex w-full flex-col gap-1 px-3 py-2 text-left transition-colors hover:bg-dark-bg1/60 ${
+                  selectedCommit?.hash === commit.hash ? 'bg-dark-bg1/50' : ''
+                }`}
+                onclick={() => selectCommit(commit)}
+                title={commit.hash}
+              >
+                <span class="text-[13px] font-medium text-dark-fg1">{commit.subject}</span>
+                <span class="flex min-w-0 items-center gap-2 text-[11px] text-dark-fg4">
+                  <span class="font-mono text-dark-yellow">{commit.shortHash}</span>
+                  <span class="min-w-0 truncate">{commit.authorName}</span>
+                  <span class="shrink-0">{formatCommitDate(commit.date)}</span>
+                </span>
+              </button>
+            {/each}
+          </div>
 
-    <div class="space-y-2 border-t border-dark-border p-3">
+          {#if commitDetailsLoading}
+            <div class="flex items-center justify-center gap-2 border-t border-dark-border p-4 text-xs text-dark-fg3">
+              <Loader2 class="h-4 w-4 animate-spin" /> Loading commit…
+            </div>
+          {:else if selectedCommit}
+            <div class="border-t border-dark-border bg-dark-surface/60 p-3">
+              <div class="mb-3 space-y-1">
+                <p class="text-sm font-medium text-dark-fg1">{selectedCommit.subject}</p>
+                <p class="text-[11px] text-dark-fg4">
+                  {selectedCommit.authorName} &lt;{selectedCommit.authorEmail}&gt; - {formatCommitDate(selectedCommit.date)}
+                </p>
+                <p class="font-mono text-[11px] text-dark-yellow">{selectedCommit.hash}</p>
+                {#if selectedCommit.body}
+                  <p class="whitespace-pre-wrap rounded-md bg-dark-bg px-2 py-1.5 text-xs text-dark-fg3">
+                    {selectedCommit.body}
+                  </p>
+                {/if}
+              </div>
+
+              <div class="space-y-1">
+                {#each selectedCommit.files as file (file.path)}
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-dark-bg1"
+                    onclick={() => openCommitDiff(file)}
+                    title={file.oldPath ? `${file.oldPath} -> ${file.path}` : file.path}
+                  >
+                    <FileText class="h-3.5 w-3.5 shrink-0 text-dark-fg3" />
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate text-dark-fg1">{file.path}</span>
+                      {#if file.oldPath}
+                        <span class="block truncate text-[10px] text-dark-fg4">from {file.oldPath}</span>
+                      {/if}
+                    </span>
+                    <span class="shrink-0 text-[11px] text-dark-fg3">{statusLabel(file.status)}</span>
+                    <span class="shrink-0 font-mono text-[11px] text-dark-green">+{file.additions}</span>
+                    <span class="shrink-0 font-mono text-[11px] text-dark-red2">-{file.deletions}</span>
+                  </button>
+                {/each}
+              </div>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    {:else}
+      <div class="panel-scroll min-h-0 flex-1 overflow-y-auto">
+        <GitChangesList changes={rows} onOpenDiff={openDiff} />
+      </div>
+    {/if}
+
+    {#if mode === 'changes'}
+      <div class="space-y-2 border-t border-dark-border p-3">
       {#if source === 'git'}
         <div
           class="rounded-xl border border-dark-border bg-dark-bgS/80 px-3 py-2 transition-colors duration-150 focus-within:border-dark-yellow/50"
@@ -408,9 +638,10 @@
           <RefreshCw class={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
-    </div>
+      </div>
+    {/if}
 
-    {#if branchMenuOpen || sourceMenuOpen}
+    {#if mode === 'changes' && (branchMenuOpen || sourceMenuOpen)}
       <!-- Outside-click catcher to close open menus -->
       <button
         type="button"

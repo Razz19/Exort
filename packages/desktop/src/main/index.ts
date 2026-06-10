@@ -51,10 +51,13 @@ import {
   commitAll as gitCommitAll,
   createBranch as gitCreateBranch,
   fetch as gitFetch,
+  getCommitDetails as gitGetCommitDetails,
+  getCommitFileDiff as gitGetCommitFileDiff,
   getFileDiff as gitGetFileDiff,
   getRepoStatus as gitGetRepoStatus,
   initRepository as gitInitRepository,
   isGitRepository as gitIsRepository,
+  listCommitHistory as gitListCommitHistory,
   listBranches as gitListBranches,
   pull as gitPull,
   push as gitPush
@@ -1864,6 +1867,21 @@ app.whenReady().then(() => {
   ipcMain.handle('git:file-diff', async (_event, payload: { workspaceRoot: string; filePath: string }) => {
     return gitGetFileDiff(payload?.workspaceRoot, payload?.filePath);
   });
+
+  ipcMain.handle('git:history', async (_event, payload: { workspaceRoot: string; limit?: number }) => {
+    return gitListCommitHistory(payload?.workspaceRoot, payload?.limit);
+  });
+
+  ipcMain.handle('git:commit-details', async (_event, payload: { workspaceRoot: string; hash: string }) => {
+    return gitGetCommitDetails(payload?.workspaceRoot, payload?.hash);
+  });
+
+  ipcMain.handle(
+    'git:commit-file-diff',
+    async (_event, payload: { workspaceRoot: string; hash: string; filePath: string; oldFilePath?: string }) => {
+      return gitGetCommitFileDiff(payload?.workspaceRoot, payload?.hash, payload?.filePath, payload?.oldFilePath);
+    }
+  );
 
   ipcMain.handle('git:commit-all', async (_event, payload: { workspaceRoot: string; message: string }) => {
     return gitCommitAll(payload?.workspaceRoot, payload?.message);

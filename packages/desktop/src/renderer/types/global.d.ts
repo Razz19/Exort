@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { UpdaterEvent, UpdaterState } from '../../shared/updater';
-import type { GitBranchInfo, GitRepoStatus } from '../../shared/git';
+import type { GitBranchInfo, GitCommitDetails, GitCommitSummary, GitRepoStatus } from '../../shared/git';
 
 export {};
 
@@ -647,6 +647,20 @@ declare global {
       gitFileDiff: (payload: {
         workspaceRoot: string;
         filePath: string;
+      }) => Promise<{ ok: boolean; original?: string; modified?: string; error?: string }>;
+      gitHistory: (payload: {
+        workspaceRoot: string;
+        limit?: number;
+      }) => Promise<{ ok: boolean; commits?: GitCommitSummary[]; error?: string }>;
+      gitCommitDetails: (payload: {
+        workspaceRoot: string;
+        hash: string;
+      }) => Promise<{ ok: boolean; commit?: GitCommitDetails; error?: string }>;
+      gitCommitFileDiff: (payload: {
+        workspaceRoot: string;
+        hash: string;
+        filePath: string;
+        oldFilePath?: string;
       }) => Promise<{ ok: boolean; original?: string; modified?: string; error?: string }>;
       gitCommitAll: (payload: {
         workspaceRoot: string;

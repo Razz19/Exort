@@ -34,3 +34,25 @@ export type GitFileDiff = {
   original: string;
   modified: string;
 };
+
+export type GitCommitSummary = {
+  hash: string;
+  shortHash: string;
+  authorName: string;
+  authorEmail: string;
+  date: string;
+  subject: string;
+};
+
+export type GitCommitFileChange = {
+  path: string;
+  oldPath?: string;
+  status: GitChangeStatus;
+  additions: number;
+  deletions: number;
+};
+
+export type GitCommitDetails = GitCommitSummary & {
+  body: string;
+  files: GitCommitFileChange[];
+};

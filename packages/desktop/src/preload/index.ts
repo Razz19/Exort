@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { UpdaterEvent, UpdaterState } from '../shared/updater.js';
-import type { GitBranchInfo, GitRepoStatus } from '../shared/git.js';
+import type { GitBranchInfo, GitCommitDetails, GitCommitSummary, GitRepoStatus } from '../shared/git.js';
 
 type OpenCodeTokenBreakdown = {
   input?: number;
@@ -727,6 +727,25 @@ const electronAPI = {
     ipcRenderer.invoke('git:init', payload) as Promise<{ ok: boolean; error?: string }>,
   gitFileDiff: (payload: { workspaceRoot: string; filePath: string }) =>
     ipcRenderer.invoke('git:file-diff', payload) as Promise<{
+      ok: boolean;
+      original?: string;
+      modified?: string;
+      error?: string;
+    }>,
+  gitHistory: (payload: { workspaceRoot: string; limit?: number }) =>
+    ipcRenderer.invoke('git:history', payload) as Promise<{
+      ok: boolean;
+      commits?: GitCommitSummary[];
+      error?: string;
+    }>,
+  gitCommitDetails: (payload: { workspaceRoot: string; hash: string }) =>
+    ipcRenderer.invoke('git:commit-details', payload) as Promise<{
+      ok: boolean;
+      commit?: GitCommitDetails;
+      error?: string;
+    }>,
+  gitCommitFileDiff: (payload: { workspaceRoot: string; hash: string; filePath: string; oldFilePath?: string }) =>
+    ipcRenderer.invoke('git:commit-file-diff', payload) as Promise<{
       ok: boolean;
       original?: string;
       modified?: string;
