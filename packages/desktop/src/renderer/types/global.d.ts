@@ -651,6 +651,7 @@ declare global {
       gitHistory: (payload: {
         workspaceRoot: string;
         limit?: number;
+        branch?: string;
       }) => Promise<{ ok: boolean; commits?: GitCommitSummary[]; error?: string }>;
       gitCommitDetails: (payload: {
         workspaceRoot: string;

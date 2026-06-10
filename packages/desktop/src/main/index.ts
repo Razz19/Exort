@@ -1868,8 +1868,8 @@ app.whenReady().then(() => {
     return gitGetFileDiff(payload?.workspaceRoot, payload?.filePath);
   });
 
-  ipcMain.handle('git:history', async (_event, payload: { workspaceRoot: string; limit?: number }) => {
-    return gitListCommitHistory(payload?.workspaceRoot, payload?.limit);
+  ipcMain.handle('git:history', async (_event, payload: { workspaceRoot: string; limit?: number; branch?: string }) => {
+    return gitListCommitHistory(payload?.workspaceRoot, payload?.limit, payload?.branch);
   });
 
   ipcMain.handle('git:commit-details', async (_event, payload: { workspaceRoot: string; hash: string }) => {

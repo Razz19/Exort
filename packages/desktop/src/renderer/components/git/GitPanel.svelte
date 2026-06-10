@@ -60,9 +60,18 @@
   let newBranchOpen = $state(false);
   let newBranchName = $state('');
   let commits = $state<GitCommitSummary[]>([]);
+  let loadedHistoryBranch = $state<string | null>(null);
   let selectedCommitHash = $state<string | null>(null);
   let selectedCommit = $state<GitCommitDetails | null>(null);
+  let historyRequestId = 0;
   let commitDetailsRequestId = 0;
+
+  function resetHistorySelection(): void {
+    selectedCommitHash = null;
+    selectedCommit = null;
+    commitDetailsLoading = false;
+    commitDetailsRequestId += 1;
+  }
 
   async function refresh(): Promise<void> {
     const root = workspaceRoot;
@@ -79,7 +88,18 @@
         status = null;
         return;
       }
+      const previousBranch = status?.branch ?? null;
       status = result.status;
+      const nextBranch = status.branch ?? null;
+      if (previousBranch !== nextBranch) {
+        commits = [];
+        loadedHistoryBranch = null;
+        historyRequestId += 1;
+        resetHistorySelection();
+        if (mode === 'history') {
+          void loadHistory({ clearSelection: true });
+        }
+      }
       if (status.isRepo) {
         const branchResult = await window.electronAPI.gitListBranches({ workspaceRoot: root });
         branches = branchResult.ok && branchResult.branches ? branchResult.branches.branches : [];
@@ -94,13 +114,22 @@
   async function loadHistory(options: { clearSelection?: boolean } = {}): Promise<void> {
     const root = workspaceRoot;
     if (!root) return;
+    const requestId = historyRequestId + 1;
+    historyRequestId = requestId;
     historyLoading = true;
     historyError = null;
+    const branch = status?.branch ?? null;
     try {
-      const result = await window.electronAPI.gitHistory({ workspaceRoot: root, limit: 50 });
+      const result = await window.electronAPI.gitHistory({
+        workspaceRoot: root,
+        limit: 50,
+        branch: branch ?? undefined
+      });
+      if (requestId !== historyRequestId || (status?.branch ?? null) !== branch) return;
       if (!result.ok) {
         historyError = result.error ?? 'Failed to load Git history.';
         commits = [];
+        loadedHistoryBranch = null;
         selectedCommitHash = null;
         selectedCommit = null;
         commitDetailsLoading = false;
@@ -108,6 +137,7 @@
         return;
       }
       commits = result.commits ?? [];
+      loadedHistoryBranch = branch;
       if (
         options.clearSelection ||
         !selectedCommitHash ||
@@ -119,7 +149,9 @@
         commitDetailsRequestId += 1;
       }
     } finally {
-      historyLoading = false;
+      if (requestId === historyRequestId) {
+        historyLoading = false;
+      }
     }
   }
 
@@ -139,6 +171,8 @@
       error = null;
       historyError = null;
       commits = [];
+      loadedHistoryBranch = null;
+      historyRequestId += 1;
       selectedCommitHash = null;
       selectedCommit = null;
       commitDetailsLoading = false;
@@ -211,7 +245,7 @@
   async function openHistory(): Promise<void> {
     mode = 'history';
     closeMenus();
-    if (commits.length === 0) {
+    if (commits.length === 0 || loadedHistoryBranch !== (status?.branch ?? null)) {
       await loadHistory();
     }
   }

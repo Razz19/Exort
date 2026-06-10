@@ -732,7 +732,7 @@ const electronAPI = {
       modified?: string;
       error?: string;
     }>,
-  gitHistory: (payload: { workspaceRoot: string; limit?: number }) =>
+  gitHistory: (payload: { workspaceRoot: string; limit?: number; branch?: string }) =>
     ipcRenderer.invoke('git:history', payload) as Promise<{
       ok: boolean;
       commits?: GitCommitSummary[];

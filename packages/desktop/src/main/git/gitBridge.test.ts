@@ -7,6 +7,7 @@ import test from 'node:test';
 
 import {
   getCommitFileDiff,
+  listCommitHistory,
   parseCommitDetailsHeader,
   parseCommitFileChanges,
   parseCommitLog,
@@ -176,5 +177,61 @@ test('getCommitFileDiff returns empty sides for root adds and deletes', async (t
   if (deleted.ok) {
     assert.equal(deleted.original, 'line one\n');
     assert.equal(deleted.modified, '');
+  }
+});
+
+test('listCommitHistory scopes commits to the requested branch', async (t) => {
+  const gitVersion = spawnSync('git', ['--version'], { encoding: 'utf8' });
+  if (gitVersion.status !== 0) {
+    t.skip('git is not available');
+    return;
+  }
+
+  const repo = await mkdtemp(path.join(tmpdir(), 'exort-git-history-branch-'));
+  t.after(async () => {
+    await rm(repo, { recursive: true, force: true });
+  });
+
+  const gitEnv = {
+    ...process.env,
+    GIT_AUTHOR_NAME: 'Exort Test',
+    GIT_AUTHOR_EMAIL: 'test@example.com',
+    GIT_COMMITTER_NAME: 'Exort Test',
+    GIT_COMMITTER_EMAIL: 'test@example.com'
+  };
+  const git = (...args: string[]) => {
+    const result = spawnSync('git', args, { cwd: repo, env: gitEnv, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    return result.stdout.trim();
+  };
+
+  git('init');
+  git('checkout', '-b', 'main');
+  await writeFile(path.join(repo, 'shared.txt'), 'base\n', 'utf8');
+  git('add', 'shared.txt');
+  git('commit', '-m', 'base commit');
+
+  git('checkout', '-b', 'feature');
+  await writeFile(path.join(repo, 'feature.txt'), 'feature\n', 'utf8');
+  git('add', 'feature.txt');
+  git('commit', '-m', 'feature only');
+
+  git('checkout', 'main');
+  await writeFile(path.join(repo, 'main.txt'), 'main\n', 'utf8');
+  git('add', 'main.txt');
+  git('commit', '-m', 'main only');
+
+  const mainHistory = await listCommitHistory(repo, 10, 'main');
+  assert.equal(mainHistory.ok, true);
+  if (mainHistory.ok) {
+    const subjects = mainHistory.commits.map((commit) => commit.subject);
+    assert.deepEqual(subjects, ['main only', 'base commit']);
+  }
+
+  const featureHistory = await listCommitHistory(repo, 10, 'feature');
+  assert.equal(featureHistory.ok, true);
+  if (featureHistory.ok) {
+    const subjects = featureHistory.commits.map((commit) => commit.subject);
+    assert.deepEqual(subjects, ['feature only', 'base commit']);
   }
 });

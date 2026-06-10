@@ -417,7 +417,8 @@ export async function getFileDiff(
 
 export async function listCommitHistory(
   rootPath: unknown,
-  limit: unknown
+  limit: unknown,
+  branch: unknown
 ): Promise<GitEnvelope<{ commits: GitCommitSummary[] }>> {
   const root = asNonBlankString(rootPath);
   if (!root) return { ok: false, error: 'A workspace folder is required.' };
@@ -429,12 +430,15 @@ export async function listCommitHistory(
     typeof limit === 'number' && Number.isFinite(limit)
       ? Math.min(100, Math.max(1, Math.trunc(limit)))
       : 50;
+  const branchRef = asNonBlankString(branch) ?? 'HEAD';
   const result = await runGit(
     [
       'log',
       `--max-count=${normalizedLimit}`,
       '--date=iso-strict',
-      `--pretty=format:%H%x1f%h%x1f%an%x1f%ae%x1f%aI%x1f%s%x1e`
+      `--pretty=format:%H%x1f%h%x1f%an%x1f%ae%x1f%aI%x1f%s%x1e`,
+      branchRef,
+      '--'
     ],
     repoRoot
   );
