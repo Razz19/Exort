@@ -172,6 +172,7 @@
   let autosaveTimer = $state<number | null>(null);
   let activeDiffView = $state<GitFileDiff | null>(null);
   let gitRefreshToken = $state(0);
+  let gitRefreshTimer: number | null = null;
 
   let messages = $state<ChatItem[]>([]);
   let workspaceMessagesByRoot = $state<Record<string, ChatItem[]>>({});
@@ -770,6 +771,19 @@
   });
 
   const watchedFilePaths: Record<string, true> = {};
+
+  function scheduleGitRefresh(rootPath: string | null | undefined): void {
+    if (!rootPath || activeWorkspace?.rootPath !== rootPath) return;
+    if (gitRefreshTimer) {
+      window.clearTimeout(gitRefreshTimer);
+    }
+    gitRefreshTimer = window.setTimeout(() => {
+      gitRefreshTimer = null;
+      if (activeWorkspace?.rootPath !== rootPath) return;
+      gitRefreshToken += 1;
+    }, 120);
+  }
+
   const fileChangedListener = (payload: {
     filePath: string;
     content: string;
@@ -786,6 +800,7 @@
         dirty: false,
       },
     };
+    scheduleGitRefresh(activeWorkspace?.rootPath);
   };
 
   const workspaceTreeChangedListener = (payload: {
@@ -793,6 +808,7 @@
     tree: Array<{ path: string; isDirectory: boolean }>;
   }) => {
     applyWorkspaceTreeUpdate(payload.rootPath, payload.tree);
+    scheduleGitRefresh(payload.rootPath);
   };
 
   function applyWorkspaceTreeUpdate(
@@ -1029,6 +1045,10 @@
     if (appMenuCommandListener) {
       window.electronAPI.offAppMenuCommand(appMenuCommandListener);
       appMenuCommandListener = null;
+    }
+    if (gitRefreshTimer) {
+      window.clearTimeout(gitRefreshTimer);
+      gitRefreshTimer = null;
     }
     if (updaterEventListener) {
       window.electronAPI.offUpdaterEvent(updaterEventListener);
@@ -2244,6 +2264,7 @@
       await openFile(result.path);
     }
 
+    scheduleGitRefresh(workspace.rootPath);
     statusText = `${params.kind === "file" ? "File" : "Folder"} created`;
     return { ok: true, path: result.path };
   }
@@ -2283,6 +2304,7 @@
     }
 
     await refreshWorkspaceTree(workspace.rootPath);
+    scheduleGitRefresh(workspace.rootPath);
     statusText = "Renamed";
     return { ok: true, path: result.path };
   }
@@ -2658,6 +2680,7 @@
         dirty: false,
       },
     };
+    scheduleGitRefresh(activeWorkspace?.rootPath);
   }
 
   function pushMessage(

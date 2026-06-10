@@ -48,10 +48,17 @@
     onOpenGitDiff: (diff: GitFileDiff) => void;
   }>();
 
+  let gitChangeCount = $state(0);
+
   const tabs: Array<{ id: RightPanelTab; label: string }> = [
     { id: 'files', label: 'Files' },
     { id: 'git', label: 'Git' }
   ];
+
+  function handleGitChangeCountChange(count: number): void {
+    if (gitChangeCount === count) return;
+    gitChangeCount = count;
+  }
 </script>
 
 <div class="flex h-full min-w-0 flex-col bg-dark-surface">
@@ -72,19 +79,32 @@
           <GitBranch class="h-4 w-4" />
         {/if}
         <span>{tab.label}</span>
+        {#if tab.id === 'git' && gitChangeCount > 0}
+          <span
+            class={`rounded-full px-1.5 py-0.5 font-mono text-[10px] leading-none ${
+              activeRightPanelTab === tab.id
+                ? 'bg-primary-500/20 text-primary-300'
+                : 'bg-dark-bg1 text-dark-fg3'
+            }`}
+          >
+            {gitChangeCount}
+          </span>
+        {/if}
       </button>
     {/each}
   </div>
 
   <div class="min-h-0 flex-1 overflow-hidden">
-    {#if activeRightPanelTab === 'git'}
+    <div class={`h-full min-w-0 ${activeRightPanelTab === 'git' ? 'block' : 'hidden'}`}>
       <GitPanel
         {workspaceRoot}
         {lastTurnChangedFiles}
         refreshToken={gitRefreshToken}
         onOpenDiff={onOpenGitDiff}
+        onChangeCountChange={handleGitChangeCountChange}
       />
-    {:else}
+    </div>
+    <div class={`h-full min-w-0 ${activeRightPanelTab === 'files' ? 'block' : 'hidden'}`}>
       <FileTree
         {rootPath}
         {items}
@@ -96,6 +116,6 @@
         {onRenameEntry}
         {onOpenInFinder}
       />
-    {/if}
+    </div>
   </div>
 </div>
