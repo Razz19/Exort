@@ -224,6 +224,14 @@
   async function selectCommit(commit: GitCommitSummary): Promise<void> {
     const root = workspaceRoot;
     if (!root) return;
+    if (selectedCommitHash === commit.hash) {
+      commitDetailsRequestId += 1;
+      selectedCommitHash = null;
+      selectedCommit = null;
+      commitDetailsLoading = false;
+      historyError = null;
+      return;
+    }
     const requestId = commitDetailsRequestId + 1;
     commitDetailsRequestId = requestId;
     selectedCommitHash = commit.hash;
@@ -495,7 +503,6 @@
                           {selectedCommit.authorName} &lt;{selectedCommit.authorEmail}&gt; -
                           {formatCommitDate(selectedCommit.date)}
                         </p>
-                        <p class="font-mono text-[11px] text-dark-yellow">{selectedCommit.hash}</p>
                         {#if selectedCommit.body}
                           <p class="whitespace-pre-wrap rounded-md bg-dark-bg px-2 py-1.5 text-xs text-dark-fg3">
                             {selectedCommit.body}
@@ -626,11 +633,13 @@
                       }}
                     />
                     <button
-                      class="btn-primary px-2.5 py-1 text-xs"
+                      class="inline-flex h-8 w-8 shrink-0 items-center justify-center text-dark-fg2 transition-colors duration-150 hover:text-dark-fg1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-dark-fg2"
                       disabled={busy || newBranchName.trim().length === 0}
                       onclick={createBranch}
+                      aria-label="Create branch"
+                      title="Create branch"
                     >
-                      Create
+                      <Check class="h-4 w-4" />
                     </button>
                   </div>
                 {:else}
