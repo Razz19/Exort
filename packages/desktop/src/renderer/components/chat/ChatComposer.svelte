@@ -662,7 +662,7 @@
             >
               <button
                 type="button"
-                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:ring-1 hover:ring-dark-fg3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 onclick={() => previewAttachment(attachment)}
                 aria-label={`Preview ${attachment.name}`}
                 title={`Preview ${attachment.name}`}

@@ -1072,7 +1072,7 @@
         {#each regularUserAttachments as attachment (attachment.id)}
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3 transition-colors hover:border-dark-fg3 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3 transition-colors hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             title={attachment.name}
             aria-label={`Preview ${attachment.name}`}
             onclick={() => onPreviewAttachment?.(attachment)}
