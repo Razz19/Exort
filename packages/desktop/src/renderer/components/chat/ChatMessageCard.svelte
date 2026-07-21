@@ -5,6 +5,7 @@
   import type {
     AgentPermissionReply,
     AgentStep,
+    ChatAttachment,
     ChatItem,
   } from "../../lib/types";
   import { formatChatTime } from "./chatDate";
@@ -12,6 +13,10 @@
   import { findToolTargetFilePath } from "./toolPathTarget";
   import ChatStepCard from "./ChatStepCard.svelte";
   import ChangedFilesCard from "./ChangedFilesCard.svelte";
+  import {
+    attachmentPreviewUrl,
+    isImageAttachment,
+  } from "./attachmentPreview";
 
   let {
     message,
@@ -23,6 +28,7 @@
     onQuestionReply,
     onQuestionReject,
     onOpenFile,
+    onPreviewAttachment,
   } = $props<{
     message: ChatItem;
     showReasoning?: boolean;
@@ -42,6 +48,7 @@
     ) => Promise<void> | void;
     onQuestionReject?: (requestId: string) => Promise<void> | void;
     onOpenFile?: (filePath: string) => Promise<void> | void;
+    onPreviewAttachment?: (attachment: ChatAttachment) => void;
   }>();
 
   let showPlanningFull = $state(false);
@@ -876,43 +883,6 @@
     !isAssistant || (stepCount === 0 && assistantBodyText.length > 0),
   );
 
-  function isImageAttachment(attachment: {
-    name: string;
-    mime: string;
-  }): boolean {
-    if (attachment.mime.startsWith("image/")) return true;
-    return /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(attachment.name);
-  }
-
-  function fileUrl(path: string): string {
-    const normalized = path.replace(/\\/g, "/");
-    const withLeadingSlash = normalized.startsWith("/")
-      ? normalized
-      : `/${normalized}`;
-    const encodedPath = withLeadingSlash
-      .split("/")
-      .map((segment, index) => {
-        if (index === 0) return "";
-        if (/^[A-Za-z]:$/.test(segment)) return segment;
-        return encodeURIComponent(segment);
-      })
-      .join("/");
-    return `file://${encodedPath}`;
-  }
-
-  function attachmentPreviewUrl(attachment: {
-    path: string;
-    url?: string;
-  }): string {
-    if (
-      attachment.url?.startsWith("data:") ||
-      attachment.url?.startsWith("blob:")
-    ) {
-      return attachment.url;
-    }
-    return fileUrl(attachment.path);
-  }
-
   function splitOutputErrorContext(content: string): {
     body: string;
     context: string | null;
@@ -1100,10 +1070,12 @@
     {#if regularUserAttachments.length > 0}
       <div class="flex max-w-full flex-wrap justify-end gap-2 self-end">
         {#each regularUserAttachments as attachment (attachment.id)}
-          <div
-            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3"
+          <button
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-dark-border bg-dark-bgS p-1 text-dark-fg3 transition-colors hover:border-dark-fg3 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             title={attachment.name}
-            aria-label={attachment.name}
+            aria-label={`Preview ${attachment.name}`}
+            onclick={() => onPreviewAttachment?.(attachment)}
           >
             {#if isImageAttachment(attachment)}
               <img
@@ -1119,7 +1091,7 @@
                 <FileText class="h-4 w-4" />
               </span>
             {/if}
-          </div>
+          </button>
         {/each}
       </div>
     {/if}

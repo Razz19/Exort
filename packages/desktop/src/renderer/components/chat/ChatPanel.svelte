@@ -2,6 +2,7 @@
   import { Plus } from "lucide-svelte";
   import type {
     AgentPermissionReply,
+    ChatAttachment,
     ChatItem,
     PendingOutputErrorContext,
     ChatSendPayload,
@@ -11,6 +12,7 @@
   import ChatHeader from "./ChatHeader.svelte";
   import HistoryLoading from "./HistoryLoading.svelte";
   import ChatTimeline from "./ChatTimeline.svelte";
+  import AttachmentPreview from "./AttachmentPreview.svelte";
   import {
     filePathFromChatClickTarget,
     resolveChatFilePath,
@@ -92,6 +94,33 @@
       onRevisePendingPlan?: (feedback: string) => Promise<void> | void;
       onDismissPendingPlan?: () => void;
     }>();
+
+  let previewAttachment = $state<ChatAttachment | null>(null);
+  let previewTriggerEl: HTMLElement | null = null;
+  let previewWorkspaceRoot = $state<string | null>(null);
+
+  function openAttachmentPreview(attachment: ChatAttachment): void {
+    previewTriggerEl =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    previewAttachment = attachment;
+  }
+
+  function closeAttachmentPreview(): void {
+    previewAttachment = null;
+    const trigger = previewTriggerEl;
+    previewTriggerEl = null;
+    queueMicrotask(() => {
+      if (trigger?.isConnected) trigger.focus();
+    });
+  }
+
+  $effect(() => {
+    if (activeWorkspaceRoot === previewWorkspaceRoot) return;
+    previewWorkspaceRoot = activeWorkspaceRoot;
+    closeAttachmentPreview();
+  });
 
   function normalizePathSeparators(value: string): string {
     return value.replace(/\\/g, "/").replace(/\/+/g, "/");
@@ -234,7 +263,7 @@
 </script>
 
 <div
-  class="chat-panel-root flex h-full flex-col bg-dark-bg"
+  class="chat-panel-root relative flex h-full flex-col overflow-hidden bg-dark-bg"
   data-chat-font-size={chatFontSize}
   onclick={handleChatPanelClick}
 >
@@ -257,6 +286,7 @@
       {onQuestionReply}
       {onQuestionReject}
       {onOpenFile}
+      onPreviewAttachment={openAttachmentPreview}
     />
     <ChatComposer
       {activeWorkspaceRoot}
@@ -272,6 +302,7 @@
       {onImplementPendingPlan}
       {onRevisePendingPlan}
       {onDismissPendingPlan}
+      onPreviewAttachment={openAttachmentPreview}
     />
   {:else if bootstrapping}
     <HistoryLoading />
@@ -286,5 +317,12 @@
         <span>Open workspace</span>
       </button>
     </div>
+  {/if}
+
+  {#if previewAttachment}
+    <AttachmentPreview
+      attachment={previewAttachment}
+      onClose={closeAttachmentPreview}
+    />
   {/if}
 </div>

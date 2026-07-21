@@ -26,6 +26,7 @@
     OpenCodeModelCatalogProvider,
     SelectedModelRef,
   } from "../../lib/types";
+  import { formatAttachmentSize } from "./attachmentPreview";
   import PlanApprovalPrompt from "./PlanApprovalPrompt.svelte";
   import { Bot, Brain } from "lucide-svelte";
 
@@ -50,6 +51,7 @@
     onImplementPendingPlan,
     onRevisePendingPlan,
     onDismissPendingPlan,
+    onPreviewAttachment,
     onSend,
     onStop,
   } = $props<{
@@ -64,6 +66,7 @@
     onImplementPendingPlan?: () => Promise<void> | void;
     onRevisePendingPlan?: (feedback: string) => Promise<void> | void;
     onDismissPendingPlan?: () => void;
+    onPreviewAttachment?: (attachment: ChatAttachment) => void;
     onSend: (payload: ChatSendPayload) => Promise<void> | void;
     onStop: () => Promise<void> | void;
   }>();
@@ -100,6 +103,7 @@
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
   let fileInputEl = $state<HTMLInputElement | null>(null);
   let attachments = $state<ComposerAttachment[]>([]);
+  let pendingAttachmentAdds = $state(0);
   let draggingFiles = $state(false);
   let modelOpen = $state(false);
   let modelButtonEl = $state<HTMLButtonElement | null>(null);
@@ -128,6 +132,7 @@
 
   let canSend = $derived(
     !busy &&
+      pendingAttachmentAdds === 0 &&
       (prompt.trim().length > 0 ||
         attachments.length > 0 ||
         pendingOutputErrorContext !== null),
@@ -177,16 +182,8 @@
     return "text/plain";
   }
 
-  function formatFileSize(size: number): string {
-    if (size < 1024) return `${size} B`;
-    const kb = size / 1024;
-    if (kb < 1024) return `${kb.toFixed(kb >= 10 ? 0 : 1)} KB`;
-    const mb = kb / 1024;
-    return `${mb.toFixed(mb >= 10 ? 0 : 1)} MB`;
-  }
-
   function revokeAttachmentPreview(attachment: ComposerAttachment): void {
-    if (!attachment.previewUrl) return;
+    if (!attachment.previewUrl?.startsWith("blob:")) return;
     URL.revokeObjectURL(attachment.previewUrl);
   }
 
@@ -212,25 +209,68 @@
     const seenPaths = new Set(next.map((attachment) => attachment.path));
 
     for (const file of Array.from(files)) {
-      const path = window.electronAPI.getPathForFile(file).trim();
-      if (!path || seenPaths.has(path)) continue;
+      const filePath = window.electronAPI.getPathForFile(file).trim();
+      if (!filePath || seenPaths.has(filePath)) continue;
 
       const mime = normalizeAttachmentMime(file);
-      const attachment: ComposerAttachment = {
+      next.push({
         id: crypto.randomUUID(),
-        name: file.name || path.split(/[\\/]/).pop() || "attachment",
-        path,
+        name: file.name || filePath.split(/[\\/]/).pop() || "attachment",
+        path: filePath,
         mime,
         size: file.size,
         previewUrl: mime.startsWith("image/")
           ? URL.createObjectURL(file)
           : undefined,
-      };
-      next.push(attachment);
-      seenPaths.add(path);
+      });
+      seenPaths.add(filePath);
     }
 
     attachments = next;
+  }
+
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        typeof reader.result === "string"
+          ? resolve(reader.result)
+          : reject(new Error("Clipboard image could not be read."));
+      reader.onerror = () =>
+        reject(reader.error ?? new Error("Clipboard image could not be read."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function addClipboardImages(files: File[]): Promise<void> {
+    const images = files.filter(
+      (file) =>
+        file.type.startsWith("image/") &&
+        !window.electronAPI.getPathForFile(file).trim(),
+    );
+    if (images.length === 0) return;
+
+    pendingAttachmentAdds += 1;
+    try {
+      const prepared: ComposerAttachment[] = [];
+      for (const file of images) {
+        const id = crypto.randomUUID();
+        const name = file.name.trim() || `pasted-image-${Date.now()}.png`;
+        prepared.push({
+          id,
+          name,
+          path: `clipboard-image://${id}/${encodeURIComponent(name)}`,
+          mime: file.type,
+          size: file.size,
+          previewUrl: await readFileAsDataUrl(file),
+        });
+      }
+      attachments = [...attachments, ...prepared];
+    } catch (error) {
+      console.error("[ChatComposer] failed to read clipboard image", error);
+    } finally {
+      pendingAttachmentAdds = Math.max(0, pendingAttachmentAdds - 1);
+    }
   }
 
   function openFilePicker(): void {
@@ -283,21 +323,16 @@
     const clipboard = event.clipboardData;
     if (!clipboard) return [];
 
-    const files: File[] = [];
-    const seen = new Set<File>();
-
-    for (const file of Array.from(clipboard.files)) {
-      if (seen.has(file)) continue;
-      seen.add(file);
-      files.push(file);
-    }
+    // Chromium exposes the same pasted image through both `files` and `items`,
+    // sometimes as different File objects. Prefer the canonical FileList and
+    // inspect items only as a compatibility fallback.
+    const files = Array.from(clipboard.files);
+    if (files.length > 0) return files;
 
     for (const item of Array.from(clipboard.items)) {
       if (item.kind !== "file") continue;
       const file = item.getAsFile();
-      if (!file || seen.has(file)) continue;
-      seen.add(file);
-      files.push(file);
+      if (file) files.push(file);
     }
 
     return files;
@@ -310,6 +345,7 @@
     // such as the file name/path into the prompt.
     event.preventDefault();
     addFiles(files);
+    void addClipboardImages(files);
   }
 
   function toSendAttachments(): ChatAttachment[] {
@@ -317,6 +353,14 @@
       ...attachment,
       url: previewUrl,
     }));
+  }
+
+  function previewAttachment(attachment: ComposerAttachment): void {
+    const { previewUrl, ...chatAttachment } = attachment;
+    onPreviewAttachment?.({
+      ...chatAttachment,
+      url: previewUrl,
+    });
   }
 
   function summarizeOutputError(text: string): string {
@@ -353,7 +397,11 @@
     const outputErrorBlock = buildOutputErrorPromptBlock(
       pendingOutputErrorContext,
     );
-    if (busy || (!text && attachments.length === 0 && !outputErrorBlock))
+    if (
+      busy ||
+      pendingAttachmentAdds > 0 ||
+      (!text && attachments.length === 0 && !outputErrorBlock)
+    )
       return;
 
     const previousPrompt = prompt;
@@ -612,26 +660,34 @@
                bg-dark-bg px-2 py-1 text-xs text-dark-fg2"
               title={attachment.path}
             >
-              {#if attachment.previewUrl}
-                <img
-                  class="h-7 w-7 shrink-0 rounded object-cover"
-                  src={attachment.previewUrl}
-                  alt={attachment.name}
-                />
-              {:else}
-                <span
-                  class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-dark-bg1 text-dark-fg3"
-                  aria-hidden="true"
-                >
-                  <FileText class="h-4 w-4" />
-                </span>
-              {/if}
+              <button
+                type="button"
+                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-dark-fg3 transition-colors hover:ring-1 hover:ring-dark-fg3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                onclick={() => previewAttachment(attachment)}
+                aria-label={`Preview ${attachment.name}`}
+                title={`Preview ${attachment.name}`}
+              >
+                {#if attachment.previewUrl}
+                  <img
+                    class="h-7 w-7 rounded object-cover"
+                    src={attachment.previewUrl}
+                    alt=""
+                  />
+                {:else}
+                  <span
+                    class="inline-flex h-7 w-7 items-center justify-center rounded bg-dark-bg1"
+                    aria-hidden="true"
+                  >
+                    <FileText class="h-4 w-4" />
+                  </span>
+                {/if}
+              </button>
               <span class="min-w-0">
                 <span class="block max-w-40 truncate text-dark-fg1">
                   {attachment.name}
                 </span>
                 <span class="block text-[10px] text-dark-fg4">
-                  {formatFileSize(attachment.size)}
+                  {formatAttachmentSize(attachment.size)}
                 </span>
               </span>
               <button
@@ -670,7 +726,7 @@
           type="button"
           class="inline-flex h-8 w-8 items-center justify-center rounded-md text-dark-fg3 transition-colors duration-150 hover:bg-dark-bg1 hover:text-dark-fg1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
           onclick={openFilePicker}
-          disabled={busy}
+          disabled={busy || pendingAttachmentAdds > 0}
           aria-label="Attach files"
           title="Attach files"
         >

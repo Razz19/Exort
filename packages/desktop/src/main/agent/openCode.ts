@@ -113,6 +113,7 @@ export type OpenCodeRuntime = {
   client: OpenCodeClient;
   server?: OpenCodeServer;
   binaryPath: string;
+  managedRoot: string;
 };
 
 let runtimePromise: Promise<OpenCodeRuntime> | null = null;
@@ -345,6 +346,7 @@ async function createOpenCodeRuntime(log?: OpenCodeLog): Promise<OpenCodeRuntime
     return {
       client,
       binaryPath: managedBinary.binaryPath,
+      managedRoot: managedBinary.managedRoot,
       server: {
         url: sidecar.url,
         close: sidecar.close

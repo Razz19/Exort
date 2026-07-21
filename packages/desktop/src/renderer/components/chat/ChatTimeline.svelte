@@ -1,6 +1,10 @@
 <script lang="ts">
   import { ChevronDown } from "lucide-svelte";
-  import type { AgentPermissionReply, ChatItem } from "../../lib/types";
+  import type {
+    AgentPermissionReply,
+    ChatAttachment,
+    ChatItem,
+  } from "../../lib/types";
   import SessionTurn from "./SessionTurn.svelte";
   import HistoryLoading from "./HistoryLoading.svelte";
 
@@ -20,6 +24,7 @@
     onQuestionReply,
     onQuestionReject,
     onOpenFile,
+    onPreviewAttachment,
   } = $props<{
     messages: ChatItem[];
     showReasoning?: boolean;
@@ -41,6 +46,7 @@
     ) => Promise<void> | void;
     onQuestionReject?: (requestId: string) => Promise<void> | void;
     onOpenFile?: (filePath: string) => Promise<void> | void;
+    onPreviewAttachment?: (attachment: ChatAttachment) => void;
   }>();
 
   let scrollEl = $state<HTMLDivElement | null>(null);
@@ -153,6 +159,7 @@
         {onQuestionReply}
         {onQuestionReject}
         {onOpenFile}
+        {onPreviewAttachment}
       />
     {/each}
 

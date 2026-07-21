@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { AgentPermissionReply, ChatItem } from "../../lib/types";
+  import type {
+    AgentPermissionReply,
+    ChatAttachment,
+    ChatItem,
+  } from "../../lib/types";
   import ChatMessageCard from "./ChatMessageCard.svelte";
 
   let {
@@ -12,6 +16,7 @@
     onQuestionReply,
     onQuestionReject,
     onOpenFile,
+    onPreviewAttachment,
   } = $props<{
     message: ChatItem;
     showReasoning?: boolean;
@@ -22,6 +27,7 @@
     onQuestionReply?: (requestId: string, answers: string[][]) => Promise<void> | void;
     onQuestionReject?: (requestId: string) => Promise<void> | void;
     onOpenFile?: (filePath: string) => Promise<void> | void;
+    onPreviewAttachment?: (attachment: ChatAttachment) => void;
   }>();
 </script>
 
@@ -36,5 +42,6 @@
     {onQuestionReply}
     {onQuestionReject}
     {onOpenFile}
+    {onPreviewAttachment}
   />
 </div>

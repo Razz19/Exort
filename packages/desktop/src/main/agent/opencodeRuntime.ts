@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { getOpenCodeRuntime, shutdownOpenCode, type OpenCodeClient } from './openCode.js';
 import { OPEN_CODE_MODEL } from './openCodeConfig.js';
+import { materializeInlineImageAttachments } from './promptAttachmentFiles.js';
 
 export type AgentStreamEvent =
   | { type: 'content'; content: string; partId?: string; contentKind?: 'reasoning' | 'text' }
@@ -259,9 +260,10 @@ function buildPromptParts(prompt: string, attachments: OpenCodePromptAttachment[
     if (!filePath) continue;
 
     const filename = attachment.name.trim() || filePath;
+    const mime = normalizeAttachmentMime(attachment.mime);
     parts.push({
       type: 'file',
-      mime: normalizeAttachmentMime(attachment.mime),
+      mime,
       filename,
       url: pathToFileURL(filePath).href
     });
@@ -3242,6 +3244,13 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
   log(`turn:start workspace=${params.workspaceRoot}`);
   const runtime = await getOpenCodeRuntime(log);
   log('runtime:ready');
+  const promptAttachments = await materializeInlineImageAttachments(
+    params.attachments,
+    runtime.managedRoot
+  );
+  if (promptAttachments?.some((attachment, index) => attachment.path !== params.attachments?.[index]?.path)) {
+    log('prompt:attachments:materialized-inline-images');
+  }
 
   const explicitSessionId = getFirstNonBlankString(params.sessionId);
   let preferredSessionId: string | null = null;
@@ -3398,7 +3407,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
       response: unknown;
       usedPromptAsync: boolean;
     }> => {
-      const parts = buildPromptParts(params.prompt, params.attachments);
+      const parts = buildPromptParts(params.prompt, promptAttachments);
       const promptBody: Record<string, unknown> = {
         parts
       };
