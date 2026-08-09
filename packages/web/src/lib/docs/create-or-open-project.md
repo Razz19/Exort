@@ -1,13 +1,13 @@
 ---
-title: Create or Open a Project
-description: Start from an existing firmware folder or scaffold a new project with Exort Agent.
+title: Open A Workspace
+description: Start from an existing firmware folder or create a new local project workspace.
 order: 1
-section: Usage
+section: First Project Tutorial
 ---
 
-# Create or Open a Project
+# Open A Workspace
 
-A project in Exort is a local folder. Exort does not force your code into a cloud workspace.
+A project in Exort is just a local folder. Exort does not force your code into a cloud workspace.
 
 ## Open an Existing Project
 

@@ -1,32 +1,109 @@
 ---
 title: Board Manager
-description: Install and manage Arduino CLI board platforms and cores.
-order: 6
-section: Usage
+description: Install board platforms and cores for Arduino CLI-compatible hardware.
+order: 4
+section: Board Manager
 ---
+
+<script lang="ts">
+  import { ArrowRight } from "lucide-svelte";
+</script>
 
 # Board Manager
 
 Board Manager helps install and manage Arduino CLI board platforms and cores.
 
-## What Is a Board Core?
+Exort can also install board packages for you when you ask it to.
 
-A board core tells Arduino CLI how to compile and upload code for a specific family of boards.
+## Install A Board Package
 
-Examples:
+To install a board package in Exort:
 
-- Arduino AVR
-- ESP32
-- ESP8266
-- RP2040
-- STM32
-- Teensy
+<div class="inline-flex items-center gap-2">
+  <span class="inline-flex items-center gap-2">
+    <code>Settings</code>
+  </span>
+  <ArrowRight class="h-4 w-4 text-gruvbox-muted/80" />
+  <span class="inline-flex items-center gap-2">
+    <code>Boards</code>
+  </span>
+  <ArrowRight class="h-4 w-4 text-gruvbox-muted/80" />
+  <span class="inline-flex items-center gap-2">
+    <span>Search for the board you want to use</span>
+  </span>
+  <ArrowRight class="h-4 w-4 text-gruvbox-muted/80" />
+  <span class="inline-flex items-center gap-2">
+    <code>Install</code>
+  </span>
+</div>
 
-## When You Need to Install a Core
+Once installed, the board package is ready to use.
 
-You need a core when:
+## Supported Boards
 
-- Your board does not appear
-- Compile says board platform is missing
-- Upload tool is missing
-- You are using a new board family
+Exort is designed to work with Arduino CLI-compatible platforms, including:
+
+### Arduino
+
+- Uno
+- Nano
+- Mega
+- Leonardo
+
+### ESP32
+
+- ESP32 Dev Module
+- ESP32-S3
+- ESP32-C3
+
+### ESP8266
+
+- NodeMCU
+- Wemos D1 Mini
+
+### STM32
+
+- STM32 Blue Pill
+- STM32 Nucleo
+
+### Teensy
+
+- Teensy 4.x
+- Teensy LC
+
+Other Arduino CLI-compatible boards may also work if the correct core and toolchain are installed.
+
+## When You Need To Install A Package
+
+You usually need to install a board package when:
+
+- your board does not appear
+- compile says board platform is missing
+- upload tool is missing
+- you are using a new board family
+
+In many cases, Exort can identify the correct package and install it for you.
+
+## Common Problems
+
+<span class="text-gruvbox-orange">Ask Exort first.</span>
+
+Exort can often identify the most likely issue, guide you through the correct checks, and handle many of the fixes directly inside the app.
+
+### Board Not Found
+
+- Verify the USB cable
+- Verify the drivers
+- Reconnect the device
+
+### Port Missing
+
+- Restart Exort
+- Reconnect the hardware
+- Install the required USB drivers
+
+### Upload Failed
+
+- Verify the correct board selection
+- Verify the correct serial port
+- Press the `BOOT` button if required by the board

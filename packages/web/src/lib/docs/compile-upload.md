@@ -1,58 +1,44 @@
 ---
-title: Compile and Upload
-description: Build and flash firmware through Exort using Arduino CLI workflows.
-order: 3
-section: Usage
+title: Compile & Upload
+description: How manual and automatic compile/upload flows work, plus the common failure points.
+order: 6
+section: Compile & Upload
 ---
 
-# Compile and Upload
+# Compile & Upload
 
 Exort supports automatic and manual compile/upload flows through Arduino CLI.
 
-## Before Compiling
+## Select Board, FQBN, And Port
 
-Make sure you selected:
+Before you compile or upload, select the correct board, port, and project settings.
 
-- Correct board
-- Correct port
-- Correct project folder
-- Required board core
-- Required libraries
+If you are not sure which board, port, or project configuration to use, <span class="text-gruvbox-orange">ask Exort</span>. Exort can guide you through the correct selection.
 
-## Compile
+For board package installation and board platform details, see [Board Manager](/docs/board-manager).
 
-Compile checks whether your firmware can build for the selected board.
+## Manual Compile And Upload
 
-Common compile problems:
+After your board and port are configured, you can compile and upload manually.
 
-- Missing library
-- Wrong board selected
-- Syntax error
-- Incorrect include path
-- Board core not installed
-- Wrong function or class name
+This is useful when you want direct control over the process or want to validate each step yourself.
 
-## Upload
+## Automatic Compile And Upload
 
-Upload sends the compiled firmware to the connected board.
+Exort can also compile and upload the code automatically.
 
-Common upload problems:
+If you prefer, Exort can handle the full process for you without requiring separate manual steps.
 
-- Wrong port selected
-- Board not connected
-- USB cable is power-only
-- Missing USB driver
-- Board is not in bootloader mode
-- Another app is using the serial port
+## Output Window
 
-## Recommended Workflow
+The Output Window shows the compile and upload process, including detailed progress and error messages.
 
-1. Ask Exort Agent to review or generate code
-2. Compile
-3. Fix compile errors
-4. Upload
-5. Open Serial Monitor
-6. Observe logs
-7. Iterate
+If the process fails, you can add the full error output to the context and ask Exort to inspect it.
 
-This matches Exort recommended edit, compile, upload, observe cycle.
+Exort can usually determine whether the issue is caused by:
+
+- code that needs to be changed
+- project settings that need to be adjusted
+- hardware configuration that needs to be corrected
+
+If the issue is related to code or configuration, Exort can usually fix it directly. If the problem is hardware-related, Exort can tell you what to check and how to correct it.
