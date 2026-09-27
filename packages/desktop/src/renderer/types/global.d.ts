@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import type { OpenCodeUpdateState, OpenCodeUpdateResponse } from '../../shared/openCodeUpdater';
 import type { UpdaterEvent, UpdaterState } from '../../shared/updater';
 
 export {};
@@ -403,6 +404,7 @@ type RequirementStatus = {
   releaseTargetKey?: string;
   releaseArchiveName?: string;
   releaseArchiveSha256?: string;
+  releaseArchiveIntegrity?: string;
 };
 type RequirementInstallResult = {
   id: RequirementId;
@@ -585,6 +587,11 @@ declare global {
         shouldAutoBootstrap: boolean;
         error?: string;
       }>;
+      getOpenCodeUpdateState: () => Promise<OpenCodeUpdateResponse>;
+      checkOpenCodeUpdate: (background?: boolean) => Promise<OpenCodeUpdateResponse>;
+      installOpenCodeUpdate: () => Promise<OpenCodeUpdateResponse>;
+      onOpenCodeUpdateState: (listener: (state: OpenCodeUpdateState) => void) => void;
+      offOpenCodeUpdateState: (listener: (state: OpenCodeUpdateState) => void) => void;
       getUpdaterState: () => Promise<{
         ok: boolean;
         state?: UpdaterState;

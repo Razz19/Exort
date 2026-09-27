@@ -51,7 +51,9 @@ function buildEnvOverrides(paths: IsolationPaths): NodeJS.ProcessEnv {
     return {
       EXORT_OPENCODE_ISOLATED: '1',
       APPDATA: paths.runtimeConfigRoot,
-      LOCALAPPDATA: paths.runtimeDataRoot
+      LOCALAPPDATA: paths.runtimeDataRoot,
+      XDG_CONFIG_HOME: paths.runtimeConfigRoot, XDG_DATA_HOME: paths.runtimeDataRoot,
+      XDG_STATE_HOME: paths.runtimeStateRoot, XDG_CACHE_HOME: path.join(paths.root, 'cache')
     };
   }
 
@@ -59,7 +61,8 @@ function buildEnvOverrides(paths: IsolationPaths): NodeJS.ProcessEnv {
     EXORT_OPENCODE_ISOLATED: '1',
     XDG_CONFIG_HOME: paths.runtimeConfigRoot,
     XDG_DATA_HOME: paths.runtimeDataRoot,
-    XDG_STATE_HOME: paths.runtimeStateRoot
+    XDG_STATE_HOME: paths.runtimeStateRoot,
+    XDG_CACHE_HOME: path.join(paths.root, 'cache')
   };
 }
 

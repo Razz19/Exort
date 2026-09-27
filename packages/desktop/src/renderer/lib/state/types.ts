@@ -74,6 +74,7 @@ export type RuntimeRequirementStatus = {
   releaseTargetKey?: string;
   releaseArchiveName?: string;
   releaseArchiveSha256?: string;
+  releaseArchiveIntegrity?: string;
 };
 
 export type AppState = {

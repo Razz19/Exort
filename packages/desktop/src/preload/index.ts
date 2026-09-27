@@ -1,3 +1,4 @@
+import type { OpenCodeUpdateState, OpenCodeUpdateResponse } from '../shared/openCodeUpdater.js';
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { UpdaterEvent, UpdaterState } from '../shared/updater.js';
 
@@ -407,6 +408,7 @@ type RequirementStatus = {
   releaseTargetKey?: string;
   releaseArchiveName?: string;
   releaseArchiveSha256?: string;
+  releaseArchiveIntegrity?: string;
 };
 type RequirementInstallResult = {
   id: RequirementId;
@@ -545,6 +547,7 @@ const appMenuCommandListeners = new Map<
   (payload: AppMenuCommandEnvelope) => void,
   (event: IpcRendererEvent, payload: AppMenuCommandEnvelope) => void
 >();
+const openCodeUpdateListeners = new Map<(state: OpenCodeUpdateState) => void, (_event: IpcRendererEvent, state: OpenCodeUpdateState) => void>();
 const updaterEventListeners = new Map<
   (payload: UpdaterEventEnvelope) => void,
   (event: IpcRendererEvent, payload: UpdaterEventEnvelope) => void
@@ -631,6 +634,21 @@ const electronAPI = {
       shouldAutoBootstrap: boolean;
       error?: string;
     }>,
+  getOpenCodeUpdateState: () => ipcRenderer.invoke('opencode-updater:get-state') as Promise<OpenCodeUpdateResponse>,
+  checkOpenCodeUpdate: (background = false) => ipcRenderer.invoke('opencode-updater:check', { background }) as Promise<OpenCodeUpdateResponse>,
+  installOpenCodeUpdate: () => ipcRenderer.invoke('opencode-updater:install') as Promise<OpenCodeUpdateResponse>,
+  onOpenCodeUpdateState: (listener: (state: OpenCodeUpdateState) => void) => {
+    const previous = openCodeUpdateListeners.get(listener);
+    if (previous) ipcRenderer.off('opencode-updater:state', previous);
+    const wrapped = (_event: IpcRendererEvent, state: OpenCodeUpdateState) => listener(state);
+    openCodeUpdateListeners.set(listener, wrapped);
+    ipcRenderer.on('opencode-updater:state', wrapped);
+  },
+  offOpenCodeUpdateState: (listener: (state: OpenCodeUpdateState) => void) => {
+    const wrapped = openCodeUpdateListeners.get(listener);
+    if (wrapped) ipcRenderer.off('opencode-updater:state', wrapped);
+    openCodeUpdateListeners.delete(listener);
+  },
   getUpdaterState: () =>
     ipcRenderer.invoke('updater:get-state') as Promise<{
       ok: boolean;

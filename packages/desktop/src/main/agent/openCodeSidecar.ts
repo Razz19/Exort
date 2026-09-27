@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { createConnection, createServer } from 'node:net';
+import { createServer } from 'node:net';
 
-import type { Config } from '@opencode-ai/sdk';
+import { randomBytes } from 'node:crypto';
 import type { OpenCodeIsolationInfo } from './openCodeIsolation.js';
 
 type OpenCodeLog = (line: string) => void;
@@ -13,7 +13,7 @@ type StartOpenCodeSidecarOptions = {
   hostname?: string;
   port?: number;
   timeoutMs?: number;
-  config?: Config;
+  config?: Record<string, unknown>;
   envOverrides?: NodeJS.ProcessEnv;
   isolationInfo?: OpenCodeIsolationInfo;
   log?: OpenCodeLog;
@@ -22,6 +22,7 @@ type StartOpenCodeSidecarOptions = {
 
 export type OpenCodeSidecar = {
   url: string;
+  headers: Record<string, string>;
   pid: number | undefined;
   close: () => Promise<void>;
 };
@@ -31,65 +32,31 @@ function getErrorMessage(error: unknown): string {
   return typeof error === 'string' ? error : 'Unknown sidecar error';
 }
 
-function parseSidecarUrl(output: string): string | null {
-  const lines = output.split(/\r?\n/);
-  for (const line of lines) {
-    const normalized = line.replace(/\u001b\[[0-9;]*m/g, '').trim();
-    const match = normalized.match(/opencode\s+server\s+listening\b.*?\bon\s+(https?:\/\/[^\s]+)/i);
-    if (!match) continue;
-    return match[1] ?? null;
-  }
-
-  return null;
-}
-
-function tailOutput(value: string, maxChars = 2000): string {
-  if (value.length <= maxChars) return value.trim();
-  return value.slice(-maxChars).trim();
-}
-
 function buildFallbackUrl(hostname: string, port: number): string {
   const host = hostname.includes(':') && !hostname.startsWith('[') ? `[${hostname}]` : hostname;
   return `http://${host}:${port}`;
 }
 
-async function probeHttp(url: string, timeoutMs: number): Promise<boolean> {
+async function probeHttp(url: string, timeoutMs: number, headers: Record<string, string>): Promise<boolean> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
   }, timeoutMs);
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url + '/api/info', {
       method: 'GET',
+      headers,
       signal: controller.signal
     });
-    return response.status > 0;
+    if (!response.ok) return false;
+    const info = await response.json() as { version?: string; pid?: number };
+    return typeof info.version === 'string' && info.version.startsWith('2.') && typeof info.pid === 'number';
   } catch {
     return false;
   } finally {
     clearTimeout(timer);
   }
-}
-
-async function probeTcp(hostname: string, port: number, timeoutMs: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const socket = createConnection({ host: hostname, port });
-    let settled = false;
-
-    const settle = (value: boolean) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      resolve(value);
-    };
-
-    socket.setTimeout(timeoutMs);
-    socket.once('connect', () => settle(true));
-    socket.once('timeout', () => settle(false));
-    socket.once('error', () => settle(false));
-    socket.once('close', () => settle(false));
-  });
 }
 
 function parsePortFromUrl(url: string): number | null {
@@ -201,6 +168,8 @@ export async function startOpenCodeSidecar(options: StartOpenCodeSidecarOptions)
     );
   }
 
+  const password = randomBytes(32).toString('hex');
+  const headers = { authorization: 'Basic ' + Buffer.from('opencode:' + password).toString('base64') };
   const args = [`serve`, `--hostname=${hostname}`, `--port=${port}`];
   if (options.config?.logLevel) {
     args.push(`--log-level=${options.config.logLevel}`);
@@ -213,33 +182,28 @@ export async function startOpenCodeSidecar(options: StartOpenCodeSidecarOptions)
     env: {
       ...process.env,
       ...(options.envOverrides ?? {}),
-      OPENCODE_CONFIG_CONTENT: JSON.stringify(options.config ?? {})
+      OPENCODE_SERVER_PASSWORD: password,
+      OPENCODE_CONFIG_CONTENT: undefined,
+      OPENCODE_CONFIG_DIR: undefined,
+      OPENCODE_CONFIG: undefined
     }
   });
 
-  let output = '';
   let ready = false;
   let closing = false;
-
-  proc.stdout.on('data', (chunk) => {
-    output += chunk.toString();
-  });
-
-  proc.stderr.on('data', (chunk) => {
-    output += chunk.toString();
-  });
+  // Child output can contain provider credentials or config validation details.
+  // Drain it without forwarding it to the renderer or application log.
+  proc.stdout.resume();
+  proc.stderr.resume();
 
   const readyUrl = await new Promise<string>((resolve, reject) => {
     let settled = false;
     let probing = false;
 
     const timeout = setTimeout(() => {
-      const parsed = parseSidecarUrl(output) ?? fallbackUrl;
-      const detail = tailOutput(output);
-      const suffix = detail.length > 0 ? `\nSidecar output (tail): ${detail}` : '';
       settle(
         'reject',
-        new Error(`Timeout waiting for OpenCode sidecar startup after ${timeoutMs}ms (probe=${parsed}).${suffix}`)
+        new Error(`Timeout waiting for OpenCode sidecar startup after ${timeoutMs}ms (probe=${fallbackUrl}). Check Settings > Requirements and retry.`)
       );
     }, timeoutMs);
     timeout.unref();
@@ -267,40 +231,21 @@ export async function startOpenCodeSidecar(options: StartOpenCodeSidecarOptions)
 
     const runActiveProbe = async () => {
       if (settled || probing) return;
-      const parsed = parseSidecarUrl(output);
-      if (parsed) {
-        ready = true;
-        settle('resolve', parsed);
-        return;
-      }
-
       probing = true;
       try {
-        const httpReady = await probeHttp(fallbackUrl, 700);
+        const httpReady = await probeHttp(fallbackUrl, 2000, headers);
         if (httpReady) {
           ready = true;
-          settle('resolve', parseSidecarUrl(output) ?? fallbackUrl);
+          settle('resolve', fallbackUrl);
           return;
         }
 
-        const tcpReady = await probeTcp(hostname, port, 700);
-        if (tcpReady) {
-          ready = true;
-          settle('resolve', parseSidecarUrl(output) ?? fallbackUrl);
-        }
       } finally {
         probing = false;
       }
     };
 
     const onData = () => {
-      const parsed = parseSidecarUrl(output);
-      if (parsed) {
-        ready = true;
-        settle('resolve', parsed);
-        return;
-      }
-
       void runActiveProbe();
     };
 
@@ -309,11 +254,9 @@ export async function startOpenCodeSidecar(options: StartOpenCodeSidecarOptions)
     };
 
     const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
-      const detail = tailOutput(output);
-      const suffix = detail ? `\nSidecar output (tail): ${detail}` : '';
       settle(
         'reject',
-        new Error(`OpenCode sidecar exited before ready (code=${code ?? 'null'} signal=${signal ?? 'null'}).${suffix}`)
+        new Error(`OpenCode sidecar exited before ready (code=${code ?? 'null'} signal=${signal ?? 'null'}). Retry from Settings > Requirements.`)
       );
     };
 
@@ -354,6 +297,7 @@ export async function startOpenCodeSidecar(options: StartOpenCodeSidecarOptions)
 
   return {
     url: readyUrl,
+    headers,
     pid: proc.pid,
     close: async () => {
       closing = true;

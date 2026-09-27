@@ -35,6 +35,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Test managed runtimes and v2 adapters
+        run: npm run requirements:test --workspace @exort/desktop && npm run opencode:test --workspace @exort/desktop
+
       - name: Validate tag matches desktop package version
         id: version
         shell: bash
@@ -105,6 +108,9 @@ jobs:
       - name: Build desktop bundle
         run: npm --workspace @exort/desktop run build
 
+      - name: Smoke-test managed OpenCode and packaged plugin
+        run: npm run opencode:smoke --workspace @exort/desktop
+
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
@@ -165,6 +171,9 @@ jobs:
 
       - name: Build desktop bundle
         run: npm --workspace @exort/desktop run build
+
+      - name: Smoke-test managed OpenCode and packaged plugin
+        run: npm run opencode:smoke --workspace @exort/desktop
 
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
@@ -305,6 +314,9 @@ jobs:
       - name: Build desktop bundle
         run: npm --workspace @exort/desktop run build
 
+      - name: Smoke-test managed OpenCode and packaged plugin
+        run: npm run opencode:smoke --workspace @exort/desktop
+
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
@@ -443,6 +455,9 @@ jobs:
 
       - name: Build desktop bundle
         run: npm --workspace @exort/desktop run build
+
+      - name: Smoke-test managed OpenCode and packaged plugin
+        run: npm run opencode:smoke --workspace @exort/desktop
 
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps

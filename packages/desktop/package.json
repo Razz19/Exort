@@ -20,16 +20,19 @@
     "preview": "electron-vite preview",
     "requirements:status": "tsx src/main/requirements/cli.ts status",
     "requirements:install": "tsx src/main/requirements/cli.ts install",
-    "requirements:test": "tsx --test src/main/requirements/requirements.test.ts",
+    "requirements:test": "node --import tsx --test src/main/requirements/requirements.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src electron.vite.config.ts svelte.config.js postcss.config.cjs tailwind.config.cjs"
+    "lint": "eslint src electron.vite.config.ts svelte.config.js postcss.config.cjs tailwind.config.cjs",
+    "opencode:test": "node --import tsx --test src/main/agent/tests/*.test.ts",
+    "opencode:smoke": "node --import tsx scripts/opencode-smoke.ts",
+    "opencode:migration-smoke": "node --import tsx scripts/opencode-v1-migration-smoke.ts"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "1.2.10",
-    "@opencode-ai/sdk": "^1.1.51",
+    "@opencode/client": "2.0.14",
+    "@opencode/plugin": "2.0.14",
     "dompurify": "^3.3.1",
-    "electron-updater": "^6.6.8",
     "electron-store": "^10.1.0",
+    "electron-updater": "^6.6.8",
     "lucide-svelte": "^0.563.0",
     "marked": "^17.0.1",
     "material-file-icons": "^2.4.0",
@@ -53,8 +56,8 @@
     "svelte-eslint-parser": "^0.43.0",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
-    "typescript-eslint": "^8.30.1",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.30.1",
     "vite": "^6.0.7"
   }
 }

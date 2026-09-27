@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import { tool } from '@opencode-ai/plugin/tool';
+
 
 type PlatformioCompileArgs = {
   projectPath?: string;
@@ -314,16 +314,9 @@ async function runPlatformioCompile(
   });
 }
 
-export default tool({
-  description: 'Compile PlatformIO projects using pio run.',
-  args: {
-    projectPath: tool.schema
-      .string()
-      .optional()
-      .describe('PlatformIO project directory containing platformio.ini, relative to the current workspace root. Defaults to workspace root.'),
-    environment: tool.schema.string().optional().describe('Optional PlatformIO environment name from [env:name].'),
-    verbose: tool.schema.boolean().optional().describe('When true, run pio with verbose output.')
-  },
+export default {
+  description: "Compile PlatformIO projects using pio run.",
+  input: {"type": "object", "properties": {"projectPath": {"type": "string"}, "environment": {"type": "string"}, "verbose": {"type": "boolean"}}, "additionalProperties": false} as const,
   async execute(args: PlatformioCompileArgs, context: unknown): Promise<string> {
     const workspaceRoot = getWorkspaceRoot(context);
     let projectRoot: string;
@@ -416,4 +409,4 @@ export default tool({
       defaultEnvs: parsed.defaultEnvs
     });
   }
-});
+};

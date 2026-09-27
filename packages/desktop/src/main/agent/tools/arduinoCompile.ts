@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { type Dirent, promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import { tool } from '@opencode-ai/plugin/tool';
+
 
 type ArduinoCompileArgs = {
   sketchPath?: string;
@@ -393,22 +393,9 @@ async function runArduinoCompile(
   });
 }
 
-export default tool({
-  description: 'Compile Arduino sketches using arduino-cli compile.',
-  args: {
-    sketchPath: tool.schema
-      .string()
-      .optional()
-      .describe('Sketch directory or .ino file path, relative to the current workspace root.'),
-    fqbn: tool.schema.string().optional().describe('Board FQBN, for example: arduino:avr:uno.'),
-    buildPath: tool.schema
-      .string()
-      .optional()
-      .describe('Optional output build path, relative to the workspace root.'),
-    clean: tool.schema.boolean().optional().describe('When true, run compile with --clean.'),
-    exportBinaries: tool.schema.boolean().optional().describe('When true, run compile with --export-binaries.'),
-    verbose: tool.schema.boolean().optional().describe('When true, run compile with --verbose.')
-  },
+export default {
+  description: "Compile Arduino sketches using the managed Arduino CLI.",
+  input: {"type": "object", "properties": {"sketchPath": {"type": "string"}, "fqbn": {"type": "string"}, "buildPath": {"type": "string"}, "clean": {"type": "boolean"}, "exportBinaries": {"type": "boolean"}, "verbose": {"type": "boolean"}}, "additionalProperties": false} as const,
   async execute(args: ArduinoCompileArgs, context: unknown): Promise<string> {
     const workspaceRoot = getWorkspaceRoot(context);
     const missing: string[] = [];
@@ -544,4 +531,4 @@ export default tool({
 
     return toJsonOutput(response);
   }
-});
+};

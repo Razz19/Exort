@@ -1,10 +1,12 @@
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import {
-  EXORT_MANAGED_OPENCODE_RELEASE_TAG,
-  ensureManagedOpenCodeBinary,
+  EXORT_MANAGED_OPENCODE_VERSION,
+  resolveManagedOpenCodeBinary,
   getManagedOpenCodeStatus,
   type OpenCodeBinarySource
 } from '../agent/openCodeBinary.js';
-import { ensureOpenCodeIsolation, getOpenCodeIsolationStatus } from '../agent/openCodeIsolation.js';
+import { getOpenCodeIsolationStatus } from '../agent/openCodeIsolation.js';
 import {
   EXORT_MANAGED_ARDUINO_CLI_RELEASE_TAG,
   EXORT_MANAGED_ARDUINO_CLI_VERSION,
@@ -13,7 +15,7 @@ import {
   type ArduinoCliBinarySource
 } from '../arduinoCliBinary.js';
 import { resolveArduinoCliReleaseAssetForCurrentTarget } from './arduinoCliReleaseInstaller.js';
-import { installOpenCodeFromReleaseAssets, resolveOpenCodeReleaseAssetForCurrentTarget } from './opencodeReleaseInstaller.js';
+import { resolveOpenCodeReleaseAssetForCurrentTarget, type OpenCodeReleaseAssetDetails } from './opencodeReleaseInstaller.js';
 
 export type RequirementId = 'opencode' | 'arduino-cli';
 
@@ -35,6 +37,7 @@ export type RequirementStatus = {
   releaseTargetKey?: string;
   releaseArchiveName?: string;
   releaseArchiveSha256?: string;
+  releaseArchiveIntegrity?: string;
 };
 
 export type RequirementInstallResult = {
@@ -70,7 +73,7 @@ function getRequirementLabel(id: RequirementId): string {
 function getManualCommands(id: RequirementId, os: OSKind): string[] {
   if (id === 'opencode') {
     return [
-      `Download the pinned OpenCode release from https://github.com/anomalyco/opencode/releases/tag/${EXORT_MANAGED_OPENCODE_RELEASE_TAG}`,
+      'Download OpenCode v2 from https://opencode.ai/v2/docs',
       'Set EXORT_OPENCODE_BINARY to the downloaded binary and EXORT_ALLOW_SYSTEM_OPENCODE=1 before launching Exort'
     ];
   }
@@ -106,12 +109,13 @@ async function getVersion(id: RequirementId): Promise<{
   releaseTargetKey?: string;
   releaseArchiveName?: string;
   releaseArchiveSha256?: string;
+  releaseArchiveIntegrity?: string;
 }> {
   if (id === 'opencode') {
     const [status, isolation, releaseAsset] = await Promise.all([
       getManagedOpenCodeStatus(),
       getOpenCodeIsolationStatus(),
-      resolveOpenCodeReleaseAssetForCurrentTarget().catch(() => null)
+      readManagedReleaseMetadata().catch(() => null)
     ]);
     const details = [status.details, isolation.isolated ? undefined : `Runtime isolation unavailable: ${isolation.details ?? 'Unknown error'}`]
       .filter((item): item is string => Boolean(item && item.trim().length > 0))
@@ -131,7 +135,7 @@ async function getVersion(id: RequirementId): Promise<{
       isolated: isolation.isolated,
       releaseTargetKey: releaseAsset?.targetKey,
       releaseArchiveName: releaseAsset?.archiveName,
-      releaseArchiveSha256: releaseAsset?.sha256
+      releaseArchiveIntegrity: releaseAsset?.integrity
     };
   }
 
@@ -180,6 +184,7 @@ export async function getRequirementsStatus(): Promise<RequirementStatus[]> {
       isolated: result.isolated,
       releaseTargetKey: result.releaseTargetKey,
       releaseArchiveName: result.releaseArchiveName,
+      releaseArchiveIntegrity: result.releaseArchiveIntegrity,
       releaseArchiveSha256: result.releaseArchiveSha256
     });
   }
@@ -196,52 +201,10 @@ export async function installRequirement(id: RequirementId): Promise<Requirement
   let lastFailureMessage = 'No install strategy was executed.';
 
   if (id === 'opencode') {
-    const releaseResult = await installOpenCodeFromReleaseAssets({
-      log: (line) => {
-        logs.push(`[runtime] ${line}`);
-      }
-    });
-
-    if (releaseResult.ok) {
-      attemptedStrategyId = 'release-url';
-      try {
-        await ensureManagedOpenCodeBinary({
-          installIfMissing: true,
-          log: (line) => {
-            logs.push(`[runtime] ${line}`);
-          }
-        });
-        const isolation = await ensureOpenCodeIsolation();
-        logs.push(`[runtime] runtime:isolation:enabled root=${isolation.root}`);
-        logs.push(
-          `[runtime] runtime:isolation:paths config=${isolation.runtimeConfigRoot} data=${isolation.runtimeDataRoot} state=${isolation.runtimeStateRoot}`
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to provision OpenCode runtime.';
-        logs.push(`[runtime:error] ${message}`);
-        lastFailureMessage = `Release URL install succeeded, but managed provisioning failed: ${message}`;
-      }
-
-      const validated = await getVersion(id);
-      if (validated.ok) {
-        return {
-          id,
-          ok: true,
-          installedAfter: true,
-          versionAfter: validated.version,
-          strategyTried: attemptedStrategyId,
-          message: `${getRequirementLabel(id)} installed successfully.`,
-          manualCommands,
-          logs
-        };
-      }
-
-      lastFailureMessage = `Release URL install finished, but validation failed: ${validated.details ?? 'version check failed'}`;
-    } else {
-      const releaseMessage = releaseResult.message ?? 'Unknown release installer error.';
-      logs.push(`[runtime] runtime:binary:provision:release:error message=${releaseMessage}`);
-      lastFailureMessage = `Release URL install failed: ${releaseMessage}`;
-    }
+    const { installOpenCodeUpdate } = await import('../updater/openCodeUpdater.js');
+    const result = await installOpenCodeUpdate();
+    return { id, ok: result.ok, installedAfter: result.ok, versionAfter: result.state?.currentVersion ?? null,
+      strategyTried: 'verified-npm', message: result.error ?? 'OpenCode is ready.', manualCommands, logs };
   }
 
   if (id === 'arduino-cli') {
@@ -332,3 +295,11 @@ export async function installRequirements(ids: RequirementId[]): Promise<Require
 }
 
 export { isRequirementId };
+
+async function readManagedReleaseMetadata(): Promise<OpenCodeReleaseAssetDetails | null> {
+  const binary = await resolveManagedOpenCodeBinary();
+  if (binary.source !== 'managed') return null;
+  if (binary.managedVersion === EXORT_MANAGED_OPENCODE_VERSION) return resolveOpenCodeReleaseAssetForCurrentTarget();
+  const metadata = JSON.parse(await readFile(path.join(binary.installRoot, 'release.json'), 'utf8')) as OpenCodeReleaseAssetDetails;
+  return metadata.version === binary.managedVersion ? metadata : null;
+}

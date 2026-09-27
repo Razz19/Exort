@@ -649,7 +649,7 @@ export async function runOpenCodeSidecarSmokeCheck(params?: {
 
     const runtime = await withTimeout(
       getOpenCodeRuntime(log),
-      20_000,
+      360_000,
       'Timeout waiting for OpenCode runtime initialization during smoke check.'
     );
 
@@ -687,11 +687,9 @@ export async function runOpenCodeSidecarSmokeCheck(params?: {
 }
 
 async function recycleOpenCodeRuntimeAfterProviderAuthMutation(log?: (line: string) => void): Promise<void> {
-  // Provider auth/model metadata can remain stale on a long-lived SDK runtime instance.
-  // Recycling runtime here ensures subsequent provider state reads reflect latest auth immediately.
-  await shutdownOpenCode(log);
-  workspaceSessions.clear();
-  loggedSessionIds.clear();
+  // v2 invalidates provider/model registries when credentials change.
+  // Keep the sidecar alive: other workspaces may be running or signing in.
+  log?.('provider:auth:updated');
 }
 
 const OPENAI_MODEL_RECOMMENDATION_ORDER = ['gpt-5.3-codex', 'gpt-5.2-codex', 'gpt-5.5', 'gpt-5.2', 'gpt-4.1', 'gpt-4', 'gpt-3.5-turbo'];
@@ -979,8 +977,7 @@ async function findLatestWorkspaceSessionId(
       directory: workspaceRoot
     });
   } catch (error) {
-    log?.(`session:list:error ${getErrorMessage(error)}`);
-    return null;
+    throw new Error('Could not load existing OpenCode sessions. Retry without creating a new conversation.', { cause: error });
   }
 
   const sessions = extractSessionRecords(response);
@@ -1032,8 +1029,7 @@ async function ensureWorkspaceSessionId(
       logSessionHighlight(log, cached, workspaceRoot);
       return cached;
     }
-    log?.(`session:cache-drop id=${cached}`);
-    workspaceSessions.delete(workspaceRoot);
+    throw new Error('The associated OpenCode conversation could not be loaded. Retry after checking the runtime in Settings > Requirements.');
   }
 
   const discovered = await findLatestWorkspaceSessionId(client, workspaceRoot, log);
@@ -2295,7 +2291,7 @@ function parseMessagePartUpdated(properties: Record<string, unknown>): AgentStre
     return null;
   }
 
-  if (partType === 'text' || partType === 'output_text' || partType === 'assistant_text' || !partType) {
+  if (partType === 'text' || partType === 'reasoning' || partType === 'output_text' || partType === 'assistant_text' || !partType) {
     const delta = getFirstString(properties.delta, part.delta) ?? '';
     if (!delta) return null;
 
@@ -3005,7 +3001,7 @@ export async function loadOpenCodeSessionHistory(params: LoadOpenCodeSessionHist
       workspaceSessions.set(params.workspaceRoot, explicitSessionId);
       logSessionHighlight(log, explicitSessionId, params.workspaceRoot);
     } else {
-      log(`history:load:session:invalid id=${explicitSessionId}`);
+      throw new Error('The saved OpenCode history is unavailable. Retry after migration completes.');
     }
   }
   const sessionId =
@@ -3261,7 +3257,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
       logSessionHighlight(log, explicitSessionId, params.workspaceRoot);
       preferredSessionId = explicitSessionId;
     } else {
-      log(`session:explicit-invalid id=${explicitSessionId}`);
+      throw new Error('The saved OpenCode session could not be loaded. Retry after migration completes; your history has not been replaced.');
     }
   }
   const sessionId = preferredSessionId ?? (await ensureWorkspaceSessionId(runtime.client, params.workspaceRoot, log));
@@ -3313,7 +3309,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
 
   try {
     subscription = (await runtime.client.event.subscribe({
-      directory: params.workspaceRoot
+      directory: params.workspaceRoot, sessionID: sessionId
     }, {
       signal: params.signal
     })) as OpenCodeSubscription;
@@ -3388,6 +3384,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
     resolveStreamSettled();
   });
 
+  void streamPump.catch(() => {});
   try {
     log('prompt:send');
     if (params.model?.providerID && params.model?.modelID) {
@@ -3430,6 +3427,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
         messageID: typeof promptBody.messageID === 'string' ? promptBody.messageID : undefined,
         model: (promptBody.model as { providerID: string; modelID: string } | undefined) ?? undefined,
         agent: typeof promptBody.agent === 'string' ? promptBody.agent : undefined,
+        variant: typeof promptBody.variant === 'string' ? promptBody.variant : undefined,
         noReply: promptBody.noReply === true ? true : undefined,
         tools:
           promptBody.tools && typeof promptBody.tools === 'object'
@@ -3506,7 +3504,7 @@ export async function runOpenCodeTurn(params: RunOpenCodeTurnParams): Promise<vo
 
     if (usedPromptAsync) {
       log('prompt:awaiting-stream');
-      await streamSettled;
+      await streamPump;
     } else if (!streamFinished && !streamedAnyContent && finalResponseParts.length === 0) {
       log('prompt:response:empty-await-stream');
       await Promise.race([streamSettled, wait(1500)]);

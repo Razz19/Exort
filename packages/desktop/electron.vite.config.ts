@@ -18,6 +18,7 @@ function copyOpenCodeConfigAssets(): Plugin {
       }
 
       rmSync(openCodeConfigOutDir, { recursive: true, force: true });
+      cpSync(path.join(openCodeConfigSourceDir, '..', 'plugins'), path.join(openCodeConfigOutDir, 'plugins'), { recursive: true, force: true });
       cpSync(openCodeConfigSourceDir, path.join(openCodeConfigOutDir, 'tools'), {
         recursive: true,
         force: true

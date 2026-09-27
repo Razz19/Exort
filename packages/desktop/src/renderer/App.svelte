@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { OpenCodeUpdateState } from "../shared/openCodeUpdater";
   import { onDestroy, onMount } from "svelte";
 
   import ChatPanel from "./components/ChatPanel.svelte";
@@ -192,6 +193,47 @@
   let settingsModalOpen = $state(false);
   let navbarOverlayOpen = $state(false);
   let settingsModalTab = $state<SettingsTab>("general");
+  let openCodeUpdateTimer: ReturnType<typeof setInterval> | undefined;
+  let openCodeUpdateState: OpenCodeUpdateState | null = null;
+  const dismissedOpenCodeVersions = new Set<string>();
+  let refreshedOpenCodeVersion: string | null = null;
+  const OPEN_CODE_UPDATE_TOAST = 'opencode-update';
+  async function requestOpenCodeUpdate(): Promise<void> {
+    const response = await window.electronAPI.installOpenCodeUpdate();
+    if (!response.ok) showToast({ id: OPEN_CODE_UPDATE_TOAST, title: 'OpenCode update failed', message: response.error ?? 'Please retry from Requirements.', variant: 'error' });
+  }
+  function applyOpenCodeUpdateState(state: OpenCodeUpdateState): void {
+    openCodeUpdateState = state;
+    if (state.status === 'available') {
+      if (state.latestVersion && dismissedOpenCodeVersions.has(state.latestVersion)) return;
+      showToast({ id: OPEN_CODE_UPDATE_TOAST, title: `OpenCode update available — v${state.latestVersion}`, message: 'Install the latest OpenCode runtime.', variant: 'info', actionLabel: 'Update', onAction: () => void requestOpenCodeUpdate() });
+    } else if (['downloading', 'waiting-for-idle', 'installing'].includes(state.status)) {
+      showToast({ id: OPEN_CODE_UPDATE_TOAST, title: state.status === 'downloading' ? 'Downloading OpenCode' : state.status === 'waiting-for-idle' ? 'OpenCode update ready' : 'Installing OpenCode',
+        message: state.status === 'downloading' ? `Downloading v${state.latestVersion}… ${Math.round(state.progressPercent ?? 0)}%` : state.message ?? 'Please wait…', variant: 'info' });
+    } else if (state.status === 'updated') {
+      showToast({ id: OPEN_CODE_UPDATE_TOAST, title: 'OpenCode updated', message: `v${state.currentVersion} is ready.`, variant: 'info' });
+      if (refreshedOpenCodeVersion !== state.currentVersion) {
+        refreshedOpenCodeVersion = state.currentVersion;
+        void refreshRequirementsStatus().then(response => { if (response.requirements) handleRequirementsUpdated(response.requirements); });
+        if (activeWorkspace) {
+          void loadModelCatalogForWorkspace(activeWorkspace.rootPath, { force: true });
+          void ensureWorkspaceSessions(activeWorkspace.id, { force: true });
+          void loadWorkspaceHistory(activeWorkspace.id, { force: true });
+        }
+      }
+    } else if (state.status === 'error' && !state.background) {
+      showToast({ id: OPEN_CODE_UPDATE_TOAST, title: 'OpenCode update failed', message: state.error ?? 'Please retry.', variant: 'error', actionLabel: 'Requirements', onAction: () => openSettingsModal('requirements') });
+    }
+  }
+  async function startOpenCodeUpdateChecks(): Promise<void> {
+    const response = await window.electronAPI.getOpenCodeUpdateState();
+    if (!response.state) return;
+    applyOpenCodeUpdateState(response.state);
+    if (!response.state.automaticChecks) return;
+    await window.electronAPI.checkOpenCodeUpdate(true);
+    openCodeUpdateTimer = setInterval(() => { void window.electronAPI.checkOpenCodeUpdate(true); }, 24 * 60 * 60 * 1000);
+  }
+
   let toasts = $state<ToastMessage[]>([]);
   let arduinoEnvironmentRefreshKey = $state(0);
   let outputRun = $state<ArduinoOutputRun | null>(null);
@@ -990,11 +1032,14 @@
       applyUpdaterState(payload.state);
     };
     window.electronAPI.onUpdaterEvent(updaterEventListener);
+    window.electronAPI.onOpenCodeUpdateState(applyOpenCodeUpdateState);
 
     void initializeApp();
   });
 
   onDestroy(() => {
+    window.electronAPI.offOpenCodeUpdateState(applyOpenCodeUpdateState);
+    if (openCodeUpdateTimer) clearInterval(openCodeUpdateTimer);
     if (unsubscribeAppState) {
       unsubscribeAppState();
       unsubscribeAppState = null;
@@ -1127,7 +1172,7 @@
       appInitialized = true;
     }
 
-    void checkRequirementsForStartupToast();
+    void checkRequirementsForStartupToast().finally(() => startOpenCodeUpdateChecks());
     void checkForUpdatesOnStartup();
     if (statusText === "Local mode") {
       statusText = "Local mode ready";
@@ -1312,6 +1357,7 @@
   }
 
   function dismissToast(id: string): void {
+    if (id === OPEN_CODE_UPDATE_TOAST && openCodeUpdateState?.status === 'available' && openCodeUpdateState.latestVersion) dismissedOpenCodeVersions.add(openCodeUpdateState.latestVersion);
     toasts = toasts.filter((toast) => toast.id !== id);
     toastActions.delete(id);
   }
@@ -1444,7 +1490,7 @@
       if (!response.ok) return;
 
       const missingRequirements = (response.requirements ?? []).filter(
-        (requirement) => !requirement.installed,
+        (requirement) => !requirement.installed && !(requirement.id === "opencode" && requirement.version?.startsWith("1.")),
       );
       if (missingRequirements.length === 0) return;
 

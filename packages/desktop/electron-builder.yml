@@ -1,6 +1,7 @@
 appId: ai.exort.desktop
 productName: Exort
 asar: true
+# The sidecar loads the v2 plugin and shared compile tool source from real files.
 asarUnpack:
   - out/main/opencode-config/**/*
 npmRebuild: false

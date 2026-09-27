@@ -46,10 +46,10 @@ test('Arduino CLI release assets exist for all supported targets', () => {
   }
 });
 
-test('OpenCode release assets include sha256 for all supported targets', () => {
+test('OpenCode release assets include verified npm integrity for all supported targets', () => {
   const assets = opencodeReleaseAssets as Record<
     string,
-    { archiveName?: string; archiveType?: string; binaryName?: string; sha256?: string }
+    { archiveName?: string; archiveType?: string; binaryName?: string; integrity?: string; version?: string; url?: string }
   >;
 
   for (const key of [
@@ -66,8 +66,10 @@ test('OpenCode release assets include sha256 for all supported targets', () => {
     'linux-arm64-musl'
   ]) {
     assert.equal(typeof assets[key]?.archiveName, 'string');
-    assert.equal(assets[key]?.binaryName, 'opencode');
-    assert.match(assets[key]?.sha256 ?? '', /^[a-f0-9]{64}$/);
+    assert.equal(assets[key]?.binaryName, key.startsWith('windows') ? 'opencode.exe' : 'opencode');
+    assert.equal(assets[key]?.version, '2.0.14');
+    assert.equal(new URL(assets[key]!.url!).origin, 'https://registry.npmjs.org');
+    assert.match(assets[key]?.integrity ?? '', /^sha512-[A-Za-z0-9+/]{86}==$/);
   }
 });
 

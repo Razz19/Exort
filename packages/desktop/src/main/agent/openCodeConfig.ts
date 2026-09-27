@@ -1,5 +1,3 @@
-import type { Config, ServerOptions } from '@opencode-ai/sdk';
-
 import { OPEN_CODE_MODEL } from '../../shared/openCodeModel.js';
 
 export { OPEN_CODE_MODEL } from '../../shared/openCodeModel.js';
@@ -68,71 +66,9 @@ Response format (Markdown, only if relevant):
 Use: Summary, Commands, Result, Missing Info, Next Step. Keep it short.
 `.trim();
 
-function stripUndefined<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value.map((item) => stripUndefined(item)).filter((item) => item !== undefined) as T;
-  }
-
-  if (value && typeof value === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) {
-      if (item === undefined) continue;
-      result[key] = stripUndefined(item);
-    }
-    return result as T;
-  }
-
-  return value;
-}
-
-const openCodeConfigTemplate: Config = {
-  $schema: undefined,
-  theme: undefined,
-  keybinds: undefined,
-  logLevel: undefined,
-  tui: undefined,
-  command: undefined,
-  watcher: undefined,
-  plugin: undefined,
-  snapshot: undefined,
-  share: undefined,
-  autoshare: undefined,
-  autoupdate: undefined,
-  disabled_providers: undefined,
-  enabled_providers: undefined,
+export const openCodeConfig = {
   model: OPEN_CODE_MODEL,
-  small_model: undefined,
-  username: undefined,
-  mode: undefined,
-  agent: {
-    build: {
-      prompt: OPEN_CODE_SYSTEM_PROMPT,
-      model: OPEN_CODE_MODEL
-    },
-    plan: undefined,
-    general: undefined,
-    explore: undefined
-  },
-  provider: undefined,
-  mcp: undefined,
-  formatter: undefined,
-  lsp: undefined,
-  instructions: undefined,
-  layout: undefined,
-  permission: undefined,
-  tools: undefined,
-  enterprise: undefined,
-  experimental: undefined
+  update: 'disable',
+  agents: { build: { system: OPEN_CODE_SYSTEM_PROMPT, model: OPEN_CODE_MODEL } }
 };
-
-export const openCodeConfig: Config = stripUndefined(openCodeConfigTemplate);
-
-const openCodeServerOptionsTemplate: ServerOptions = {
-  hostname: '127.0.0.1',
-  port: undefined,
-  signal: undefined,
-  timeout: 15_000,
-  config: openCodeConfig
-};
-
-export const openCodeServerOptions: ServerOptions = stripUndefined(openCodeServerOptionsTemplate);
+export const openCodeServerOptions = { hostname: '127.0.0.1', port: undefined, timeout: 60_000, config: openCodeConfig };

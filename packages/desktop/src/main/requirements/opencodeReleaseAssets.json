@@ -1,68 +1,101 @@
 {
   "darwin-arm64": {
-    "archiveName": "opencode-darwin-arm64.zip",
-    "archiveType": "zip",
+    "package": "@opencode/cli-darwin-arm64",
+    "version": "2.0.14",
+    "archiveName": "cli-darwin-arm64-2.0.14.tgz",
+    "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "335307ee87d3dac84986bf8f0bd4273a43c35fcb9b124556c2f4fad4a510e3a4"
+    "url": "https://registry.npmjs.org/@opencode/cli-darwin-arm64/-/cli-darwin-arm64-2.0.14.tgz",
+    "integrity": "sha512-rAv4hutXUkS3/kBiw2bYuokXYPKOBuck8D39eAMY3FDsUt5AWgM4X7wW/2dKhz6BgVwc1rgWio5MDYrfvS5png=="
   },
   "darwin-x64": {
-    "archiveName": "opencode-darwin-x64.zip",
-    "archiveType": "zip",
+    "package": "@opencode/cli-darwin-x64",
+    "version": "2.0.14",
+    "archiveName": "cli-darwin-x64-2.0.14.tgz",
+    "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "12e4a562bcd6e691eb846ceedc5c1f7bad88f047df3775be21aaf979bda959d7"
+    "url": "https://registry.npmjs.org/@opencode/cli-darwin-x64/-/cli-darwin-x64-2.0.14.tgz",
+    "integrity": "sha512-1Q2eqPy+0Ei+jkGXqvJKaEJ59rgr3kuyMwJs9+TuD5IvJ5uovaw7PCxbVCdS6u9o5Ko0cOwKTq1yZu+s4UxtNQ=="
   },
   "darwin-x64-baseline": {
-    "archiveName": "opencode-darwin-x64-baseline.zip",
-    "archiveType": "zip",
+    "package": "@opencode/cli-darwin-x64-baseline",
+    "version": "2.0.14",
+    "archiveName": "cli-darwin-x64-baseline-2.0.14.tgz",
+    "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "a925abd6a72afbd6f35010184a6b93caa1f46c14faac739a5b3543b41244d72b"
+    "url": "https://registry.npmjs.org/@opencode/cli-darwin-x64-baseline/-/cli-darwin-x64-baseline-2.0.14.tgz",
+    "integrity": "sha512-zouKRwlYb0/92G35D6iDWKOb7PoB/nmCL5Oql63CH5PYEq2XwE/AXb1mP7s7TAi26xtCDrl36P/wwJw3GQ5luQ=="
   },
   "windows-x64": {
-    "archiveName": "opencode-windows-x64.zip",
-    "archiveType": "zip",
-    "binaryName": "opencode",
-    "sha256": "8ac96b52692a3daeb84a20295cc7ed43aa3c698078e802926a47aef83748eab2"
+    "package": "@opencode/cli-windows-x64",
+    "version": "2.0.14",
+    "archiveName": "cli-windows-x64-2.0.14.tgz",
+    "archiveType": "tar.gz",
+    "binaryName": "opencode.exe",
+    "url": "https://registry.npmjs.org/@opencode/cli-windows-x64/-/cli-windows-x64-2.0.14.tgz",
+    "integrity": "sha512-najS+dtYpEJm1WLpEItsVZJiGhtJbBiL4cqIZZv57I/LiaYW2TO2ZHzfsDrr4akDHuRyTXRDHLuV7HWWJ0dnEw=="
   },
   "windows-x64-baseline": {
-    "archiveName": "opencode-windows-x64-baseline.zip",
-    "archiveType": "zip",
-    "binaryName": "opencode",
-    "sha256": "887f2ffb6c607b03e993e6537dfe1c6119fa0712320b58813ca4ad5cee73e27b"
+    "package": "@opencode/cli-windows-x64-baseline",
+    "version": "2.0.14",
+    "archiveName": "cli-windows-x64-baseline-2.0.14.tgz",
+    "archiveType": "tar.gz",
+    "binaryName": "opencode.exe",
+    "url": "https://registry.npmjs.org/@opencode/cli-windows-x64-baseline/-/cli-windows-x64-baseline-2.0.14.tgz",
+    "integrity": "sha512-xzcjSbdpEV2w8gfsCIbrfCS9WiLiJA9EpRXswdwVuEcGSDJSOOuA3a6op9MsxCH7k8PxGJQLBtWNkNYgAJZVPQ=="
   },
   "linux-x64": {
-    "archiveName": "opencode-linux-x64.tar.gz",
+    "package": "@opencode/cli-linux-x64",
+    "version": "2.0.14",
+    "archiveName": "cli-linux-x64-2.0.14.tgz",
     "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "6f7f95f13917b9aab8421dbb7e121abf2fecfecdccd16fd5b497f522f454f928"
+    "url": "https://registry.npmjs.org/@opencode/cli-linux-x64/-/cli-linux-x64-2.0.14.tgz",
+    "integrity": "sha512-YFGnck40hBmD8S785zHi1sCZMVodoyxy615SrEo+YXJj/i92I8ViETodsY6Yde0H0VJk/ZuLu8mrllOA4wbAlQ=="
   },
   "linux-x64-baseline": {
-    "archiveName": "opencode-linux-x64-baseline.tar.gz",
+    "package": "@opencode/cli-linux-x64-baseline",
+    "version": "2.0.14",
+    "archiveName": "cli-linux-x64-baseline-2.0.14.tgz",
     "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "62ddaa36242f4944eb66aa122cbb7a8b6375f5196a36214d4938e4b7eb1d8cd1"
+    "url": "https://registry.npmjs.org/@opencode/cli-linux-x64-baseline/-/cli-linux-x64-baseline-2.0.14.tgz",
+    "integrity": "sha512-kqkUnXzk0vqmwBAJ3p0IP+jOQcnEb78pCxAAyZHvWzaJVz+aCciOPRsrQO2h/lVqWPb14vJDhQ6dY8/VylYl7A=="
   },
   "linux-x64-musl": {
-    "archiveName": "opencode-linux-x64-musl.tar.gz",
+    "package": "@opencode/cli-linux-x64-musl",
+    "version": "2.0.14",
+    "archiveName": "cli-linux-x64-musl-2.0.14.tgz",
     "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "7966e6f2fcde07b8390d5759d5d76097f6c3b8e2a1c8a479977b51e5f601abdb"
+    "url": "https://registry.npmjs.org/@opencode/cli-linux-x64-musl/-/cli-linux-x64-musl-2.0.14.tgz",
+    "integrity": "sha512-Bi1QeJ0F2FZRbjl6Mv+GDLjb+M3KsCpd6BMBJ2refp/GeFWdtLEVepaUmpxY7BvoI50ixf3xtAEnTFg4PL+35Q=="
   },
   "linux-x64-baseline-musl": {
-    "archiveName": "opencode-linux-x64-baseline-musl.tar.gz",
+    "package": "@opencode/cli-linux-x64-baseline-musl",
+    "version": "2.0.14",
+    "archiveName": "cli-linux-x64-baseline-musl-2.0.14.tgz",
     "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "8757664d6915291bee4eec19a4387cef0b84bac13a6d3e923da9a176e44812b1"
+    "url": "https://registry.npmjs.org/@opencode/cli-linux-x64-baseline-musl/-/cli-linux-x64-baseline-musl-2.0.14.tgz",
+    "integrity": "sha512-X9866F7O8T9y6jNOsWZ7PtSsmfCIpRMv3W7SkUpQIFEa0fcekWdq0GEQVMVg8gOs90jM5CVRHmkX0JFV4pvP5A=="
   },
   "linux-arm64": {
-    "archiveName": "opencode-linux-arm64.tar.gz",
+    "package": "@opencode/cli-linux-arm64",
+    "version": "2.0.14",
+    "archiveName": "cli-linux-arm64-2.0.14.tgz",
     "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "d2ca40f11b0eb1648cbffaf9850c122a83062b21ada18e5db29558c6bfafee0f"
+    "url": "https://registry.npmjs.org/@opencode/cli-linux-arm64/-/cli-linux-arm64-2.0.14.tgz",
+    "integrity": "sha512-wlTLi73Yj3ms7/OrPjF+3dwWz80sFkYSZvOvsU1uYKF5kzA7MCwCYgRZrQudRw9RQZeKt90uVI0fRtBdIPN+dw=="
   },
   "linux-arm64-musl": {
-    "archiveName": "opencode-linux-arm64-musl.tar.gz",
+    "package": "@opencode/cli-linux-arm64-musl",
+    "version": "2.0.14",
+    "archiveName": "cli-linux-arm64-musl-2.0.14.tgz",
     "archiveType": "tar.gz",
     "binaryName": "opencode",
-    "sha256": "aae45df3aa8981875059045d87028926e7313d99998ac65598f1f95732d171f3"
+    "url": "https://registry.npmjs.org/@opencode/cli-linux-arm64-musl/-/cli-linux-arm64-musl-2.0.14.tgz",
+    "integrity": "sha512-DtHGEPHkuXixMxyEad7wHR0oXdX/Br6MO990+uYnFZebyFhJFA0r967Chp542oxjRwyAzQFG+98+XHCHncaAyw=="
   }
 }

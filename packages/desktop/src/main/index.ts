@@ -1,3 +1,5 @@
+import { configureOpenCodeUpdater, getOpenCodeUpdateState, checkOpenCodeUpdate, installOpenCodeUpdate, restartManagedOpenCode, stopOpenCodeUpdater } from './updater/openCodeUpdater.js';
+import { assertRuntimeAvailable } from './agent/runtimeAccess.js';
 import {
   app,
   BrowserWindow,
@@ -198,7 +200,7 @@ const SERIAL_BAUD_RATE_DEFAULT = 9600;
 const SERIAL_BUFFER_SIZE_DEFAULT = 150;
 const SERIAL_BUFFER_SIZE_MIN = 100;
 const SERIAL_BUFFER_SIZE_MAX = 5000;
-const OPEN_CODE_SMOKE_CHECK_TIMEOUT_MS = 30_000;
+const OPEN_CODE_SMOKE_CHECK_TIMEOUT_MS = 360_000;
 
 app.setName(APP_NAME);
 configureEarlyElectronRuntime();
@@ -1064,6 +1066,15 @@ app.whenReady().then(async () => {
   registerProvidersBridge({
     onOpenCodeLog: logOpenCodeLine
   });
+  configureOpenCodeUpdater({ automaticChecks: app.isPackaged, isAgentBusy: () => activeAgentTurns.size > 0,
+    onState: state => { for (const window of BrowserWindow.getAllWindows()) window.webContents.send('opencode-updater:state', state); }
+  });
+  ipcMain.handle('opencode-updater:get-state', async () => {
+    try { return { ok: true, state: await getOpenCodeUpdateState() }; }
+    catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'Could not read OpenCode update state.' }; }
+  });
+  ipcMain.handle('opencode-updater:check', (_event, payload?: { background?: boolean }) => checkOpenCodeUpdate(payload?.background === true));
+  ipcMain.handle('opencode-updater:install', () => installOpenCodeUpdate());
   registerUpdaterBridge({
     owner: 'Razz19',
     repo: 'Exort'
@@ -1614,30 +1625,12 @@ app.whenReady().then(async () => {
 
     try {
       if (id === 'opencode') {
-        await shutdownOpenCodeRuntime();
+        const response = await installOpenCodeUpdate();
+        return { ...response, result: { id, ok: response.ok, installedAfter: response.ok,
+          versionAfter: response.state?.currentVersion ?? null, strategyTried: 'verified-npm',
+          message: response.error ?? 'OpenCode is ready.', manualCommands: [], logs: [] } };
       }
-
       const result = await installRequirement(id);
-
-      if (id === 'opencode' && result.ok) {
-        const smoke = await withTimeout(
-          runOpenCodeSidecarSmokeCheck({
-            onLog: logOpenCodeLine,
-            restartRuntime: true
-          }),
-          OPEN_CODE_SMOKE_CHECK_TIMEOUT_MS,
-          'OpenCode sidecar smoke check timed out after install.'
-        );
-
-        if (!smoke.ok) {
-          return {
-            ok: false,
-            result,
-            error: `OpenCode installed but smoke check failed: ${smoke.details ?? 'Unknown smoke-check error.'}`,
-            smoke
-          };
-        }
-      }
       return { ok: true, result };
     } catch (error) {
       return {
@@ -1657,11 +1650,12 @@ app.whenReady().then(async () => {
       }
     ): Promise<{ ok: boolean; result?: OpenCodeSidecarSmokeCheckResult; error?: string }> => {
       try {
+        if (payload?.restartRuntime) await restartManagedOpenCode();
         const workspaceRoot = asNonBlankString(payload?.workspaceRoot) ?? undefined;
         const result = await withTimeout(
           runOpenCodeSidecarSmokeCheck({
             workspaceRoot,
-            restartRuntime: payload?.restartRuntime === true,
+            restartRuntime: false,
             onLog: logOpenCodeLine
           }),
           OPEN_CODE_SMOKE_CHECK_TIMEOUT_MS,
@@ -1693,12 +1687,12 @@ app.whenReady().then(async () => {
       }
     ): Promise<{ ok: boolean; result?: OpenCodeSidecarSmokeCheckResult; error?: string }> => {
       try {
-        await shutdownOpenCodeRuntime();
+        await restartManagedOpenCode();
         const workspaceRoot = asNonBlankString(payload?.workspaceRoot) ?? undefined;
         const result = await withTimeout(
           runOpenCodeSidecarSmokeCheck({
             workspaceRoot,
-            restartRuntime: true,
+            restartRuntime: false,
             onLog: logOpenCodeLine
           }),
           OPEN_CODE_SMOKE_CHECK_TIMEOUT_MS,
@@ -2384,6 +2378,7 @@ app.whenReady().then(async () => {
         };
       }
     ) => {
+      try { assertRuntimeAvailable(); } catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'OpenCode is updating.' }; }
       if (activeAgentTurns.has(payload.requestId)) {
         return { ok: false, error: 'Turn already running for this request id' };
       }
@@ -2450,6 +2445,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', (event) => {
+  stopOpenCodeUpdater();
   if (appQuitCleanupInProgress) {
     return;
   }

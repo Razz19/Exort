@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { OpenCodeUpdateState } from "../../../shared/openCodeUpdater";
   import { onDestroy, onMount } from "svelte";
   import {
     CheckCircle2,
@@ -46,6 +47,39 @@
     error: null,
     checkedAt: null,
   });
+  let runtimeUpdate = $state<OpenCodeUpdateState | null>(null);
+  let runtimeCheckBusy = $state(false);
+  let runtimeUpdateBusy = $derived(!!runtimeUpdate && ['checking', 'downloading', 'waiting-for-idle', 'installing'].includes(runtimeUpdate.status));
+  function onRuntimeUpdate(state: OpenCodeUpdateState): void {
+    const previous = runtimeUpdate?.status;
+    runtimeUpdate = state;
+    if (state.status === 'updated' && previous !== 'updated') void loadRequirements();
+  }
+  async function checkRuntimeUpdate(): Promise<void> {
+    if (runtimeCheckBusy || runtimeUpdateBusy) return;
+    runtimeCheckBusy = true;
+    errorMessage = null;
+    try {
+      const response = await window.electronAPI.checkOpenCodeUpdate();
+      if (response.state) runtimeUpdate = response.state;
+      if (!response.ok) {
+        errorMessage = response.error ?? 'Could not check OpenCode updates.';
+        return;
+      }
+      if (response.state?.status === 'available') {
+        setInstalling('opencode', true);
+        const installation = await window.electronAPI.installOpenCodeUpdate();
+        if (installation.state) runtimeUpdate = installation.state;
+        if (!installation.ok) errorMessage = installation.error ?? 'Could not update OpenCode.';
+        await loadRequirements();
+      }
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : 'Could not check or update OpenCode.';
+    } finally {
+      setInstalling('opencode', false);
+      runtimeCheckBusy = false;
+    }
+  }
   let refreshBusy = $state(false);
   let installAllBusy = $state(false);
   let installingIds = $state<Partial<Record<RequirementId, true>>>({});
@@ -80,8 +114,11 @@
       requirementsState = state;
     });
     void loadRequirements();
+    window.electronAPI.onOpenCodeUpdateState(onRuntimeUpdate);
+    void window.electronAPI.getOpenCodeUpdateState().then(response => { if (response.state) runtimeUpdate = response.state; });
 
     return () => {
+      window.electronAPI.offOpenCodeUpdateState(onRuntimeUpdate);
       unsubscribe();
     };
   });
@@ -102,7 +139,7 @@
 
     autoInstallTriggered = true;
     onAutoInstallTriggered();
-    void installAll();
+    void installAll(true);
   });
 
   function normalizeStatusMessage(input: string): string {
@@ -163,6 +200,7 @@
     if (status.releaseArchiveName) {
       lines.push(`Release archive: ${status.releaseArchiveName}`);
     }
+    if (status.releaseArchiveIntegrity) lines.push(`Npm integrity: ${status.releaseArchiveIntegrity}`);
     if (status.releaseArchiveSha256) {
       lines.push(`Release SHA-256: ${status.releaseArchiveSha256}`);
     }
@@ -231,6 +269,7 @@
   }
 
   function startProgress(id: RequirementId): void {
+    if (id === "opencode") return; // The runtime updater reports actual download progress.
     stopProgressTimer(id);
     setProgress(id, 8);
 
@@ -332,7 +371,7 @@
     }
   }
 
-  async function installAll(): Promise<void> {
+  async function installAll(automatic = false): Promise<void> {
     if (installAllBusy || loading || missingRequirementIds.length === 0) return;
 
     installAllBusy = true;
@@ -340,7 +379,13 @@
     manualCommands = [];
 
     try {
-      for (const id of missingRequirementIds) {
+      // First-run setup installs a missing OpenCode runtime. Existing runtimes
+      // still require an explicit upgrade action, including migration from v1.
+      const installIds = missingRequirementIds.filter(id =>
+        !automatic || id !== "opencode" ||
+        (requirementMap[id]?.version === null && requirementMap[id]?.source !== "system"),
+      );
+      for (const id of installIds) {
         setInstalling(id, true);
         startProgress(id);
         const installed = await installRequirement(id);
@@ -508,11 +553,11 @@
     {#each requirementOrder as id (id)}
       {@const status = requirementMap[id]}
       {@const checking = !status && loading}
-      {@const installing = !!installingIds[id]}
+      {@const installing = !!installingIds[id] || (id === "opencode" && runtimeUpdateBusy && runtimeUpdate?.status !== "checking")}
       {@const installed = status?.installed === true}
       {@const metaLines = getRequirementMetaLines(id, status)}
       {@const expanded = !!expandedInfoIds[id]}
-      {@const progress = installProgress[id] ?? 0}
+      {@const progress = id === "opencode" ? Math.round(runtimeUpdate?.progressPercent ?? 0) : installProgress[id] ?? 0}
       <section class="card flex flex-col gap-2 px-3 py-2.5">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
@@ -541,11 +586,26 @@
               <span>Installed</span>
             {:else}
               <XCircle class="h-3.5 w-3.5" />
-              <span>Not installed</span>
+              <span>{id === "opencode" && status?.version?.startsWith("1.") ? "Upgrade required" : "Not installed"}</span>
             {/if}
           </span>
         </div>
 
+        {#if id === 'opencode'}
+          <div class="flex flex-wrap items-center gap-2 text-xs text-dark-fg3">
+            <span>Latest: {runtimeUpdate?.latestVersion ? `v${runtimeUpdate.latestVersion}` : 'Not checked'}</span>
+            {#if !installing}
+              <button
+                class="inline-flex h-7 items-center rounded-md border border-dark-border bg-dark-bg px-2 text-[11px] text-dark-fg2 transition-colors hover:bg-dark-bgH hover:text-dark-fg disabled:cursor-not-allowed disabled:opacity-60"
+                onclick={() => void checkRuntimeUpdate()}
+                disabled={runtimeCheckBusy || runtimeUpdateBusy || runtimeUpdate?.status === 'external'}
+              >Check for updates</button>
+            {/if}
+          </div>
+          {#if runtimeUpdate?.message || runtimeUpdate?.error}
+            <p class="text-xs text-dark-fg3">{runtimeUpdate.error ?? runtimeUpdate.message}</p>
+          {/if}
+        {/if}
         {#if installing}
           <div class="rounded">
             <div
@@ -573,7 +633,7 @@
             <button
               class="inline-flex h-8 items-center gap-1 rounded-md border border-dark-border bg-dark-bg px-2.5 text-xs text-dark-fg2 transition-colors hover:bg-dark-bgH hover:text-dark-fg disabled:cursor-not-allowed disabled:opacity-60"
               onclick={() => void install(id)}
-              disabled={installing || installAllBusy || loading || checking}
+              disabled={installing || installAllBusy || loading || checking || (id === "opencode" && runtimeUpdate?.status === "external")}
               aria-label={`Install ${id}`}
             >
               {#if installing}
@@ -581,7 +641,7 @@
                 <span>Installing</span>
               {:else}
                 <Download class="h-3.5 w-3.5" />
-                <span>Install</span>
+                <span>{id === "opencode" && status?.version?.startsWith("1.") ? "Upgrade" : "Install"}</span>
               {/if}
             </button>
           {/if}
@@ -608,7 +668,7 @@
               <button
                 class="inline-flex h-7 items-center gap-1 rounded-md border border-dark-border bg-dark-bg px-2 text-[11px] text-dark-fg2 transition-colors hover:bg-dark-bgH hover:text-dark-fg disabled:cursor-not-allowed disabled:opacity-60"
                 onclick={() => void runOpenCodeSmokeCheck()}
-                disabled={smokeCheckBusy || restartBusy || loading || installAllBusy}
+                disabled={runtimeUpdateBusy || smokeCheckBusy || restartBusy || loading || installAllBusy}
                 aria-label="Check OpenCode"
               >
                 {#if smokeCheckBusy}
@@ -622,7 +682,7 @@
               <button
                 class="inline-flex h-7 items-center gap-1 rounded-md border border-dark-border bg-dark-bg px-2 text-[11px] text-dark-fg2 transition-colors hover:bg-dark-bgH hover:text-dark-fg disabled:cursor-not-allowed disabled:opacity-60"
                 onclick={() => void runOpenCodeSmokeCheck({ restartRuntime: true })}
-                disabled={restartBusy || smokeCheckBusy || loading || installAllBusy}
+                disabled={runtimeUpdateBusy || restartBusy || smokeCheckBusy || loading || installAllBusy}
                 aria-label="Restart OpenCode"
               >
                 {#if restartBusy}

@@ -14,6 +14,7 @@ coverage
 .svelte-kit
 **/.vercel
 docs/*
+!docs/opencode-v2.md
 packages/desktop/release
 packages/server/prisma/dev.db
 packages/server/prisma/dev.db-journal

@@ -1,169 +1,70 @@
+import { readOpenCodeBinaryVersion } from '../agent/openCodeProbe.js';
+import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { createReadStream, existsSync } from 'node:fs';
-import { chmod, copyFile, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdtemp, mkdir, readFile, rm, writeFile, lstat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-
-import {
-  EXORT_MANAGED_OPENCODE_RELEASE_TAG,
-  resolveManagedOpenCodeBinary
-} from '../agent/openCodeBinary.js';
+import { EXORT_MANAGED_OPENCODE_VERSION, isSupportedOpenCodeVersion, resolveManagedOpenCodeBinary } from '../agent/openCodeBinary.js';
 import releaseAssets from './opencodeReleaseAssets.json';
 
-type ArchiveType = 'zip' | 'tar.gz';
-
-type ReleaseAssetEntry = {
-  archiveName: string;
-  archiveType: ArchiveType;
-  binaryName: string;
-  sha256: string;
+export type OpenCodeReleaseAssetDetails = {
+  targetKey: string; package: string; version: string; archiveName: string;
+  archiveType: 'tar.gz'; binaryName: string; url: string; integrity: string;
 };
-
-type ReleaseAssetMap = Record<string, ReleaseAssetEntry>;
-
-type RunCommandResult = {
-  ok: boolean;
-  exitCode: number | null;
-  stdout: string;
-  stderr: string;
-  error?: string;
-  timedOut?: boolean;
-};
-
 export type OpenCodeReleaseInstallResult = {
-  ok: boolean;
-  targetKey?: string;
-  url?: string;
-  archiveType?: ArchiveType;
-  binaryPath?: string;
-  message?: string;
+  ok: boolean; targetKey?: string; url?: string; archiveType?: string; binaryPath?: string; message?: string;
 };
-
-export type OpenCodeReleaseAssetDetails = ReleaseAssetEntry & {
-  targetKey: string;
-  url: string;
-};
-
-const RELEASE_ASSETS: ReleaseAssetMap = releaseAssets as ReleaseAssetMap;
 const COMMAND_TIMEOUT_MS = 60_000;
-const DOWNLOAD_TIMEOUT_MS = 8 * 60 * 1000;
-const OPENCODE_RELEASE_BASE_URL = 'https://github.com/anomalyco/opencode/releases/download';
-
-function buildReleaseUrl(asset: ReleaseAssetEntry): string {
-  return `${OPENCODE_RELEASE_BASE_URL}/${EXORT_MANAGED_OPENCODE_RELEASE_TAG}/${asset.archiveName}`;
+const DOWNLOAD_TIMEOUT_MS = 8 * 60_000;
+function trimOutput(value: string): string { return value.trim(); }
+function runCommand(params: { command: string; args?: string[]; timeoutMs?: number }) {
+  return new Promise<{ ok: boolean; stdout: string; stderr: string; error?: string }>((resolve) => {
+    const proc = spawn(params.command, params.args ?? [], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '', stderr = '', timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; proc.kill('SIGKILL'); }, params.timeoutMs ?? COMMAND_TIMEOUT_MS);
+    proc.stdout.on('data', c => { stdout = (stdout + c).slice(-100000); });
+    proc.stderr.on('data', c => { stderr = (stderr + c).slice(-100000); });
+    proc.once('error', e => { clearTimeout(timer); resolve({ ok: false, stdout, stderr, error: e.message }); });
+    proc.once('close', code => { clearTimeout(timer); resolve({ ok: code === 0 && !timedOut, stdout, stderr }); });
+  });
 }
-
-export async function resolveOpenCodeReleaseAssetForCurrentTarget(): Promise<OpenCodeReleaseAssetDetails> {
-  const targetKey = await resolveTargetKey();
-  const asset = RELEASE_ASSETS[targetKey];
-  if (!asset) {
-    throw new Error(`No release asset is configured for target ${targetKey}.`);
+export function compareOpenCodeVersions(a: string, b: string): number {
+  const left = a.split('.').map(Number), right = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) { const diff = (left[i] ?? 0) - (right[i] ?? 0); if (diff) return Math.sign(diff); }
+  return 0;
+}
+export function parseLatestOpenCodeRelease(data: unknown): string {
+  const d = data as { version?: unknown; active?: unknown; channel?: unknown; metadata?: { package?: unknown } };
+  if (!d || !isSupportedOpenCodeVersion(d.version) || d.active !== true || d.channel !== 'latest' || d.metadata?.package !== '@opencode/cli') {
+    throw new Error('No compatible stable OpenCode 2.x update is available.');
   }
-
-  return {
-    ...asset,
-    targetKey,
-    url: buildReleaseUrl(asset)
-  };
+  return d.version;
 }
-
-function trimOutput(value: string): string {
-  return value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .join('\n');
+export async function fetchLatestOpenCodeVersion(): Promise<string> {
+  const response = await fetch('https://opencode.ai/update/api/latest/cli/npm', { signal: AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`OpenCode update check failed (${response.status}).`);
+  return parseLatestOpenCodeRelease(await response.json());
 }
-
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, onTimeout: () => void): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      onTimeout();
-      reject(new Error(`Operation timed out after ${timeoutMs}ms.`));
-    }, timeoutMs);
-
-    promise
-      .then((value) => {
-        clearTimeout(timer);
-        resolve(value);
-      })
-      .catch((error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
-  });
+export async function resolveOpenCodeReleaseAssetForCurrentTarget(version = EXORT_MANAGED_OPENCODE_VERSION): Promise<OpenCodeReleaseAssetDetails> {
+  if (!isSupportedOpenCodeVersion(version)) throw new Error('Unsupported OpenCode version.');
+  const targetKey = await resolveTargetKey();
+  const pinned = (releaseAssets as Record<string, Omit<OpenCodeReleaseAssetDetails, 'targetKey'>>)[targetKey];
+  if (!pinned) throw new Error(`No OpenCode package for ${targetKey}.`);
+  if (version === EXORT_MANAGED_OPENCODE_VERSION) return { ...pinned, targetKey };
+  const response = await fetch(`https://registry.npmjs.org/@opencode%2fcli-${targetKey}/${version}`, { signal: AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`OpenCode ${version} is unavailable for ${targetKey}.`);
+  const data = await response.json() as { name: string; version: string; dist: { tarball: string; integrity: string } };
+  const url = new URL(data.dist.tarball);
+  if (data.name !== pinned.package || data.version !== version || url.origin !== 'https://registry.npmjs.org' || !data.dist.integrity?.startsWith('sha512-')) {
+    throw new Error('Invalid OpenCode package metadata.');
+  }
+  return { ...pinned, targetKey, version, url: url.href, archiveName: path.basename(url.pathname), integrity: data.dist.integrity };
 }
-
-function runCommand(params: {
-  command: string;
-  args?: string[];
-  shell?: boolean;
-  timeoutMs?: number;
-}): Promise<RunCommandResult> {
-  const args = params.args ?? [];
-  const shell = params.shell === true;
-  const timeoutMs = params.timeoutMs ?? COMMAND_TIMEOUT_MS;
-
-  return new Promise((resolve) => {
-    const proc = spawn(params.command, args, {
-      shell,
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
-
-    let stdout = '';
-    let stderr = '';
-    let settled = false;
-    let timedOut = false;
-
-    const timer = setTimeout(() => {
-      timedOut = true;
-      proc.kill('SIGTERM');
-      setTimeout(() => {
-        if (!proc.killed) {
-          proc.kill('SIGKILL');
-        }
-      }, 2000).unref();
-    }, timeoutMs);
-
-    const settle = (result: RunCommandResult) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(result);
-    };
-
-    proc.stdout?.on('data', (chunk) => {
-      stdout += chunk.toString();
-    });
-
-    proc.stderr?.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-
-    proc.on('error', (error) => {
-      settle({
-        ok: false,
-        exitCode: null,
-        stdout,
-        stderr,
-        error: error.message,
-        timedOut
-      });
-    });
-
-    proc.on('close', (code) => {
-      settle({
-        ok: code === 0 && !timedOut,
-        exitCode: code,
-        stdout,
-        stderr,
-        timedOut
-      });
-    });
-  });
+export function verifyOpenCodeArchive(data: Buffer, integrity: string): void {
+  const actual = 'sha512-' + createHash('sha512').update(data).digest('base64');
+  if (actual !== integrity) throw new Error('OpenCode archive integrity check failed.');
 }
-
 async function detectLinuxMusl(): Promise<boolean> {
   if (process.platform !== 'linux') return false;
   if (existsSync('/etc/alpine-release')) return true;
@@ -220,271 +121,71 @@ async function detectHasAvx2(): Promise<boolean | null> {
   return null;
 }
 
+export function selectOpenCodeTarget(platform: string, arch: string, avx2: boolean | null, musl: boolean): string {
+  if (platform === 'darwin' && arch === 'arm64') return 'darwin-arm64';
+  if (platform === 'linux' && arch === 'arm64') return musl ? 'linux-arm64-musl' : 'linux-arm64';
+  if (arch === 'x64' && ['darwin', 'win32', 'linux'].includes(platform)) {
+    return `${platform === 'win32' ? 'windows' : platform}-x64${avx2 === true ? '' : '-baseline'}${platform === 'linux' && musl ? '-musl' : ''}`;
+  }
+  throw new Error(`Unsupported OpenCode platform: ${platform}-${arch}`);
+}
 async function resolveTargetKey(): Promise<string> {
-  if (process.platform === 'darwin') {
-    if (process.arch === 'arm64') return 'darwin-arm64';
-    if (process.arch !== 'x64') {
-      throw new Error(`Unsupported macOS architecture: ${process.arch}`);
-    }
-
-    const avx2 = await detectHasAvx2();
-    return avx2 ? 'darwin-x64' : 'darwin-x64-baseline';
-  }
-
-  if (process.platform === 'win32') {
-    if (process.arch !== 'x64') {
-      throw new Error(`Unsupported Windows architecture: ${process.arch}`);
-    }
-
-    const avx2 = await detectHasAvx2();
-    return avx2 ? 'windows-x64' : 'windows-x64-baseline';
-  }
-
-  if (process.platform === 'linux') {
-    const musl = await detectLinuxMusl();
-
-    if (process.arch === 'arm64') {
-      return musl ? 'linux-arm64-musl' : 'linux-arm64';
-    }
-
-    if (process.arch !== 'x64') {
-      throw new Error(`Unsupported Linux architecture: ${process.arch}`);
-    }
-
-    const avx2 = await detectHasAvx2();
-    const useBaseline = avx2 !== true;
-
-    if (musl) {
-      return useBaseline ? 'linux-x64-baseline-musl' : 'linux-x64-musl';
-    }
-
-    return useBaseline ? 'linux-x64-baseline' : 'linux-x64';
-  }
-
-  throw new Error(`Unsupported platform: ${process.platform}`);
+  return selectOpenCodeTarget(process.platform, process.arch, await detectHasAvx2(), await detectLinuxMusl());
 }
 
-function buildArchivePath(tempRoot: string, archiveType: ArchiveType): string {
-  if (archiveType === 'zip') {
-    return path.join(tempRoot, 'opencode-release.zip');
-  }
 
-  return path.join(tempRoot, 'opencode-release.tar.gz');
-}
-
-function normalizeSha256(value: string): string {
-  return value.trim().toLowerCase().replace(/^sha256:/, '');
-}
-
-async function computeFileSha256(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const hash = createHash('sha256');
-    const stream = createReadStream(filePath);
-
-    stream.on('data', (chunk) => {
-      hash.update(chunk);
-    });
-    stream.on('end', () => {
-      resolve(hash.digest('hex'));
-    });
-    stream.on('error', (error) => {
-      reject(error);
-    });
-  });
-}
-
-async function downloadFile(url: string, destinationPath: string): Promise<void> {
-  const controller = new AbortController();
-  const response = await withTimeout(
-    fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow'
-    }),
-    DOWNLOAD_TIMEOUT_MS,
-    () => controller.abort()
-  );
-
-  if (!response.ok) {
-    throw new Error(`Download failed with status ${response.status}.`);
-  }
-
-  const data = Buffer.from(await response.arrayBuffer());
-  await writeFile(destinationPath, data);
-}
-
-async function extractArchive(params: {
-  archivePath: string;
-  archiveType: ArchiveType;
-  extractDir: string;
-}): Promise<void> {
-  const { archivePath, archiveType, extractDir } = params;
-  await mkdir(extractDir, { recursive: true });
-
-  if (archiveType === 'zip') {
-    if (process.platform === 'win32') {
-      const psCommand = `Expand-Archive -Path '${archivePath.replace(/'/g, "''")}' -DestinationPath '${extractDir.replace(/'/g, "''")}' -Force`;
-      const result = await runCommand({
-        command: 'powershell.exe',
-        args: ['-NoProfile', '-Command', psCommand],
-        timeoutMs: COMMAND_TIMEOUT_MS
-      });
-      if (!result.ok) {
-        const detail = trimOutput(result.stderr) || trimOutput(result.stdout) || result.error || 'Expand-Archive failed.';
-        throw new Error(detail);
-      }
-      return;
-    }
-
-    const result = await runCommand({
-      command: 'unzip',
-      args: ['-o', archivePath, '-d', extractDir],
-      timeoutMs: COMMAND_TIMEOUT_MS
-    });
-    if (!result.ok) {
-      const detail = trimOutput(result.stderr) || trimOutput(result.stdout) || result.error || 'unzip failed.';
-      throw new Error(detail);
-    }
-    return;
-  }
-
-  const result = await runCommand({
-    command: 'tar',
-    args: ['-xzf', archivePath, '-C', extractDir],
-    timeoutMs: COMMAND_TIMEOUT_MS
-  });
-  if (!result.ok) {
-    const detail = trimOutput(result.stderr) || trimOutput(result.stdout) || result.error || 'tar extract failed.';
-    throw new Error(detail);
-  }
-}
-
-async function findExtractedBinary(params: {
-  rootDir: string;
-  configuredName: string;
-  targetBinaryPath: string;
-}): Promise<string | null> {
-  const { rootDir, configuredName, targetBinaryPath } = params;
-  const requiredBaseName = path.basename(targetBinaryPath);
-  const candidateNames = new Set<string>([configuredName, requiredBaseName]);
-  if (process.platform === 'win32') {
-    candidateNames.add(`${configuredName}.exe`);
-  }
-
-  const stack: string[] = [rootDir];
-  while (stack.length > 0) {
-    const current = stack.pop();
-    if (!current) continue;
-
-    const entries = await readdir(current, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        stack.push(fullPath);
-        continue;
-      }
-      if (candidateNames.has(entry.name)) {
-        return fullPath;
-      }
-    }
-  }
-
-  return null;
-}
-
-async function ensureExecutable(binaryPath: string): Promise<void> {
-  if (process.platform === 'win32') return;
-  await chmod(binaryPath, 0o755).catch(() => {
-    // Best effort.
-  });
-}
-
-async function validateBinary(binaryPath: string): Promise<void> {
-  const result = await runCommand({
-    command: binaryPath,
-    args: ['--version'],
-    timeoutMs: 15_000
-  });
-  if (!result.ok) {
-    const detail = trimOutput(result.stderr) || trimOutput(result.stdout) || result.error || 'Version check failed.';
-    throw new Error(detail);
-  }
-}
-
-export async function installOpenCodeFromReleaseAssets(params?: {
-  log?: (line: string) => void;
-}): Promise<OpenCodeReleaseInstallResult> {
-  const log = params?.log;
-  const managed = await resolveManagedOpenCodeBinary();
-  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'exort-opencode-release-'));
-
+export async function installOpenCodeFromReleaseAssets(params: {
+  version?: string; log?: (line: string) => void; onProgress?: (percent: number) => void;
+} = {}): Promise<OpenCodeReleaseInstallResult> {
+  let temporary: string | undefined;
+  let staged: string | undefined;
   try {
-    const assetDetails = await resolveOpenCodeReleaseAssetForCurrentTarget();
-    const { targetKey, url: assetUrl } = assetDetails;
-    const asset: ReleaseAssetEntry = assetDetails;
-    log?.(`runtime:binary:provision:release:target key=${targetKey}`);
-    log?.(`runtime:binary:provision:start source=managed method=release-url target=${managed.binaryPath}`);
-    log?.(`runtime:binary:provision:release:download url=${assetUrl}`);
-
-    const archivePath = buildArchivePath(tempRoot, asset.archiveType);
-    await downloadFile(assetUrl, archivePath);
-    log?.(`runtime:binary:provision:release:verify archive=${archivePath}`);
-    const expectedSha256 = normalizeSha256(asset.sha256);
-    const actualSha256 = normalizeSha256(await computeFileSha256(archivePath));
-    if (expectedSha256 !== actualSha256) {
-      throw new Error(
-        `Checksum verification failed for ${asset.archiveName}. Expected sha256 ${expectedSha256} but got ${actualSha256}.`
-      );
+    const asset = await resolveOpenCodeReleaseAssetForCurrentTarget(params.version);
+    const target = await resolveManagedOpenCodeBinary(asset.version);
+    if (target.source !== 'managed') throw new Error('The configured system OpenCode binary is managed externally.');
+    temporary = await mkdtemp(path.join(os.tmpdir(), 'exort-opencode-'));
+    const response = await fetch(asset.url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
+    if (!response.ok || !response.body) throw new Error(`OpenCode download failed (${response.status}).`);
+    const total = Number(response.headers.get('content-length'));
+    const reader = response.body.getReader();
+    const chunks: Buffer[] = [];
+    let received = 0;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = Buffer.from(value); chunks.push(chunk); received += chunk.length;
+      if (received > 512 * 1024 * 1024) { await reader.cancel(); throw new Error('OpenCode archive exceeds maximum size.'); }
+      if (total > 0) params.onProgress?.(Math.min(99, received / total * 100));
     }
-    log?.(`runtime:binary:provision:release:verify:ok archive=${archivePath}`);
-
-    const extractDir = path.join(tempRoot, 'extract');
-    log?.(`runtime:binary:provision:release:extract archive=${archivePath}`);
-    await extractArchive({
-      archivePath,
-      archiveType: asset.archiveType,
-      extractDir
-    });
-
-    const extractedBinary = await findExtractedBinary({
-      rootDir: extractDir,
-      configuredName: asset.binaryName,
-      targetBinaryPath: managed.binaryPath
-    });
-
-    if (!extractedBinary) {
-      return {
-        ok: false,
-        targetKey,
-        url: assetUrl,
-        archiveType: asset.archiveType,
-        message: `Unable to locate extracted OpenCode binary (${asset.binaryName}) in archive.`
-      };
+    const data = Buffer.concat(chunks);
+    verifyOpenCodeArchive(data, asset.integrity);
+    const archive = path.join(temporary, 'runtime.tgz');
+    await writeFile(archive, data);
+    const member = `package/bin/${asset.binaryName}`;
+    const extract = await runCommand({ command: 'tar', args: ['-xzf', archive, '-C', temporary, member] });
+    if (!extract.ok) throw new Error(extract.error || extract.stderr || 'Could not extract OpenCode.');
+    const binary = path.join(temporary, member);
+    if (!(await lstat(binary)).isFile()) throw new Error('OpenCode package does not contain a regular binary.');
+    if (process.platform !== 'win32') await chmod(binary, 0o755);
+    if (await readOpenCodeBinaryVersion(binary) !== asset.version) {
+      throw new Error(`Downloaded OpenCode did not report expected version ${asset.version}.`);
     }
-
-    await mkdir(path.dirname(managed.binaryPath), { recursive: true });
-    await copyFile(extractedBinary, managed.binaryPath);
-    await ensureExecutable(managed.binaryPath);
-    await validateBinary(managed.binaryPath);
-
-    log?.(`runtime:binary:provision:done source=managed method=release-url target=${managed.binaryPath}`);
-
-    return {
-      ok: true,
-      targetKey,
-      url: assetUrl,
-      archiveType: asset.archiveType,
-      binaryPath: managed.binaryPath
-    };
+    // Only stage here. The updater publishes this directory while holding the runtime lock.
+    const stagingRoot = path.join(target.managedRoot, 'staging');
+    await mkdir(stagingRoot, { recursive: true });
+    staged = await mkdtemp(path.join(stagingRoot, `${asset.version}-`));
+    const stagedBinary = path.join(staged, asset.binaryName);
+    await copyFile(binary, stagedBinary);
+    if (process.platform !== 'win32') await chmod(stagedBinary, 0o755);
+    await writeFile(path.join(staged, 'release.json'), JSON.stringify(asset), { mode: 0o600 });
+    params.onProgress?.(100);
+    params.log?.(`Installed verified OpenCode ${asset.version} for ${asset.targetKey}.`);
+    staged = undefined; // Ownership passes to the updater.
+    return { ok: true, binaryPath: stagedBinary, targetKey: asset.targetKey, url: asset.url, archiveType: asset.archiveType };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown release install error.';
-    return {
-      ok: false,
-      message
-    };
+    return { ok: false, message: error instanceof Error ? error.message : 'OpenCode install failed.' };
   } finally {
-    await rm(tempRoot, { recursive: true, force: true }).catch(() => {
-      // Best effort cleanup.
-    });
+    if (temporary) await rm(temporary, { recursive: true, force: true });
+    if (staged) await rm(staged, { recursive: true, force: true });
   }
 }
