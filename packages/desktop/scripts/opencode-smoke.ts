@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { OpenCode } from '@opencode/client';
 import { createOpenCodeUpdater } from '../src/main/updater/openCodeUpdater.js';
 import { resolveManagedOpenCodeBinary } from '../src/main/agent/openCodeBinary.js';
@@ -39,7 +40,7 @@ try {
   const client = createV2Adapter(native);
   const session = await native.session.create({ location: { directory: workspace } });
   // Exercise the actual packaged tools without requiring hardware or installed board cores.
-  const plugin = (await import(path.join(assets, 'plugins/exort/index.ts'))).default;
+  const plugin = (await import(pathToFileURL(path.join(assets, 'plugins/exort/index.ts')).href)).default;
   const tools: Array<{ name: string; execute: (args: unknown, context: unknown) => Promise<{ content: string }> }> = [];
   await plugin.setup({ tool: { transform: async (fn: (editor: unknown) => void) => fn({ add: (tool: typeof tools[number]) => tools.push(tool) }) }, session: native.session });
   assert.deepEqual(tools.map(t => t.name).sort(), ['arduinoCompile', 'platformioCompile']);

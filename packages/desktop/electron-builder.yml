@@ -5,6 +5,10 @@ asar: true
 asarUnpack:
   - out/main/opencode-config/**/*
 npmRebuild: false
+# install-app-deps can run npm install in a hoisted workspace. Keep the locked
+# build tools installed instead of pruning them with --production.
+npmArgs:
+  - --include=dev
 directories:
   output: release
   buildResources: resources

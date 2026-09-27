@@ -178,6 +178,12 @@ jobs:
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
+      - name: Prepare signing keychain
+        env:
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+        run: bash packages/desktop/scripts/macos-signing-keychain.sh setup
+
       - name: Prepare App Store Connect API key
         shell: bash
         run: |
@@ -188,12 +194,11 @@ jobs:
 
       - name: Package desktop release artifacts
         env:
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          CSC_KEYCHAIN: ${{ env.CSC_KEYCHAIN }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: npm --workspace @exort/desktop run package
+        run: npm --workspace @exort/desktop run package -- --config.forceCodeSigning=true
 
       - name: Staple and validate macOS DMG
         shell: bash
@@ -285,6 +290,13 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Clean up signing credentials
+        if: always()
+        shell: bash
+        run: |
+          bash packages/desktop/scripts/macos-signing-keychain.sh cleanup
+          if [[ -n "${APPLE_API_KEY:-}" ]]; then rm -f "$APPLE_API_KEY"; fi
+
   build-macos-x64:
     needs:
       - validate
@@ -320,6 +332,12 @@ jobs:
       - name: Rebuild app native dependencies
         run: npm --workspace @exort/desktop run install-app-deps
 
+      - name: Prepare signing keychain
+        env:
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+        run: bash packages/desktop/scripts/macos-signing-keychain.sh setup
+
       - name: Prepare App Store Connect API key
         shell: bash
         run: |
@@ -330,12 +348,11 @@ jobs:
 
       - name: Package desktop release artifacts
         env:
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          CSC_KEYCHAIN: ${{ env.CSC_KEYCHAIN }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: npm --workspace @exort/desktop run package
+        run: npm --workspace @exort/desktop run package -- --config.forceCodeSigning=true
 
       - name: Staple and validate macOS DMG
         shell: bash
@@ -426,6 +443,13 @@ jobs:
           path: packages/desktop/release/latest-mac.yml
           if-no-files-found: error
           retention-days: 1
+
+      - name: Clean up signing credentials
+        if: always()
+        shell: bash
+        run: |
+          bash packages/desktop/scripts/macos-signing-keychain.sh cleanup
+          if [[ -n "${APPLE_API_KEY:-}" ]]; then rm -f "$APPLE_API_KEY"; fi
 
   build-linux:
     needs:
