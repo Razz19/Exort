@@ -184,6 +184,9 @@ jobs:
           MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
         run: bash packages/desktop/scripts/macos-signing-keychain.sh setup
 
+      - name: Verify signing identity
+        run: bash packages/desktop/scripts/macos-signing-keychain.sh verify
+
       - name: Prepare App Store Connect API key
         shell: bash
         run: |
@@ -337,6 +340,9 @@ jobs:
           MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
           MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
         run: bash packages/desktop/scripts/macos-signing-keychain.sh setup
+
+      - name: Verify signing identity
+        run: bash packages/desktop/scripts/macos-signing-keychain.sh verify
 
       - name: Prepare App Store Connect API key
         shell: bash
