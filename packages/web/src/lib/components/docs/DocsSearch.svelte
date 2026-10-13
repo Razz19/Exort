@@ -144,7 +144,12 @@
     query = "";
   }
 
-  function toResultCopy(doc: DocsEntry) {
+  function toResultCopy(doc: DocsEntry, tokens: string[]) {
+    const excerpt = buildExcerpt(doc.searchContent, tokens);
+    if (excerpt) {
+      return excerpt;
+    }
+
     if (doc.description && doc.description.length > 0) {
       return doc.description;
     }
@@ -157,7 +162,8 @@
     const description = (doc.description ?? "").toLowerCase();
     const section = doc.section.toLowerCase();
     const slugWords = doc.slug.replaceAll("/", " ").toLowerCase();
-    const haystack = `${title} ${description} ${section} ${slugWords}`.trim();
+    const content = doc.searchContent.toLowerCase();
+    const haystack = `${title} ${description} ${section} ${slugWords} ${content}`.trim();
 
     let score = 0;
 
@@ -174,6 +180,8 @@
         score += 6;
       } else if (section.includes(token)) {
         score += 4;
+      } else if (content.includes(token)) {
+        score += 1;
       } else {
         score += 2;
       }
@@ -184,6 +192,34 @@
     }
 
     return score;
+  }
+
+  function buildExcerpt(content: string, tokens: string[]) {
+    if (content.length === 0 || tokens.length === 0) {
+      return "";
+    }
+
+    const lowerContent = content.toLowerCase();
+    const matchIndex = tokens.reduce((best, token) => {
+      const tokenIndex = lowerContent.indexOf(token);
+      if (tokenIndex === -1) {
+        return best;
+      }
+
+      return best === -1 ? tokenIndex : Math.min(best, tokenIndex);
+    }, -1);
+
+    if (matchIndex === -1) {
+      return "";
+    }
+
+    const excerptRadius = 72;
+    const start = Math.max(0, matchIndex - excerptRadius);
+    const end = Math.min(content.length, matchIndex + excerptRadius);
+    const prefix = start > 0 ? "..." : "";
+    const suffix = end < content.length ? "..." : "";
+
+    return `${prefix}${content.slice(start, end).trim()}${suffix}`;
   }
 </script>
 
@@ -272,7 +308,7 @@
                           {result.doc.title}
                         </p>
                         <p class="mt-1 text-sm text-gruvbox-muted/95">
-                          {toResultCopy(result.doc)}
+                          {toResultCopy(result.doc, queryTokens)}
                         </p>
                       </a>
                     {/each}

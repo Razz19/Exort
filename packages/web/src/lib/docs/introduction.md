@@ -1,41 +1,143 @@
 ---
-title: Overview
-description: What Exort is, why it exists, and what you can do with it.
+title: Getting Started
+description: What Exort is, who it is for, and how to start using it.
 order: 1
-section: Intro
+section: Getting Started
 ---
 
-# Overview
+# Getting Started
 
-<span style="text-decoration: underline; text-underline-offset: 3px; ">Exort</span> is a free, open-source AI coding workspace for embedded development.
+Exort is a free, open-source AI coding workspace for embedded development.
+
+It combines a desktop code editor, an AI agent, Arduino CLI integration, board management, compile and upload tools, serial monitoring, and serial plotting in one app.
 
 ![Exort screenshot](/exort-screenshot.webp)
 
-It helps you build microcontroller projects faster by combining an AI coding agent, a desktop code workspace, Arduino CLI integration, board management, compile/upload tools, serial monitoring, and serial plotting in one app.
+## What Exort Is For
 
-Exort is designed for developers, students, makers, and hardware builders who work with boards like Arduino, ESP32, ESP8266, RP2040, STM32, Teensy, and other Arduino CLI-compatible platforms.
+Exort is designed for:
 
-## What Exort Helps You Do
+- Developers building microcontroller firmware
+- Students learning embedded systems
+- Makers prototyping hardware projects
+- Teams that want faster edit, compile, upload, observe loops
+- Anyone who wants AI help without leaving the local workspace
 
-- Write firmware
-- Ask AI to explain or edit code
-- Compile projects
-- Upload code to boards
-- Monitor live serial output
-- Plot sensor values
-- Manage board cores
-- Keep project sessions local
+## What You Can Do
 
-## What Is Exort's Goal
+- Open a local embedded workspace
+- Ask the agent to explain, generate, or edit code
+- Install board platforms and cores
+- Compile and upload sketches
+- Watch serial logs and runtime output
+- Plot numeric streams from sensors or device telemetry
+- Keep code and session state on your machine
 
-Our goal is to make hardware coding easier and more friendly, so people of different ages and experience levels can build their own microcontroller projects without feeling overwhelmed.
+## Arduino And PlatformIO Compatibility
 
-We reduce friction by keeping coding, board setup, compile/upload, serial monitoring, and plotting in one desktop workspace.
+Exort is designed to work with existing embedded projects. You can open and continue developing projects created with Arduino IDE or PlatformIO without starting from scratch.
 
-For beginners, this means fewer setup headaches and clearer workflows. For experienced developers, it means faster iteration, better debugging loops, and less time switching between tools.
+Supported project types:
 
-Exort is also local-first, so your project files stay on your machine while you still get practical AI support for code generation, explanations, and troubleshooting.
+- Arduino sketches (`.ino`)
+- Arduino CLI projects
+- PlatformIO projects
+- Multi-file C/C++ firmware projects
 
-## Recommended Next Step
+### Arduino Projects
 
-Start with [Quick Start ->](/docs/quick-start) to use the app immediately.
+#### Opening An Existing Arduino Project
+
+1. Click `Open Workspace`
+2. Select the folder containing your `.ino` file
+3. Exort will automatically detect the project structure
+
+Example:
+
+```text
+Blink/
+├── Blink.ino
+```
+
+Once loaded, you can:
+
+- Edit code manually
+- Ask the AI agent to modify the project
+- Compile and upload firmware
+- Monitor serial output
+
+#### Creating Arduino Code With AI
+
+Example prompts:
+
+- Create an Arduino Uno project that reads an HC-SR04 ultrasonic sensor.
+- Add EEPROM storage to this Arduino project.
+- Convert this polling loop to use interrupts.
+
+### PlatformIO Projects
+
+#### Opening A PlatformIO Project
+
+Open the folder containing `platformio.ini`.
+
+Example:
+
+```text
+MyProject/
+├── platformio.ini
+├── src/
+│   └── main.cpp
+├── include/
+├── lib/
+```
+
+Exort will detect the PlatformIO structure and provide AI assistance directly inside the project.
+
+#### Working With Existing Code
+
+The AI agent understands common PlatformIO project structure, including:
+
+- `platformio.ini`
+- `src/`
+- `include/`
+- `lib/`
+
+Example prompts:
+
+- Analyze this PlatformIO project and explain its architecture.
+- Add MQTT support using PubSubClient.
+- Migrate this project from ESP8266 to ESP32.
+
+### Supported Languages
+
+Exort can assist with:
+
+- Arduino C++
+- C
+- C++
+- Embedded frameworks built on Arduino
+- ESP-IDF-based projects
+- PlatformIO projects
+
+## Download And Install
+
+Download Exort for your operating system from the release page or the download page:
+
+- Windows: download the Windows installer or portable package from the release page
+- macOS: download the `.dmg` build for Apple Silicon or Intel Macs
+- Linux: download the AppImage build
+- Source builds: use the repository if you want to run the app locally during development
+
+The main entry point is the desktop app. Once installed, launch Exort and open a folder that contains your firmware project.
+
+## First Launch Setup
+
+On first launch, Exort is usually easiest to set up in this order:
+
+1. Open or create a workspace folder.
+2. Confirm Arduino CLI and OpenCode/provider setup in Settings.
+3. Install any missing board platforms or cores.
+4. Select your board and port.
+5. Ask the agent for a small change or a starter sketch.
+
+If you want the shortest path to a working project, continue with [First Project Tutorial](/docs/quick-start).

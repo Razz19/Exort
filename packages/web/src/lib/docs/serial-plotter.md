@@ -1,13 +1,17 @@
 ---
 title: Serial Plotter
-description: Graph numeric board output for sensors, calibration, and tuning.
-order: 5
-section: Usage
+description: Plot numeric serial data from your board and inspect value changes over time.
+order: 8
+section: Serial Monitor & Plotter
 ---
 
 # Serial Plotter
 
 Serial Plotter graphs numeric values printed by your board.
+
+It uses the same serial connection as Serial Monitor, but instead of showing plain text logs, it turns numeric output into a visual graph.
+
+You can always <span class="text-gruvbox-orange">ask Exort</span> to prepare the plotter setup for you. Exort can configure the stream in the most effective way for clear plotting and easier analysis.
 
 Use it for:
 
@@ -18,6 +22,7 @@ Use it for:
 - Motor values
 - Battery voltage
 - PID tuning
+- quick visual checks during tuning
 
 ## Basic Example
 
@@ -43,29 +48,6 @@ Serial.print(",");
 Serial.println(sensorB);
 ```
 
-## Best Practice
+## Plotting Numeric Streams
 
-Do not mix text logs and plotter values too much.
-
-Good for plotter:
-
-```text
-123
-124
-125
-```
-
-or:
-
-```text
-123,456
-124,458
-125,459
-```
-
-Bad for plotter:
-
-```text
-Sensor value is: 123
-Temperature now equals 24.3 C
-```
+Serial Plotter works best when you print plain numbers, one sample per line, or a stable set of comma-separated numbers.

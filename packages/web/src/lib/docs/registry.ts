@@ -17,6 +17,7 @@ export interface DocsEntry {
   description?: string;
   order: number;
   section: string;
+  searchContent: string;
 }
 
 export interface DocsSidebarLinkNode {
@@ -48,9 +49,23 @@ export interface DocsCatalog {
 }
 
 const docsModules = import.meta.glob('/src/lib/docs/**/*.{md,svx}');
-const sectionOrder = ['Intro', 'Usage', 'Configuration', 'Guides', 'Reference', 'Community'] as const;
+const docsSourceModules = import.meta.glob('/src/lib/docs/**/*.{md,svx}', {
+  query: '?raw',
+  import: 'default'
+});
+const sectionOrder = [
+  'Getting Started',
+  'Requirements',
+  'Board Manager',
+  'Serial Monitor & Plotter',
+  'Compile & Upload',
+  'AI Agent Usage',
+  'Community'
+] as const;
+const hiddenSections = new Set(['First Project Tutorial']);
 let docsCatalogPromise: Promise<DocsCatalog> | null = null;
 const docsModuleCache = new Map<string, { default?: Component; metadata?: unknown }>();
+const docsSourceCache = new Map<string, string>();
 
 export async function getDocsCatalog(): Promise<DocsCatalog> {
   docsCatalogPromise ??= buildDocsCatalog();
@@ -77,6 +92,7 @@ async function buildDocsCatalog(): Promise<DocsCatalog> {
 
   for (const modulePath of Object.keys(docsModules)) {
     const moduleValue = await loadDocsModule(modulePath);
+    const rawSource = await loadDocsSource(modulePath);
     const frontmatter = parseFrontmatter(moduleValue.metadata, modulePath);
     const slugParts = toSlugParts(modulePath);
 
@@ -97,7 +113,8 @@ async function buildDocsCatalog(): Promise<DocsCatalog> {
       title: frontmatter.title,
       description: frontmatter.description,
       order: frontmatter.order ?? Number.MAX_SAFE_INTEGER,
-      section
+      section,
+      searchContent: extractSearchText(rawSource)
     });
   }
 
@@ -122,6 +139,26 @@ async function loadDocsModule(modulePath: string): Promise<{ default?: Component
 
   const loaded = (await loader()) as { default?: Component; metadata?: unknown };
   docsModuleCache.set(modulePath, loaded);
+  return loaded;
+}
+
+async function loadDocsSource(modulePath: string): Promise<string> {
+  const fromCache = docsSourceCache.get(modulePath);
+  if (fromCache) {
+    return fromCache;
+  }
+
+  const loader = docsSourceModules[modulePath];
+  if (!loader) {
+    throw new Error(`No docs source loader found for "${modulePath}"`);
+  }
+
+  const loaded = await loader();
+  if (typeof loaded !== 'string') {
+    throw new Error(`Docs source for "${modulePath}" did not load as text`);
+  }
+
+  docsSourceCache.set(modulePath, loaded);
   return loaded;
 }
 
@@ -201,6 +238,10 @@ function buildSidebar(docs: DocsEntry[]): DocsSidebarSection[] {
   const sections = new Map<string, DocsSidebarSection>();
 
   for (const doc of docs) {
+    if (hiddenSections.has(doc.section)) {
+      continue;
+    }
+
     const sectionId = toKebab(doc.section);
     const section =
       sections.get(sectionId) ??
@@ -332,4 +373,19 @@ function toKebab(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+}
+
+function extractSearchText(source: string): string {
+  return source
+    .replace(/^---[\s\S]*?---\s*/m, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/<\/?[^>]+>/g, ' ')
+    .replace(/^[#>\-\*\d\.\|\s]+/gm, ' ')
+    .replace(/\b[a-z0-9_./-]+\.(ino|cpp|h|hpp|c|md|svx|ini)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

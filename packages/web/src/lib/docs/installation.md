@@ -1,50 +1,71 @@
 ---
-title: Installation
-description: Install Exort from releases or run the desktop app from source.
-order: 3
-section: Intro
+title: Download & Install
+description: Download Exort for Windows, macOS, or Linux and get the desktop app running.
+order: 2
+section: Getting Started
 ---
 
 <script lang="ts">
   import { EXORT_GITHUB_LINK, EXORT_GITHUB_RELEASES_LINK } from "$lib/constant";
 </script>
 
-# Installation
+# Download & Install
 
-Exort is a desktop-only Electron app. The main app lives in `packages/desktop`, while the website lives separately in `packages/web`.
+There are two main ways to use Exort: download it from the website, or use GitHub.
 
-## Download
+## Option 1: Download From The Website
 
-Use the latest build from:
+The fastest and easiest way to start is from the Exort download page:
 
-- [https://exort.dev/download](https://exort.dev/download)
-- <a href={EXORT_GITHUB_RELEASES_LINK}>{EXORT_GITHUB_RELEASES_LINK}</a>
+- <a href="/download">/download</a>
 
-## Run from Source
+Choose the build that matches your operating system, then install and launch Exort.
 
-<pre><code>git clone {EXORT_GITHUB_LINK}.git
+After the app opens, make sure the required tools are available in Settings. Exort can install and manage the required dependencies for you, including:
+
+- Arduino CLI
+- OpenCode
+
+In most cases, this is the best option if you just want to get Exort running quickly.
+
+## Option 2: Use GitHub
+
+GitHub gives you two ways to use Exort:
+
+- Run Exort from source
+- Download packaged builds from GitHub Releases
+
+### 2.1: Run Exort From GitHub
+
+If you want to work from source, use the GitHub repository:
+
+- <a href={EXORT_GITHUB_LINK}>{EXORT_GITHUB_LINK}</a>
+
+Clone the repository, open the project folder, install dependencies, and start the development app:
+
+```bash
+git clone https://github.com/Razz19/Exort.git
 cd Exort
 npm install
 npm run dev
-</code></pre>
-
-The repository uses npm workspaces under `packages/*`.
-
-## Useful Development Commands
-
-```bash
-npm run dev
-npm run dev:web
-npm run dev:all
-
-npm run build
-npm run build:web
-npm run build:all
-
-npm run lint
-npm run typecheck
-npm run typecheck:web
-npm run typecheck:all
 ```
 
-These commands are defined in the root `package.json`.
+Once Exort starts, allow it to install and manage its required tools if prompted. This includes Arduino CLI and OpenCode.
+
+Running from source is useful if you want to contribute, test local changes, or work on Exort during development.
+
+### 2.2: Download Packaged Builds From GitHub Releases
+
+If you prefer downloading packaged builds directly from GitHub, use the releases page:
+
+- <a href={EXORT_GITHUB_RELEASES_LINK}>{EXORT_GITHUB_RELEASES_LINK}</a>
+
+Open the release you want, then choose the asset that matches your platform and architecture.
+
+Common examples:
+
+- Windows: `.exe` installer
+- macOS: `.dmg` for Apple Silicon or Intel
+- Linux: `.AppImage`
+
+Avoid `.blockmap` files unless you specifically need them for update-related workflows. If you only want to install Exort, download the main application asset for your system.

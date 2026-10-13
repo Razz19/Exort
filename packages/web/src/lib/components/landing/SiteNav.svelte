@@ -34,11 +34,11 @@
       href: "/roadmap",
       hoverClass: "hover:text-gruvbox-purple focus-visible:text-gruvbox-purple",
     },
-    // {
-    //   label: "Docs",
-    //   href: "/docs",
-    //   hoverClass: "hover:text-gruvbox-yellow focus-visible:text-gruvbox-yellow",
-    // },
+    {
+      label: "Docs",
+      href: "/docs",
+      hoverClass: "hover:text-gruvbox-yellow focus-visible:text-gruvbox-yellow",
+    },
   ];
 
   let isNavScrolled = false;
