@@ -1,5 +1,5 @@
 import { waitForExortPlugin } from './v2Readiness.js';
-import type { OpenCodeClient as NativeClient, OpenCodeEvent, FormInfo, SessionMessageInfo, SessionInfo, PermissionRequest } from '@opencode/client';
+import type { OpenCodeClient as NativeClient, OpenCodeEvent, FormInfo, SessionMessageInfo, SessionInfo, PermissionRequest, IntegrationInfo } from '@opencode/client';
 import type { OpenCodeClient } from './openCode.js';
 import { withRuntimeCall } from './runtimeAccess.js';
 
@@ -9,6 +9,7 @@ const str = (v: unknown): string => typeof v === 'string' ? v : '';
 const array = (v: unknown): unknown[] => Array.isArray(v) ? v : [];
 const location = (v: unknown) => ({ directory: str(record(v).directory) || undefined });
 const session = (s: SessionInfo) => ({ ...s, directory: s.location.directory });
+const signInMethods = (integration?: IntegrationInfo) => integration?.methods.filter(m => m.type === 'key' || m.type === 'oauth') ?? [];
 export function legacyPermission(p: PermissionRequest) {
   return { ...p, title: p.message || `${p.action}: ${p.resources.join(', ')}`, command: p.resources.join(', '), tool: { callID: p.source?.id } };
 }
@@ -172,6 +173,29 @@ export function createV2Adapter(native: NativeClient): OpenCodeClient {
     return { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30000)]) : AbortSignal.timeout(30000) };
   };
   const invoke = (fn: (a: RecordValue, o: unknown) => Promise<unknown>) => (a?: unknown, o?: unknown) => withRuntimeCall(() => fn(record(a), o));
+  async function providerEntries(a: RecordValue) {
+    const query = { location: location(a) };
+    const [providers, integrations] = await Promise.all([
+      native.provider.list(query, options(undefined)), native.integration.list(query, options(undefined))
+    ]);
+    const byID = new Map(integrations.data.map(i => [i.id, i]));
+    const represented = new Set<string>();
+    const entries = providers.data.map(p => {
+      const integrationID = p.integrationID || p.id;
+      represented.add(integrationID);
+      represented.add(p.id);
+      const integration = byID.get(integrationID);
+      return { id: p.id, name: p.name, connected: p.activation === 'enabled' || !!integration?.connections.length, integration };
+    });
+    // v2 only creates provider records for active providers. The integrations
+    // catalog supplies the remaining choices and their sign-in methods.
+    for (const integration of integrations.data) {
+      if (!represented.has(integration.id) && signInMethods(integration).length) {
+        entries.push({ id: integration.id, name: integration.name, connected: !!integration.connections.length, integration });
+      }
+    }
+    return entries;
+  }
   async function integration(providerID: string, directory?: string) {
     await waitForExortPlugin(native, directory);
     const providers = await native.provider.list({ location: { directory } }, options(undefined));
@@ -245,24 +269,23 @@ export function createV2Adapter(native: NativeClient): OpenCodeClient {
       list: invoke(async a => {
         await waitForExortPlugin(native, str(a.directory) || undefined);
         const query = { location: location(a) };
-        const [providers, models, integrations] = await Promise.all([native.provider.list(query, options(undefined)), native.model.list(query, options(undefined)), native.integration.list(query, options(undefined))]);
-        const connected = providers.data.filter(p => p.activation === 'enabled' || integrations.data.some(i => i.id === (p.integrationID || p.id) && i.connections.length > 0)).map(p => p.id);
-        return { data: { connected, default: {}, all: providers.data.map(p => ({ ...p, models: Object.fromEntries(models.data.filter(m => m.providerID === p.id).map(m => [m.id, {
+        const [providers, models] = await Promise.all([providerEntries(a), native.model.list(query, options(undefined))]);
+        const connected = providers.filter(p => p.connected).map(p => p.id);
+        return { data: { connected, default: {}, all: providers.map(p => ({ id: p.id, name: p.name, models: Object.fromEntries(models.data.filter(m => m.providerID === p.id).map(m => [m.id, {
           ...m, tool_call: m.capabilities.tools, reasoning: m.variants.some(v => /reason|think|high/i.test(v.id)),
           variants: Object.fromEntries(m.variants.map(v => [v.id, v]))
         }])) })) } };
       }),
       auth: invoke(async a => {
         await waitForExortPlugin(native, str(a.directory) || undefined);
-        const query = { location: location(a) };
-        const [providers, integrations] = await Promise.all([native.provider.list(query, options(undefined)), native.integration.list(query, options(undefined))]);
-        return { data: Object.fromEntries(providers.data.map(p => [p.id, integrations.data.find(i => i.id === (p.integrationID || p.id))?.methods.filter(m => m.type === 'key' || m.type === 'oauth').map(m => ({ type: m.type === 'key' ? 'api' : 'oauth', label: m.label || 'API key' })) || []])) };
+        const providers = await providerEntries(a);
+        return { data: Object.fromEntries(providers.map(p => [p.id, signInMethods(p.integration).map(m => ({ type: m.type === 'key' ? 'api' : 'oauth', label: m.label || (m.type === 'key' ? 'API key' : 'OAuth') }))])) };
       }),
       oauth: {
         authorize: invoke(async a => {
           const integrationID = await integration(str(a.providerID), str(a.directory) || undefined);
           const info = await native.integration.get({ integrationID, location: location(a) }, options(undefined));
-          const method = info.data.methods.filter(m => m.type === 'key' || m.type === 'oauth')[Number(a.method)];
+          const method = signInMethods(info.data)[Number(a.method)];
           if (!method || method.type !== 'oauth') throw new Error('OAuth method is no longer available.');
           const previous = oauth.get(str(a.providerID));
           if (previous) await native.integration.oauth.cancel({ integrationID, attemptID: previous.attemptID, location: location(a) }, options(undefined));

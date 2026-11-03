@@ -66,6 +66,23 @@ test('permission and question replies use session IDs and option values', async 
   await adapter.question!.reject!({ requestID: 'f' });
   assert.deepEqual(calls, [{ sessionID: 's', requestID: 'p', decision: 'once', message: undefined }, { sessionID: 's', formID: 'f', answer: { board: 'uno' } }, { sessionID: 's', formID: 'f' }]);
 });
+test('Settings lists disconnected integrations alongside active providers without duplicating aliases', async () => {
+  const methods = [{ type: 'key', label: 'API key' }, { type: 'env' }, { type: 'oauth', label: 'Sign in' }];
+  const adapter = createV2Adapter(fixture({
+    provider: { list: async () => ({ data: [{ id: 'opencode', name: 'OpenCode', integrationID: 'console', activation: 'enabled' }] }) },
+    integration: { list: async () => ({ data: [
+      { id: 'console', name: 'Console', connections: [], methods },
+      { id: 'openai', name: 'OpenAI', connections: [], methods }
+    ] }) },
+    model: { list: async () => ({ data: [{ providerID: 'opencode', id: 'free', capabilities: { tools: true }, variants: [] }] }) }
+  }));
+  const { data } = await adapter.provider!.list!() as { data: { connected: string[]; all: { id: string; name: string; models: object }[] } };
+  assert.deepEqual(data.connected, ['opencode']);
+  assert.deepEqual(data.all.map(p => [p.id, p.name, Object.keys(p.models)]), [['opencode', 'OpenCode', ['free']], ['openai', 'OpenAI', []]]);
+  const signIn = [{ type: 'api', label: 'API key' }, { type: 'oauth', label: 'Sign in' }];
+  assert.deepEqual(await adapter.provider!.auth!(), { data: { opencode: signIn, openai: signIn } });
+});
+
 test('provider API keys and OAuth use integration IDs and attempt IDs', async () => {
   const calls: unknown[] = [];
   const native = fixture({ provider: { list: async () => ({ data: [{ id: 'p', integrationID: 'i' }] }) }, integration: {
