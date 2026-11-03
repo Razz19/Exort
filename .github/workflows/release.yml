@@ -358,6 +358,13 @@ jobs:
           printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY_PATH"
           echo "APPLE_API_KEY=$APPLE_API_KEY_PATH" >> "$GITHUB_ENV"
 
+      # Temporary workaround for https://github.com/actions/runner-images/issues/14924
+      - name: Use TCP for Apple ticket downloads on the Intel runner
+        shell: bash
+        run: |
+          echo "block return out quick proto udp from any to any port 443" | sudo pfctl -f -
+          sudo pfctl -E
+
       - name: Package desktop release artifacts
         env:
           CSC_KEYCHAIN: ${{ env.CSC_KEYCHAIN }}
